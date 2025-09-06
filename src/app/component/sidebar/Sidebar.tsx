@@ -13,7 +13,9 @@ interface SidebarProps {
   themeMode: "light" | "dark"; // new prop
 }
 
-export default function Sidebar({ collapsed = false, themeMode }: SidebarProps) {
+export default function Sidebar({
+  collapsed = false,
+}: SidebarProps) {
   return (
     <Sider
       collapsible
@@ -25,7 +27,7 @@ export default function Sidebar({ collapsed = false, themeMode }: SidebarProps) 
     >
       <div className="flex flex-col flex-1">
         <SidebarBrand collapsed={collapsed} />
-        <SidebarMenu theme={themeMode} /> {/* pass theme down */}
+        <SidebarMenu /> {/* pass theme down */}
       </div>
       <SidebarProfile collapsed={collapsed} />
     </Sider>
