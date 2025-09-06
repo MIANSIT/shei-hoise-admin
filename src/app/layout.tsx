@@ -21,13 +21,16 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Shei Hoise SuperAdmin",
   description: "Super Admin Panel",
+  icons: {
+    icon: "/logo.png", 
+  },
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
       <body

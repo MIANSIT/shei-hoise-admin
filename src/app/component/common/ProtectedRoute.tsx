@@ -15,14 +15,20 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const checkAuth = useAuthStore((state) => state.checkAuth);
 
   useEffect(() => {
-    if (!hydrated) checkAuth();
-  }, [checkAuth, hydrated]);
+    const verify = async () => {
+      if (!hydrated) {
+        await checkAuth();
+      }
 
-  useEffect(() => {
-    if (hydrated && !isAdminLoggedIn) {
-      router.replace("/");
-    }
-  }, [hydrated, isAdminLoggedIn, router]);
+      // After hydration, redirect if not logged in
+      const state = useAuthStore.getState();
+      if (state.hydrated && !state.isAdminLoggedIn) {
+        router.replace("/");
+      }
+    };
+
+    verify();
+  }, [hydrated, checkAuth, router]);
 
   if (!hydrated || !isAdminLoggedIn) {
     return (

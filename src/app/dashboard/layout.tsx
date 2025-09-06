@@ -18,21 +18,22 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
-  // Sidebar responsiveness
   useEffect(() => {
+    // Sidebar responsiveness
     const handleResize = () => setIsSidebarOpen(window.innerWidth >= 768);
     handleResize();
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
-  // Load saved theme
-  useEffect(() => {
+    // Load saved theme
     const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
     if (savedTheme) {
       setTheme(savedTheme);
       document.documentElement.classList.toggle("dark", savedTheme === "dark");
     }
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
   }, []);
 
   // Toggle light/dark mode
@@ -49,7 +50,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         theme={{
           algorithm: theme === "dark" ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
           token: {
-            colorPrimary: "#3b82f6", // brand color
+            colorPrimary: "#3b82f6",
             borderRadius: 8,
           },
           components: {
