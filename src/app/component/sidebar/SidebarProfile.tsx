@@ -4,9 +4,9 @@ import React, { useState } from "react";
 import { Avatar, Dropdown, Tooltip, Spin } from "antd";
 import type { MenuProps } from "antd";
 import { LogOut } from "lucide-react";
-import { LucideIcon } from "@/app/lib/LucideIcon";
-import { useAuthStore } from "@/app/lib/store/authStore";
-import { useSheiNotification } from "@/app/lib/hooks/useSheiNotification";
+import { LucideIcon } from "@/lib/LucideIcon";
+import { useAuthStore } from "@/lib/store/authStore";
+import { useSheiNotification } from "@/lib/hooks/useSheiNotification";
 import { useRouter } from "next/navigation";
 
 interface SidebarProfileProps {
@@ -50,7 +50,7 @@ export default function SidebarProfile({ collapsed }: SidebarProfileProps) {
 
   return (
     <div
-      className="p-4 mt-auto"
+      className='p-4 mt-auto'
       style={{
         borderTop: "1px solid var(--sidebar-border)",
         background: "var(--sidebar)",
@@ -58,35 +58,48 @@ export default function SidebarProfile({ collapsed }: SidebarProfileProps) {
       }}
     >
       {collapsed ? (
-        <Dropdown menu={profileMenu} placement="topRight">
-          <div className="flex items-center gap-3 cursor-pointer">
-            <Avatar style={{ backgroundColor: "var(--sidebar-primary)" }} size={40}>
+        <Dropdown menu={profileMenu} placement='topRight'>
+          <div className='flex items-center gap-3 cursor-pointer'>
+            <Avatar
+              style={{ backgroundColor: "var(--sidebar-primary)" }}
+              size={40}
+            >
               AD
             </Avatar>
           </div>
         </Dropdown>
       ) : (
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <Avatar style={{ backgroundColor: "var(--sidebar-primary)" }} size={40}>
+        <div className='flex items-center justify-between gap-3'>
+          <div className='flex items-center gap-3'>
+            <Avatar
+              style={{ backgroundColor: "var(--sidebar-primary)" }}
+              size={40}
+            >
               AD
             </Avatar>
             <div>
-              <div className="text-sm font-medium" style={{ color: "var(--sidebar-foreground)" }}>
+              <div
+                className='text-sm font-medium'
+                style={{ color: "var(--sidebar-foreground)" }}
+              >
                 Admin
               </div>
-              <div className="text-xs opacity-70">admin@sheihoise.com</div>
+              <div className='text-xs opacity-70'>admin@sheihoise.com</div>
             </div>
           </div>
 
-          <Tooltip title="Logout">
+          <Tooltip title='Logout'>
             <button
               onClick={handleLogout}
-              className="transition flex items-center justify-center"
+              className='transition flex items-center justify-center'
               style={{ color: "var(--destructive)" }}
               disabled={loading}
             >
-              {loading ? <Spin size="small" /> : <LucideIcon icon={LogOut} size={20} />}
+              {loading ? (
+                <Spin size='small' />
+              ) : (
+                <LucideIcon icon={LogOut} size={20} />
+              )}
             </button>
           </Tooltip>
         </div>

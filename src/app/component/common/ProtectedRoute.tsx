@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { ReactNode, useEffect } from "react";
-import { useAuthStore } from "@/app/lib/store/authStore";
+import { useAuthStore } from "@/lib/store/authStore";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -32,7 +32,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (!hydrated || !isAdminLoggedIn) {
     return (
-      <div className="flex items-center justify-center min-h-screen text-white">
+      <div className='flex items-center justify-center min-h-screen text-white'>
         Checking admin authentication...
       </div>
     );

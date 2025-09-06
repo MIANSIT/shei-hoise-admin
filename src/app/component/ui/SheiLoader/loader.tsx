@@ -2,7 +2,7 @@
 
 import React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "@/app/lib/utils";
+import { cn } from "@/lib/utils";
 
 const loaderVariants = cva(
   "inline-block animate-spin rounded-full border-solid border-current border-r-transparent",
@@ -31,7 +31,7 @@ const loaderVariants = cva(
 );
 
 interface SheiLoaderProps
-  extends Omit<React.HTMLAttributes<HTMLSpanElement>, 'color'>,
+  extends Omit<React.HTMLAttributes<HTMLSpanElement>, "color">,
     VariantProps<typeof loaderVariants> {
   loadingText?: string;
 }
@@ -39,16 +39,18 @@ interface SheiLoaderProps
 const SheiLoader = React.forwardRef<HTMLSpanElement, SheiLoaderProps>(
   ({ className, size, loaderColor, loadingText, ...props }, ref) => {
     return (
-      <div className="inline-flex items-center gap-2">
+      <div className='inline-flex items-center gap-2'>
         <span
           ref={ref}
           className={cn(loaderVariants({ size, loaderColor, className }))}
           {...props}
           style={{ animationDuration: "0.75s" }}
-          aria-label="Loading"
+          aria-label='Loading'
         />
         {loadingText && (
-          <span className="text-primary text-sm font-medium">{loadingText}</span>
+          <span className='text-primary text-sm font-medium'>
+            {loadingText}
+          </span>
         )}
       </div>
     );

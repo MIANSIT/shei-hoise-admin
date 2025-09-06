@@ -4,8 +4,8 @@ import React, { useMemo } from "react";
 import { Menu } from "antd";
 import type { MenuProps } from "antd";
 import { usePathname, useRouter } from "next/navigation";
-import { sideMenu } from "@/app/lib/menu";
-import { LucideIcon } from "@/app/lib/LucideIcon";
+import { sideMenu } from "@/lib/menu";
+import { LucideIcon } from "@/lib/LucideIcon";
 
 type AntdMenuItem = Required<MenuProps>["items"][number];
 
@@ -48,7 +48,7 @@ export default function SidebarMenu() {
 
   return (
     <Menu
-      mode="inline"
+      mode='inline'
       selectedKeys={[pathname]}
       defaultOpenKeys={defaultOpenKeys}
       items={items}

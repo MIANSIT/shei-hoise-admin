@@ -1,13 +1,12 @@
 // components/ui/input.tsx
-import * as React from "react"
-import { cn } from "@/app/lib/utils"
-
+import * as React from "react";
+import { cn } from "@/lib/utils";
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (
     <input
-      suppressHydrationWarning   // 👈 ignore extension-injected differences
+      suppressHydrationWarning // 👈 ignore extension-injected differences
       type={type}
-      data-slot="input"
+      data-slot='input'
       className={cn(
         "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-12 w-full min-w-0 rounded-md border bg-transparent px-4 py-2 text-lg shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-9 file:border-0 file:bg-transparent file:text-base file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
         "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
@@ -16,7 +15,7 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
       )}
       {...props}
     />
-  )
+  );
 }
 
-export { Input }
+export { Input };
