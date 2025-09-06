@@ -1,7 +1,18 @@
-// This is your page file that renders the AdminLogin component
+"use client";
 
-import LoginWrapper from "@/app/component/auth/LoginWrap";
+import { DesktopLayout } from "@/app/component/common/AuthDesktop";
+// import { MobileLayout } from "../../layout/auth/AuthMobile";
+import LoginPage from "@/app/component/auth/Login";
 
-export default function Page() {
-  return <LoginWrapper />;
+export default function LoginWrapper() {
+  return (
+    <>
+      {/* Desktop Layout */}
+      <div className='hidden md:block'>
+        <DesktopLayout isAdmin={true}>
+          <LoginPage />
+        </DesktopLayout>
+      </div>
+    </>
+  );
 }

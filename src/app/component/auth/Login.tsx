@@ -10,7 +10,7 @@ import {
   loginSchema,
 } from "@/lib/utils/schemas/auth/login.schema";
 
-export default function AdminLoginPage() {
+export default function LoginPage() {
   const router = useRouter();
   const { success, error } = useSheiNotification();
   const { isAdminLoggedIn, hydrated, checkAuth } = useAuthStore();
