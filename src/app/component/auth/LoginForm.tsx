@@ -12,7 +12,6 @@ import { Label } from "@/app/component/ui/label";
 import { PasswordToggle } from "../common/PasswordToggle";
 import { SheiLoader } from "../ui/SheiLoader/loader";
 import { useSheiNotification } from "@/lib/hooks/useSheiNotification";
-import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 

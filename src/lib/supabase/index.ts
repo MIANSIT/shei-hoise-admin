@@ -1,3 +1,4 @@
-import { createClient } from "./client";
+import { createAdminClient, createNormalClient } from "./client";
 
-export const supabase = createClient();
+export const supabase = createNormalClient();
+export const supabaseAdmin = createAdminClient;

@@ -12,7 +12,7 @@ import { ThemeProvider, useTheme } from "@/lib/context/ThemeContext";
 import "antd/dist/reset.css"; // or your antd styles
 import "@ant-design/v5-patch-for-react-19"; // patch for React 19
 import { useSupabaseAuth } from "@/lib/hooks/userCheckAuth";
-import { redirect } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -22,6 +22,14 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const { theme, toggleTheme } = useTheme();
   const { session, loading } = useSupabaseAuth();
+  const router = useRouter();
+
+  // Redirect client-side if no session
+  useEffect(() => {
+    if (!loading && !session) {
+      router.push("/"); // or "/login"
+    }
+  }, [loading, session, router]);
 
   if (loading)
     return (
@@ -29,10 +37,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         Loading...
       </div>
     );
-
-  if (!session) {
-    redirect("/");
-  }
 
   return (
     <ConfigProvider
