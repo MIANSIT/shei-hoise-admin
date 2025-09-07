@@ -2,7 +2,7 @@
 
 import { Controller, Control, FieldErrors } from "react-hook-form";
 import { Form, Input } from "antd";
-import { StoreFormData } from "@/lib/utils/schemas/store/storeSchema";
+import { StoreFormData } from "@/lib/utils/schemas/storeCreate/storeSchema";
 
 interface Props {
   control: Control<StoreFormData>;

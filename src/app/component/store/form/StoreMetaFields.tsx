@@ -2,7 +2,7 @@
 
 import { Controller, Control, FieldErrors } from "react-hook-form";
 import { Form, Input, Checkbox } from "antd";
-import { StoreFormData } from "@/lib/utils/schemas/store/storeSchema";
+import { StoreFormData } from "@/lib/utils/schemas/storeCreate/storeSchema";
 
 const { TextArea } = Input;
 
@@ -32,7 +32,7 @@ export function StoreMetaFields({ control }: Props) {
         render={({ field }) => (
           <Form.Item className="flex items-center mt-2">
             <Checkbox
-              checked={field.value}
+              checked={field.value !== undefined ? field.value : true} // ✅ fallback to true
               onChange={(e) => field.onChange(e.target.checked)}
             >
               Active
