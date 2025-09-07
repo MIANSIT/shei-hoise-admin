@@ -9,6 +9,8 @@ import { Toaster } from "@/app/component/ui/sheiSonner/sonner";
 import { PanelLeft, Sun, Moon } from "lucide-react";
 import { ConfigProvider, theme as antdTheme } from "antd";
 import { ThemeProvider, useTheme } from "@/lib/context/ThemeContext";
+import "antd/dist/reset.css"; // or your antd styles
+import "@ant-design/v5-patch-for-react-19"; // patch for React 19
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -30,7 +32,9 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       <ConfigProvider
         theme={{
           algorithm:
-            theme === "dark" ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+            theme === "dark"
+              ? antdTheme.darkAlgorithm
+              : antdTheme.defaultAlgorithm,
           token: {
             colorPrimary: "#3b82f6",
             borderRadius: 8,
@@ -74,7 +78,11 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               className="p-2 rounded hover:opacity-70"
               style={{ background: theme === "dark" ? "#374151" : "#f3f4f6" }}
             >
-              {theme === "light" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+              {theme === "light" ? (
+                <Moon className="w-5 h-5" />
+              ) : (
+                <Sun className="w-5 h-5" />
+              )}
             </button>
           </header>
 
