@@ -1,7 +1,6 @@
 import * as z from "zod";
 
 export const storeSchema = z.object({
-  owner_id: z.string().uuid("Owner ID must be a valid UUID"),
   store_name: z.string().min(1, "Store name is required"),
   store_slug: z.string().min(1, "Store slug is required"),
   description: z.string().optional(),
@@ -16,6 +15,13 @@ export const storeSchema = z.object({
   approved_by: z.string().uuid().optional(),
   approved_at: z.string().optional(),
   is_active: z.boolean().optional(),
+
+  // ✅ New User Fields
+  user_email: z.string().email("Invalid email"),
+  first_name: z.string().min(1, "First name is required"),
+  last_name: z.string().min(1, "Last name is required"),
+  user_phone: z.string().min(6, "Phone number is too short"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 export type StoreFormData = z.infer<typeof storeSchema>;

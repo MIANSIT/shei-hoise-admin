@@ -3,7 +3,7 @@
 import { Controller, Control, FieldErrors } from "react-hook-form";
 import { Form, Input, Select, DatePicker } from "antd";
 import dayjs from "dayjs";
-import { StoreFormData } from "@/lib/utils/schemas/store/storeSchema";
+import { StoreFormData } from "@/lib/utils/schemas/storeCreate/storeSchema";
 
 interface Props {
   control: Control<StoreFormData>;
@@ -14,19 +14,6 @@ export function StoreBasicInfoFields({ control, errors }: Props) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Owner ID */}
-      <Controller
-        name="owner_id"
-        control={control}
-        render={({ field }) => (
-          <Form.Item
-            label="Owner ID"
-            validateStatus={errors.owner_id ? "error" : ""}
-            help={errors.owner_id?.message}
-          >
-            <Input {...field} placeholder="Enter Owner UUID" />
-          </Form.Item>
-        )}
-      />
 
       {/* Store Name */}
       <Controller
