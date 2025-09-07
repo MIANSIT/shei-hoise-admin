@@ -7,6 +7,7 @@ import "@ant-design/v5-patch-for-react-19";
 import "antd/dist/reset.css"; // AntD styles
 
 import { Toaster } from "./component/ui/sheiSonner/sonner";
+import { ThemeProvider } from "@/lib/context/ThemeContext"; // ✅ import ThemeProvider
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
   title: "Shei Hoise SuperAdmin",
   description: "Super Admin Panel",
   icons: {
-    icon: "/logo.png", 
+    icon: "/logo.png",
   },
 };
 
@@ -36,8 +37,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
-        <Toaster position="top-right" />
+        <ThemeProvider> {/* ✅ Wrap children with ThemeProvider */}
+          {children}
+          <Toaster position="top-right" />
+        </ThemeProvider>
       </body>
     </html>
   );

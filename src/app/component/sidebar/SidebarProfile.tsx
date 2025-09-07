@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { Avatar, Dropdown, Tooltip, Spin } from "antd";
-import type { MenuProps } from "antd";
 import { LogOut } from "lucide-react";
 import { LucideIcon } from "@/lib/LucideIcon";
 import { useAuthStore } from "@/lib/store/authStore";
@@ -11,32 +10,24 @@ import { useRouter } from "next/navigation";
 
 interface SidebarProfileProps {
   collapsed: boolean;
+  themeMode: "light" | "dark";
 }
 
-export default function SidebarProfile({ collapsed }: SidebarProfileProps) {
+export default function SidebarProfile({ collapsed, themeMode }: SidebarProfileProps) {
   const logout = useAuthStore((state) => state.logout);
   const notify = useSheiNotification();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   const handleLogout = () => {
-    try {
-      setLoading(true);
-
-      // Since logout is hardcoded, no need to await
-      logout();
-
-      notify.success("Logout successful!");
-      router.push("/");
-    } catch (err) {
-      console.error("Logout error:", err);
-      notify.error("Logout failed. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    setLoading(true);
+    logout();
+    notify.success("Logout successful!");
+    router.push("/");
+    setLoading(false);
   };
 
-  const profileMenu: MenuProps = {
+  const profileMenu = {
     items: [
       {
         key: "logout",
@@ -50,56 +41,33 @@ export default function SidebarProfile({ collapsed }: SidebarProfileProps) {
 
   return (
     <div
-      className='p-4 mt-auto'
+      className="p-4 mt-auto"
       style={{
-        borderTop: "1px solid var(--sidebar-border)",
-        background: "var(--sidebar)",
-        color: "var(--sidebar-foreground)",
+        borderTop: `1px solid ${themeMode === "dark" ? "#374151" : "#e5e7eb"}`,
+        background: themeMode === "dark" ? "#111827" : "#ffffff",
+        color: themeMode === "dark" ? "#e5e7eb" : "#111827",
       }}
     >
       {collapsed ? (
-        <Dropdown menu={profileMenu} placement='topRight'>
-          <div className='flex items-center gap-3 cursor-pointer'>
-            <Avatar
-              style={{ backgroundColor: "var(--sidebar-primary)" }}
-              size={40}
-            >
-              AD
-            </Avatar>
-          </div>
+        <Dropdown menu={profileMenu} placement="topRight">
+          <Avatar size={40} style={{ backgroundColor: themeMode === "dark" ? "#3b82f6" : "#2563eb" }}>
+            AD
+          </Avatar>
         </Dropdown>
       ) : (
-        <div className='flex items-center justify-between gap-3'>
-          <div className='flex items-center gap-3'>
-            <Avatar
-              style={{ backgroundColor: "var(--sidebar-primary)" }}
-              size={40}
-            >
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Avatar size={40} style={{ backgroundColor: themeMode === "dark" ? "#3b82f6" : "#2563eb" }}>
               AD
             </Avatar>
             <div>
-              <div
-                className='text-sm font-medium'
-                style={{ color: "var(--sidebar-foreground)" }}
-              >
-                Admin
-              </div>
-              <div className='text-xs opacity-70'>admin@sheihoise.com</div>
+              <div className="text-sm font-medium">Admin</div>
+              <div className="text-xs opacity-70">admin@sheihoise.com</div>
             </div>
           </div>
-
-          <Tooltip title='Logout'>
-            <button
-              onClick={handleLogout}
-              className='transition flex items-center justify-center'
-              style={{ color: "var(--destructive)" }}
-              disabled={loading}
-            >
-              {loading ? (
-                <Spin size='small' />
-              ) : (
-                <LucideIcon icon={LogOut} size={20} />
-              )}
+          <Tooltip title="Logout">
+            <button onClick={handleLogout} className="transition" disabled={loading}>
+              {loading ? <Spin size="small" /> : <LucideIcon icon={LogOut} size={20} />}
             </button>
           </Tooltip>
         </div>

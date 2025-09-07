@@ -10,12 +10,10 @@ const { Sider } = Layout;
 
 interface SidebarProps {
   collapsed?: boolean;
-  themeMode: "light" | "dark"; // new prop
+  themeMode: "light" | "dark";
 }
 
-export default function Sidebar({
-  collapsed = false,
-}: SidebarProps) {
+export default function Sidebar({ collapsed = false, themeMode }: SidebarProps) {
   return (
     <Sider
       collapsible
@@ -23,13 +21,16 @@ export default function Sidebar({
       trigger={null}
       width={240}
       className="flex flex-col shadow-md"
-      style={{ background: "var(--sidebar)" }}
+      style={{
+        background: themeMode === "dark" ? "#111827" : "#ffffff",
+        color: themeMode === "dark" ? "#e5e7eb" : "#111827",
+      }}
     >
       <div className="flex flex-col flex-1">
-        <SidebarBrand collapsed={collapsed} />
-        <SidebarMenu /> {/* pass theme down */}
+        <SidebarBrand collapsed={collapsed} themeMode={themeMode} />
+        <SidebarMenu themeMode={themeMode} />
       </div>
-      <SidebarProfile collapsed={collapsed} />
+      <SidebarProfile collapsed={collapsed} themeMode={themeMode} />
     </Sider>
   );
 }

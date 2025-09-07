@@ -1,6 +1,6 @@
 "use client";
 
-import { Path, useForm } from "react-hook-form";
+import { Path, useForm, SubmitHandler } from "react-hook-form";
 import { Button } from "@/app/component/ui/button";
 import { Input } from "@/app/component/ui/input";
 import { Label } from "@/app/component/ui/label";
@@ -17,39 +17,45 @@ interface UserFormProps<T extends Record<string, unknown>> {
   onSubmit: (values: T) => Promise<void>;
   hiddenFields?: Partial<Record<keyof T, boolean>>;
   footer?: {
-    text?: string; // e.g. "Don't have an account?"
-    linkText?: string; // e.g. "Sign up"
-    linkUrl?: string; // e.g. "/sign-up"
+    text?: string;
+    linkText?: string;
+    linkUrl?: string;
   };
   submitText: string;
+  theme: "light" | "dark";
 }
 
 export function UserForm<T extends Record<string, unknown>>({
-  schema,
   defaultValues,
   onSubmit,
   hiddenFields = {},
   footer,
   submitText,
+  theme,
 }: UserFormProps<T>) {
-  const form = useForm<T>(defaultValues);
+  const form = useForm<T>({
+    defaultValues,
+    mode: "onChange",
+  });
 
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (values: T) => {
-    setIsLoading(true);
+  const handleSubmit: SubmitHandler<T> = async (values) => {
     try {
       await onSubmit(values);
       form.reset();
     } finally {
-      setIsLoading(false);
+      // react-hook-form sets isSubmitting automatically
     }
   };
 
   const renderError = (fieldName: keyof T) =>
     form.formState.errors[fieldName as Path<T>] ? (
-      <p className='text-sm text-destructive mt-1'>
+      <p
+        className={`text-sm mt-1 ${
+          theme === "dark" ? "text-red-400" : "text-red-600"
+        }`}
+      >
         {form.formState.errors[fieldName as Path<T>]?.message as string}
       </p>
     ) : null;
@@ -63,8 +69,11 @@ export function UserForm<T extends Record<string, unknown>>({
       .replace(/^./, (str) => str.toUpperCase());
 
     return (
-      <div key={String(key)} className='grid gap-2 relative'>
-        <Label htmlFor={String(key)} className='text-foreground'>
+      <div key={String(key)} className="grid gap-2 relative">
+        <Label
+          htmlFor={String(key)}
+          className={theme === "dark" ? "text-gray-200" : "text-gray-800"}
+        >
           {label}
         </Label>
         <div className={isPassword ? "relative" : ""}>
@@ -72,11 +81,15 @@ export function UserForm<T extends Record<string, unknown>>({
             {...form.register(key as Path<T>)}
             placeholder={label}
             type={isPassword ? (showPassword ? "text" : "password") : "text"}
-            disabled={isLoading}
-            className={isPassword ? "pr-14" : ""}
+            disabled={form.formState.isSubmitting}
+            className={`${
+              theme === "dark"
+                ? "bg-gray-800 text-gray-100 border-gray-600 placeholder-gray-400"
+                : "bg-white text-gray-900 border-gray-300 placeholder-gray-500"
+            } ${isPassword ? "pr-14" : ""}`}
           />
           {isPassword && (
-            <div className='absolute inset-y-0 right-2 flex items-center'>
+            <div className="absolute inset-y-0 right-2 flex items-center">
               <PasswordToggle
                 show={showPassword}
                 onToggle={() => setShowPassword(!showPassword)}
@@ -90,27 +103,37 @@ export function UserForm<T extends Record<string, unknown>>({
   };
 
   return (
-    <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-4'>
+    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
       {Object.keys(defaultValues).map((key) => renderField(key as keyof T))}
 
       <Button
-        type='submit'
-        className='w-full mt-2 relative overflow-hidden'
-        disabled={isLoading}
+        type="submit"
+        variant={theme === "dark" ? "dark" : "light"} // ✅ Theme-aware
+        size="default"
+        className="w-full mt-2 relative overflow-hidden"
+        disabled={!form.formState.isValid || form.formState.isSubmitting}
       >
-        {isLoading ? (
-          <SheiLoader size='sm' loaderColor='current' />
+        {form.formState.isSubmitting ? (
+          <SheiLoader size="sm" loaderColor="current" />
         ) : (
-          <span className='text-white'>{submitText}</span> // ✅ only text white
+          <span>{submitText}</span>
         )}
       </Button>
 
       {footer?.text && footer?.linkText && footer?.linkUrl && (
-        <p className='text-sm text-black text-center mt-2'>
+        <p
+          className={`text-sm text-center mt-2 ${
+            theme === "dark" ? "text-gray-300" : "text-gray-700"
+          }`}
+        >
           {footer.text}{" "}
           <Link
             href={footer.linkUrl}
-            className='text-foreground hover:underline'
+            className={`${
+              theme === "dark"
+                ? "text-blue-400 hover:underline"
+                : "text-blue-600 hover:underline"
+            }`}
           >
             {footer.linkText}
           </Link>

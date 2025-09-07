@@ -8,18 +8,14 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default:
-          "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
-        greenish:
-          "bg-chart-2 text-white shadow-xs hover:bg-chart-2/90 focus-visible:ring-chart-2/20 dark:focus-visible:ring-chart-2/40 dark:bg-chart-2/60",
-        destructive:
-          "bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
-        outline:
-          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
-        secondary:
-          "bg-secondary text-secondary-foreground shadow-xs hover:bg-accent",
-        ghost:
-          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+        default: "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
+        dark: "bg-blue-600 text-white shadow-xs hover:bg-blue-500",
+        light: "bg-blue-500 text-black shadow-xs hover:bg-blue-600",
+        greenish: "bg-chart-2 text-white shadow-xs hover:bg-chart-2/90",
+        destructive: "bg-destructive text-white shadow-xs hover:bg-destructive/90",
+        outline: "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
+        secondary: "bg-secondary text-secondary-foreground shadow-xs hover:bg-accent",
+        ghost: "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
         accent: "bg-accent text-accent-foreground shadow-xs hover:bg-accent/90",
       },
@@ -51,7 +47,7 @@ function Button({
 
   return (
     <Comp
-      data-slot='button'
+      data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
     />

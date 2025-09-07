@@ -7,6 +7,10 @@ import { usePathname, useRouter } from "next/navigation";
 import { sideMenu } from "@/lib/menu";
 import { LucideIcon } from "@/lib/LucideIcon";
 
+interface SidebarMenuProps {
+  themeMode: "light" | "dark";
+}
+
 type AntdMenuItem = Required<MenuProps>["items"][number];
 
 const buildMenuItems = (menu: typeof sideMenu): AntdMenuItem[] =>
@@ -24,7 +28,7 @@ const buildMenuItems = (menu: typeof sideMenu): AntdMenuItem[] =>
     return { key: item.href || item.title, icon, label: item.title };
   });
 
-export default function SidebarMenu() {
+export default function SidebarMenu({ themeMode }: SidebarMenuProps) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -40,15 +44,13 @@ export default function SidebarMenu() {
   }, [pathname]);
 
   const handleClick: MenuProps["onClick"] = (e) => {
-    const clicked = sideMenu
-      .flatMap((i) => i.children || [i])
-      .find((i) => i.href === e.key);
+    const clicked = sideMenu.flatMap((i) => i.children || [i]).find((i) => i.href === e.key);
     if (clicked?.href) router.push(clicked.href);
   };
 
   return (
     <Menu
-      mode='inline'
+      mode="inline"
       selectedKeys={[pathname]}
       defaultOpenKeys={defaultOpenKeys}
       items={items}
@@ -56,7 +58,8 @@ export default function SidebarMenu() {
       style={{
         flex: 1,
         borderRight: 0,
-        background: "transparent",
+        background: themeMode === "dark" ? "#111827" : "#ffffff",
+        color: themeMode === "dark" ? "#e5e7eb" : "#111827",
       }}
     />
   );
