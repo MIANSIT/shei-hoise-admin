@@ -12,6 +12,8 @@ import {
   Edit,
   BarChart2,
   FolderPlus,
+  Store,
+  Building2,
 } from "lucide-react";
 import React from "react";
 
@@ -47,7 +49,11 @@ export const sideMenu: MenuItem[] = [
         icon: Edit,
       },
       { title: "All Products", href: "/dashboard/products", icon: List },
-      { title: "All Categories", href: "/dashboard/products/view-category", icon: FolderPlus },
+      {
+        title: "All Categories",
+        href: "/dashboard/products/view-category",
+        icon: FolderPlus,
+      },
     ],
   },
   {
@@ -63,6 +69,17 @@ export const sideMenu: MenuItem[] = [
         title: "All Orders",
         href: "/dashboard/orders/view-order",
         icon: Clipboard,
+      },
+    ],
+  },
+  {
+    title: "Store",
+    icon: Store,
+    children: [
+      {
+        title: "Create Store",
+        href: "/dashboard/store/create-store",
+        icon: Building2,
       },
     ],
   },
