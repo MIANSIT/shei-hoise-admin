@@ -85,19 +85,19 @@ export function StoreWizard({
   };
 
   return (
-    <div className="p-6 rounded-xl shadow-md">
+    <div className='p-6 rounded-xl shadow-md'>
       <Steps current={current} items={steps.map((s) => ({ title: s.title }))} />
-      <div className="mt-6 space-y-6">
+      <div className='mt-6 space-y-6'>
         <CurrentStep control={control} errors={errors} />
-        <div className="flex justify-between mt-6">
+        <div className='flex justify-between mt-6'>
           {current > 0 && <Button onClick={prevStep}>Previous</Button>}
           {current < steps.length - 1 && (
-            <Button type="primary" onClick={nextStep}>
+            <Button type='primary' onClick={nextStep}>
               Next
             </Button>
           )}
           {current === steps.length - 1 && (
-            <Button type="primary" loading={loading} onClick={finish}>
+            <Button type='primary' loading={loading} onClick={finish}>
               Submit
             </Button>
           )}

@@ -53,4 +53,4 @@ export const createUserSchema = z.object({
   store_settings: storeSettingsSchema.optional(),
 });
 
-export type CreateUserInput = z.infer<typeof createUserSchema>;
+export type CreateUserType = z.infer<typeof createUserSchema>;
