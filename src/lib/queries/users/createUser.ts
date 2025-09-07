@@ -19,7 +19,7 @@ export async function createUser(input: CreateUserInput) {
     });
 
   if (authError) throw authError;
-  const userId = authData.id;
+  const userId = authData.user.id;
 
   try {
     // Insert into users table
