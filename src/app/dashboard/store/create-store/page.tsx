@@ -1,18 +1,11 @@
 "use client";
+import StorePageClient from "@/app/component/store/StorePageClient";
 
-import React from "react";
-import { StoreFormData } from "@/lib/utils/schemas/store/storeSchema";
-import { StoreForm } from "@/app/component/store/StoreForm";
-
-export default function AdminCreateStorePage() {
-  const handleCreate = async (data: StoreFormData) => {
-    console.log("Form Data:", data);
-    // ✅ Call your API to create store here
-  };
-
+export default function StorePage() {
   return (
-    <div className="max-w-4xl mx-auto p-8 rounded-xl shadow-lg">
-      <StoreForm onSubmit={handleCreate} submitLabel="Create Store" />
+    <div className="p-8">
+      <h1 className="text-2xl font-bold mb-6">Create Store</h1>
+      <StorePageClient />
     </div>
   );
 }
