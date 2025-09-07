@@ -8,7 +8,7 @@ export default function LoginWrapper() {
   return (
     <>
       {/* Desktop Layout */}
-      <div className='hidden md:block'>
+      <div className=''>
         <DesktopLayout isAdmin={true}>
           <LoginPage />
         </DesktopLayout>
