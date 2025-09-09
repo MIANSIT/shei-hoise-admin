@@ -3,6 +3,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
+
 import { LoginFormSchema, LoginFormType } from "@/lib/schema/auth";
 import { Button } from "@/app/component/ui/button";
 import { Input } from "@/app/component/ui/input";
@@ -45,11 +46,16 @@ export function LoginForm({
     mode: "onChange",
   });
 
+  const {
+    handleSubmit,
+    formState: { errors },
+  } = form;
+
   const [showPassword, setShowPassword] = useState(false);
 
   return (
     <form
-      onSubmit={form.handleSubmit(handleAdminLogin)}
+      onSubmit={handleSubmit(handleAdminLogin)}
       className='space-y-4'
       noValidate
     >
@@ -74,9 +80,7 @@ export function LoginForm({
           }
         />
         {form.formState.errors.username && (
-          <p className='text-sm text-red-500'>
-            {form?.formState?.errors?.username?.message}
-          </p>
+          <p className='text-sm text-red-500'>{errors?.username?.message}</p>
         )}
       </div>
 
@@ -108,10 +112,8 @@ export function LoginForm({
             />
           </div>
         </div>
-        {form.formState.errors.password && (
-          <p className='text-sm text-red-500'>
-            {form.formState.errors.password.message}
-          </p>
+        {errors.password && (
+          <p className='text-sm text-red-500'>{errors.password.message}</p>
         )}
       </div>
 

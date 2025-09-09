@@ -1,9 +1,9 @@
-import { CreateUserInput, createUserSchema } from "@/lib/schema/user.schema";
+import { CreateUserType, createUserSchema } from "@/lib/schema/user.schema";
 import { supabase } from "@/lib/supabase";
 
-export async function createUser(input: CreateUserInput) {
+export async function createUser(data: CreateUserType) {
   // Validate input using Zod
-  const payload = createUserSchema.parse(input);
+  const payload = createUserSchema.parse(data);
 
   // 1. Create Supabase Auth user
   const { data: authData, error: authError } =

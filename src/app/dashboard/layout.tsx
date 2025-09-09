@@ -11,7 +11,7 @@ import { ThemeProvider, useTheme } from "@/lib/context/ThemeContext";
 import "antd/dist/reset.css"; // or your antd styles
 import "@ant-design/v5-patch-for-react-19"; // patch for React 19
 import { useSupabaseAuth } from "@/lib/hooks/userCheckAuth";
-import {  useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
