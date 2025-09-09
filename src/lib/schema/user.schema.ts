@@ -53,4 +53,6 @@ export const createUserSchema = z.object({
   store_settings: storeSettingsSchema.optional(),
 });
 
-export type CreateUserInput = z.infer<typeof createUserSchema>;
+// 🔹 Types
+export type CreateUserType = z.infer<typeof createUserSchema>; // parsed output (with defaults)
+export type CreateUserInput = z.input<typeof createUserSchema>; // form input (before defaults)
