@@ -3,15 +3,18 @@
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input, Button, Form, InputNumber, Select } from "antd";
-import { CreateUserInput, createUserSchema } from "@/lib/schema/user.schema";
+import { CreateUserType, createUserSchema } from "@/lib/schema/user.schema";
 
 interface StoreCreateFormProps {
-  onSubmit: (data: CreateUserInput) => void;
+  onSubmit: (data: CreateUserType) => void;
   loading?: boolean;
 }
 
-export default function StoreCreateForm({ onSubmit, loading = false }: StoreCreateFormProps) {
-  const { control, handleSubmit, watch } = useForm<CreateUserInput>({
+export default function StoreCreateForm({
+  onSubmit,
+  loading = false,
+}: StoreCreateFormProps) {
+  const { control, handleSubmit, watch } = useForm<CreateUserType>({
     resolver: zodResolver(createUserSchema),
     defaultValues: {
       user_type: "store_owner",
@@ -32,6 +35,9 @@ export default function StoreCreateForm({ onSubmit, loading = false }: StoreCrea
         min_order_amount: 0,
         processing_time_days: 1,
         return_policy_days: 7,
+      },
+      profile: {
+        country: "Bangladesh",
       },
     },
   });
@@ -187,7 +193,9 @@ export default function StoreCreateForm({ onSubmit, loading = false }: StoreCrea
                 <Controller
                   name="store_settings.tax_rate"
                   control={control}
-                  render={({ field }) => <InputNumber {...field} min={0} className="w-full" />}
+                  render={({ field }) => (
+                    <InputNumber {...field} min={0} className="w-full" />
+                  )}
                 />
               </Form.Item>
 
@@ -195,7 +203,9 @@ export default function StoreCreateForm({ onSubmit, loading = false }: StoreCrea
                 <Controller
                   name="store_settings.shipping_fee"
                   control={control}
-                  render={({ field }) => <InputNumber {...field} min={0} className="w-full" />}
+                  render={({ field }) => (
+                    <InputNumber {...field} min={0} className="w-full" />
+                  )}
                 />
               </Form.Item>
             </div>
@@ -205,7 +215,9 @@ export default function StoreCreateForm({ onSubmit, loading = false }: StoreCrea
                 <Controller
                   name="store_settings.processing_time_days"
                   control={control}
-                  render={({ field }) => <InputNumber {...field} min={1} className="w-full" />}
+                  render={({ field }) => (
+                    <InputNumber {...field} min={1} className="w-full" />
+                  )}
                 />
               </Form.Item>
 
@@ -213,14 +225,21 @@ export default function StoreCreateForm({ onSubmit, loading = false }: StoreCrea
                 <Controller
                   name="store_settings.return_policy_days"
                   control={control}
-                  render={({ field }) => <InputNumber {...field} min={0} className="w-full" />}
+                  render={({ field }) => (
+                    <InputNumber {...field} min={0} className="w-full" />
+                  )}
                 />
               </Form.Item>
             </div>
           </>
         )}
 
-        <Button type="primary" htmlType="submit" className="mt-4 w-full" loading={loading}>
+        <Button
+          type="primary"
+          htmlType="submit"
+          className="mt-4 w-full"
+          loading={loading}
+        >
           Create User
         </Button>
       </Form>
