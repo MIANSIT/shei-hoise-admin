@@ -5,12 +5,11 @@ import UploadImage from "../uploads/UploadImage";
 
 interface StoreInformationFormProps {
   control: Control<CreateUserType>;
-  notify: {
-    error: (msg: string) => void;
-  };
 }
 
-export default function StoreInformationForm({ control, notify }: StoreInformationFormProps) {
+export default function StoreInformationForm({
+  control,
+}: StoreInformationFormProps) {
   return (
     <>
       <h3 className="text-lg font-medium mt-6 mb-2">Store Information</h3>
@@ -44,7 +43,7 @@ export default function StoreInformationForm({ control, notify }: StoreInformati
           <Controller
             name="store.logo_url"
             control={control}
-            render={({ field }) => <UploadImage field={field} label="Logo" notify={notify} />}
+            render={({ field }) => <UploadImage field={field} label="Logo" />}
           />
         </Form.Item>
 
@@ -52,12 +51,12 @@ export default function StoreInformationForm({ control, notify }: StoreInformati
           <Controller
             name="store.banner_url"
             control={control}
-            render={({ field }) => <UploadImage field={field} label="Banner" notify={notify} />}
+            render={({ field }) => <UploadImage field={field} label="Banner" />}
           />
         </Form.Item>
       </div>
 
-      <Form.Item label="Contact Email">
+      <Form.Item label="Contact Email" required>
         <Controller
           name="store.contact_email"
           control={control}
@@ -65,7 +64,7 @@ export default function StoreInformationForm({ control, notify }: StoreInformati
         />
       </Form.Item>
 
-      <Form.Item label="Contact Phone">
+      <Form.Item label="Contact Phone" required>
         <Controller
           name="store.contact_phone"
           control={control}
@@ -73,7 +72,7 @@ export default function StoreInformationForm({ control, notify }: StoreInformati
         />
       </Form.Item>
 
-      <Form.Item label="Business Address">
+      <Form.Item label="Business Address" required>
         <Controller
           name="store.business_address"
           control={control}
@@ -81,7 +80,7 @@ export default function StoreInformationForm({ control, notify }: StoreInformati
         />
       </Form.Item>
 
-      <Form.Item label="Business License">
+      <Form.Item label="Business License" required>
         <Controller
           name="store.business_license"
           control={control}

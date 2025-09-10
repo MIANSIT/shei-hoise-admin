@@ -4,14 +4,13 @@ import { Form, Button } from "antd";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CreateUserType, createUserSchema } from "@/lib/schema/user.schema";
-import { useSheiNotification } from "@/lib/hooks/useSheiNotification";
 
 import UserInformationForm from "./forms/UserInformationForm";
 import StoreInformationForm from "./forms/StoreInformationForm";
 import StoreSettingsForm from "./forms/StoreSettingsForm";
 
 interface StoreCreateFormProps {
-  onSubmit: (data: CreateUserType) => void;
+  onSubmit: (data: CreateUserType, resetForm: () => void) => Promise<void>;
   loading?: boolean;
 }
 
@@ -19,9 +18,7 @@ export default function StoreCreateForm({
   onSubmit,
   loading = false,
 }: StoreCreateFormProps) {
-  const notify = useSheiNotification();
-
-  const { control, handleSubmit, watch } = useForm<CreateUserType>({
+  const { control, handleSubmit, watch, reset } = useForm<CreateUserType>({
     resolver: zodResolver(createUserSchema),
     defaultValues: {
       user_type: "store_owner",
@@ -56,17 +53,22 @@ export default function StoreCreateForm({
 
   const userType = watch("user_type");
 
+  // ✅ Only pass reset to parent, no notifications here
+  const handleFormSubmit = (data: CreateUserType) => {
+    return onSubmit(data, reset);
+  };
+
   return (
     <div className="max-w-3xl mx-auto shadow-md rounded-2xl p-6">
       <h2 className="text-2xl font-semibold mb-4">Create User</h2>
 
-      <Form layout="vertical" onFinish={handleSubmit(onSubmit)}>
+      <Form layout="vertical" onFinish={handleSubmit(handleFormSubmit)}>
         <UserInformationForm control={control} />
 
         {userType === "store_owner" && (
           <>
-            <StoreInformationForm control={control} notify={notify} />
-            <StoreSettingsForm control={control} notify={notify} />
+            <StoreInformationForm control={control} />
+            <StoreSettingsForm control={control} />
           </>
         )}
 

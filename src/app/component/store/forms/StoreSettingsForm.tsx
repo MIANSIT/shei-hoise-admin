@@ -5,12 +5,9 @@ import UploadFile from "../uploads/UploadFile";
 
 interface StoreSettingsFormProps {
   control: Control<CreateUserType>;
-  notify: {
-    error: (msg: string) => void;
-  };
 }
 
-export default function StoreSettingsForm({ control, notify }: StoreSettingsFormProps) {
+export default function StoreSettingsForm({ control }: StoreSettingsFormProps) {
   return (
     <>
       <h3 className="text-lg font-medium mt-6 mb-2">Store Settings</h3>
@@ -41,7 +38,7 @@ export default function StoreSettingsForm({ control, notify }: StoreSettingsForm
         </Form.Item>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <Form.Item label="Processing Time (days)">
           <Controller
             name="store_settings.processing_time_days"
@@ -67,34 +64,34 @@ export default function StoreSettingsForm({ control, notify }: StoreSettingsForm
             name="is_active"
             control={control}
             render={({ field }) => (
-              <Switch
-                checked={field.value ?? true}
-                onChange={field.onChange}
-              />
+              <Switch checked={field.value ?? true} onChange={field.onChange} />
             )}
           />
         </Form.Item>
       </div>
 
-      <Form.Item label="Terms & Conditions">
-        <Controller
-          name="store_settings.terms_and_conditions"
-          control={control}
-          render={({ field }) => (
-            <UploadFile field={field} label="Upload T&C" notify={notify} />
-          )}
-        />
-      </Form.Item>
+      {/* Upload files side by side */}
+      <div className="grid grid-cols-2 gap-4 mt-4">
+        <Form.Item label="Terms & Conditions">
+          <Controller
+            name="store_settings.terms_and_conditions"
+            control={control}
+            render={({ field }) => (
+              <UploadFile field={field} label="Upload T&C" />
+            )}
+          />
+        </Form.Item>
 
-      <Form.Item label="Privacy Policy">
-        <Controller
-          name="store_settings.privacy_policy"
-          control={control}
-          render={({ field }) => (
-            <UploadFile field={field} label="Upload Privacy Policy" notify={notify} />
-          )}
-        />
-      </Form.Item>
+        <Form.Item label="Privacy Policy">
+          <Controller
+            name="store_settings.privacy_policy"
+            control={control}
+            render={({ field }) => (
+              <UploadFile field={field} label="Upload Privacy Policy" />
+            )}
+          />
+        </Form.Item>
+      </div>
     </>
   );
 }

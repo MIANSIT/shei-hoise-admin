@@ -6,7 +6,9 @@ interface UserInformationFormProps {
   control: Control<CreateUserType>;
 }
 
-export default function UserInformationForm({ control }: UserInformationFormProps) {
+export default function UserInformationForm({
+  control,
+}: UserInformationFormProps) {
   return (
     <>
       <h3 className="text-lg font-medium mt-4 mb-2">User Information</h3>
@@ -58,7 +60,7 @@ export default function UserInformationForm({ control }: UserInformationFormProp
         </Form.Item>
       </div>
 
-      <Form.Item label="Phone">
+      <Form.Item label="Phone" required>
         <Controller
           name="phone"
           control={control}

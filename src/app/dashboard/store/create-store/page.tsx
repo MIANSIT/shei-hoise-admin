@@ -3,27 +3,28 @@
 import { useState } from "react";
 import { createUserSchema, CreateUserType } from "@/lib/schema/user.schema";
 import StoreCreateForm from "@/app/component/store/StoreCreateForm";
-import { createUser } from "@/lib/queries/users/createUser"; // ✅ server action
+import { createUser } from "@/lib/queries/users/createUser";
 import { useSheiNotification } from "@/lib/hooks/useSheiNotification";
 
 export default function StoreCreatePage() {
   const [loading, setLoading] = useState(false);
-  const notify = useSheiNotification(); // ✅ use custom notification
+  const notify = useSheiNotification();
 
-  const handleCreateStore = async (values: CreateUserType) => {
+  // ✅ Handles API, notifications, and reset
+  const handleCreateStore = async (
+    values: CreateUserType,
+    resetForm: () => void
+  ) => {
     setLoading(true);
     try {
-      const payload: CreateUserType = createUserSchema.parse(values);
-      const result = await createUser(payload);
+      const payload = createUserSchema.parse(values); // validate
+      await createUser(payload);
 
-      notify.success("Store owner created successfully!"); // ✅ replaced AntD message
-      console.log("Created User ID:", result.userId);
+      notify.success("Store owner created successfully!");
+      resetForm(); // reset form only here
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        notify.error(err.message); // ✅ replaced AntD message
-      } else {
-        notify.error("Failed to create store owner");
-      }
+      if (err instanceof Error) notify.error(err.message);
+      else notify.error("Failed to create store owner");
     } finally {
       setLoading(false);
     }
