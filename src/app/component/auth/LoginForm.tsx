@@ -56,56 +56,46 @@ export function LoginForm({
   return (
     <form
       onSubmit={handleSubmit(handleAdminLogin)}
-      className='space-y-4'
+      className="space-y-4"
       noValidate
     >
       {/* Email Field */}
-      <div className='grid gap-2'>
-        <Label
-          htmlFor='email'
-          className={theme === "dark" ? "text-gray-200" : "text-gray-800"}
-        >
-          Email
-        </Label>
+      <div className="grid gap-2">
+        <Label htmlFor="email" className="font-bold">Email</Label>
         <Input
-          id='email'
-          type='email'
-          placeholder='Enter your email'
+          id="email"
+          type="email"
+          placeholder="Enter your email"
           {...form.register("username")}
           disabled={form.formState.isSubmitting}
           className={
             theme === "dark"
-              ? "bg-gray-800 text-gray-100 border-gray-600 placeholder-gray-400"
-              : "bg-white text-gray-900 border-gray-300 placeholder-gray-500"
+              ? "  border-gray-600 placeholder-gray-400"
+              : "  border-gray-300 placeholder-gray-500"
           }
         />
         {form.formState.errors.username && (
-          <p className='text-sm text-red-500'>{errors?.username?.message}</p>
+          <p className="text-sm text-red-500">{errors?.username?.message}</p>
         )}
       </div>
 
       {/* Password Field */}
-      <div className='grid gap-2 relative'>
-        <Label
-          htmlFor='password'
-          className={theme === "dark" ? "text-gray-200" : "text-gray-800"}
-        >
-          Password
-        </Label>
-        <div className='relative'>
+      <div className="grid gap-2 relative">
+        <Label htmlFor="password" className="font-bold">Password</Label>
+        <div className="relative">
           <Input
-            id='password'
+            id="password"
             type={showPassword ? "text" : "password"}
-            placeholder='Enter your password'
+            placeholder="Enter your password"
             {...form.register("password")}
             disabled={form.formState.isSubmitting}
             className={
               theme === "dark"
-                ? "bg-gray-800 text-gray-100 border-gray-600 placeholder-gray-400 pr-14"
-                : "bg-white text-gray-900 border-gray-300 placeholder-gray-500 pr-14"
+                ? " border-gray-600 placeholder-gray-400 pr-14"
+                : " text-gray-900 border-gray-300 placeholder-gray-500 pr-14"
             }
           />
-          <div className='absolute inset-y-0 right-2 flex items-center'>
+          <div className="absolute inset-y-0 right-2 flex items-center">
             <PasswordToggle
               show={showPassword}
               onToggle={() => setShowPassword(!showPassword)}
@@ -113,19 +103,19 @@ export function LoginForm({
           </div>
         </div>
         {errors.password && (
-          <p className='text-sm text-red-500'>{errors.password.message}</p>
+          <p className="text-sm text-red-500">{errors.password.message}</p>
         )}
       </div>
 
       {/* Submit Button */}
       <Button
-        type='submit'
+        type="submit"
         variant={theme === "dark" ? "dark" : "light"}
-        className='w-full mt-2 relative overflow-hidden'
+        className="w-full mt-2 relative overflow-hidden"
         disabled={!form.formState.isValid || form.formState.isSubmitting}
       >
         {form.formState.isSubmitting ? (
-          <SheiLoader size='sm' loaderColor='current' />
+          <SheiLoader size="sm" loaderColor="current" />
         ) : (
           <span>{submitText}</span>
         )}

@@ -51,6 +51,7 @@ export const createUserSchema = z.object({
   profile: userProfileSchema.optional(),
   store: storeSchema.optional(),
   store_settings: storeSettingsSchema.optional(),
+  is_active: z.boolean(),
 });
 
 // 🔹 Types

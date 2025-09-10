@@ -111,6 +111,67 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* ===========================
+   Ant Design Dark/Light Theme Overrides
+   Uses Tailwind CSS variables
+   =========================== */
+
+/* Inputs */
+.ant-input,
+.ant-input-password,
+.ant-input-number-input,
+.ant-select-selector,
+.ant-input-textarea {
+  background-color: var(--input) !important;
+  color: var(--foreground) !important;
+  border-color: var(--border) !important;
+  border-radius: var(--radius-md) !important;
+}
+
+/* Placeholder text */
+.ant-input::placeholder,
+.ant-input-password input::placeholder,
+.ant-input-number-input::placeholder,
+.ant-input-textarea::placeholder {
+  color: var(--muted-foreground) !important;
+}
+
+/* Focus state */
+.ant-input:focus,
+.ant-input-focused,
+.ant-select-focused .ant-select-selector,
+.ant-input-number-focused {
+  border-color: var(--ring) !important;
+  box-shadow: 0 0 0 2px var(--ring) !important;
+}
+
+/* Disabled state */
+.ant-input[disabled],
+.ant-input-number-input[disabled],
+.ant-select-disabled .ant-select-selector {
+  background-color: var(--muted) !important;
+  color: var(--muted-foreground) !important;
+  cursor: not-allowed;
+}
+
+/* Buttons */
+.ant-btn {
+  background-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+  border: none !important;
+  border-radius: var(--radius-md) !important;
+}
+
+.ant-btn:hover {
+  background-color: var(--accent) !important;
+  color: var(--accent-foreground) !important;
+}
+
+/* Form labels */
+.ant-form-item-label > label {
+  color: var(--foreground) !important;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;

@@ -1,9 +1,12 @@
-//storeForm
 "use client";
-import { useForm, Controller } from "react-hook-form";
+
+import { useForm, Controller, ControllerRenderProps } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Input, Button, Form, InputNumber, Select } from "antd";
+import { Input, Button, Form, InputNumber, Select, Upload, Switch } from "antd";
+import { PlusOutlined } from "@ant-design/icons";
+import type { RcFile, UploadFile } from "antd/es/upload/interface";
 import { CreateUserType, createUserSchema } from "@/lib/schema/user.schema";
+import { useSheiNotification } from "@/lib/hooks/useSheiNotification";
 
 interface StoreCreateFormProps {
   onSubmit: (data: CreateUserType) => void;
@@ -14,10 +17,13 @@ export default function StoreCreateForm({
   onSubmit,
   loading = false,
 }: StoreCreateFormProps) {
+  const notify = useSheiNotification();
+
   const { control, handleSubmit, watch } = useForm<CreateUserType>({
     resolver: zodResolver(createUserSchema),
     defaultValues: {
       user_type: "store_owner",
+      is_active: true,
       store: {
         store_name: "",
         store_slug: "",
@@ -27,6 +33,8 @@ export default function StoreCreateForm({
         business_address: "",
         business_license: "",
         tax_id: "",
+        logo_url: "",
+        banner_url: "",
       },
       store_settings: {
         currency: "BDT",
@@ -44,8 +52,59 @@ export default function StoreCreateForm({
 
   const userType = watch("user_type");
 
+  // 🔹 Image Upload Renderer without Supabase
+  const renderImageUpload = (
+    field: ControllerRenderProps<
+      CreateUserType,
+      "store.logo_url" | "store.banner_url"
+    >,
+    label: string
+  ) => {
+    const fileList: UploadFile[] = field.value
+      ? [{ uid: "-1", name: label, status: "done", url: field.value }]
+      : [];
+
+    return (
+      <Upload
+        listType="picture-card"
+        fileList={fileList}
+        onRemove={() => field.onChange(undefined)}
+        customRequest={async ({ file, onSuccess, onError }) => {
+          try {
+            const reader = new FileReader();
+            reader.readAsDataURL(file as RcFile);
+
+            reader.onload = () => {
+              const result = reader.result as string;
+              field.onChange(result); // set base64 string
+              if (onSuccess) onSuccess({ url: result }, file as RcFile);
+            };
+
+            reader.onerror = () => {
+              const error = new Error("File reading failed");
+              notify.error(error.message);
+              if (onError) onError(error);
+            };
+          } catch (err) {
+            const error =
+              err instanceof Error ? err : new Error("Upload failed");
+            notify.error(error.message);
+            if (onError) onError(error);
+          }
+        }}
+      >
+        {fileList.length >= 1 ? null : (
+          <div>
+            <PlusOutlined />
+            <div style={{ marginTop: 8 }}>Upload</div>
+          </div>
+        )}
+      </Upload>
+    );
+  };
+
   return (
-    <div className="max-w-3xl mx-auto bg-white shadow-md rounded-2xl p-6">
+    <div className="max-w-3xl mx-auto shadow-md rounded-2xl p-6">
       <h2 className="text-2xl font-semibold mb-4">Create User</h2>
 
       <Form layout="vertical" onFinish={handleSubmit(onSubmit)}>
@@ -60,9 +119,9 @@ export default function StoreCreateForm({
               <Select
                 {...field}
                 options={[
+                  { label: "Super Admin", value: "super_admin" },
                   { label: "Store Owner", value: "store_owner" },
                   { label: "Customer", value: "customer" },
-                  { label: "Admin", value: "admin" },
                 ]}
               />
             )}
@@ -111,10 +170,17 @@ export default function StoreCreateForm({
           />
         </Form.Item>
 
-        {/* Only show store info for store_owner */}
+        <Form.Item label="Country">
+          <Controller
+            name="profile.country"
+            control={control}
+            render={({ field }) => <Input {...field} readOnly />}
+          />
+        </Form.Item>
+
+        {/* Store Info */}
         {userType === "store_owner" && (
           <>
-            {/* Store Info */}
             <h3 className="text-lg font-medium mt-6 mb-2">Store Information</h3>
 
             <Form.Item label="Store Name" required>
@@ -140,6 +206,24 @@ export default function StoreCreateForm({
                 render={({ field }) => <Input.TextArea {...field} />}
               />
             </Form.Item>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Form.Item label="Logo">
+                <Controller
+                  name="store.logo_url"
+                  control={control}
+                  render={({ field }) => renderImageUpload(field, "Logo")}
+                />
+              </Form.Item>
+
+              <Form.Item label="Banner">
+                <Controller
+                  name="store.banner_url"
+                  control={control}
+                  render={({ field }) => renderImageUpload(field, "Banner")}
+                />
+              </Form.Item>
+            </div>
 
             <Form.Item label="Contact Email">
               <Controller
@@ -185,7 +269,7 @@ export default function StoreCreateForm({
             <h3 className="text-lg font-medium mt-6 mb-2">Store Settings</h3>
 
             <Form.Item label="Currency">
-              <Input value="BDT" readOnly disabled />
+              <Input value="BDT" readOnly />
             </Form.Item>
 
             <div className="grid grid-cols-2 gap-4">
@@ -227,6 +311,19 @@ export default function StoreCreateForm({
                   control={control}
                   render={({ field }) => (
                     <InputNumber {...field} min={0} className="w-full" />
+                  )}
+                />
+              </Form.Item>
+              {/* Active Switch */}
+              <Form.Item label="Is Active">
+                <Controller
+                  name="is_active"
+                  control={control}
+                  render={({ field }) => (
+                    <Switch
+                      checked={field.value ?? true} // ✅ fallback to true if undefined
+                      onChange={field.onChange}
+                    />
                   )}
                 />
               </Form.Item>
