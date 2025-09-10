@@ -172,11 +172,7 @@ export default function StoreCreateForm({
             render={({ field }) => (
               <Select
                 {...field}
-                options={[
-                  { label: "Super Admin", value: "super_admin" },
-                  { label: "Store Owner", value: "store_owner" },
-                  { label: "Customer", value: "customer" },
-                ]}
+                options={[{ label: "Super Admin", value: "super_admin" }]}
               />
             )}
           />
