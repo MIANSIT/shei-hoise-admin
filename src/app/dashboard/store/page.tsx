@@ -1,17 +1,18 @@
 "use client";
 
-import { getUsers } from "@/lib/queries/users/viewUser";
-import React, { useEffect } from "react";
+import { useEffect } from "react";
+import { viewStoreOwners } from "@/lib/queries/users/viewUser";
 
-function StorePage() {
-  const fetchUsers = async () => {
-    const data = await getUsers();
-    console.log(data);
-  };
+function StoreOwnersPage() {
   useEffect(() => {
-    fetchUsers();
+    const fetchData = async () => {
+      const res = await viewStoreOwners();
+      console.log("Store owners with their stores:", res);
+    };
+    fetchData();
   }, []);
-  return <div>page</div>;
+
+  return <div>Store Owners Page</div>;
 }
 
-export default StorePage;
+export default StoreOwnersPage;
