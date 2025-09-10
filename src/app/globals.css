@@ -156,8 +156,8 @@
 
 /* Buttons */
 .ant-btn {
-  background-color: var(--primary) !important;
-  color: var(--primary-foreground) !important;
+  background-color: var(--primary-foreground) !important;
+  color: var(--primary) !important;
   border: none !important;
   border-radius: var(--radius-md) !important;
 }
@@ -171,6 +171,7 @@
 .ant-form-item-label > label {
   color: var(--foreground) !important;
 }
+
 
 @media (prefers-color-scheme: dark) {
   :root {

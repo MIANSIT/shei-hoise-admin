@@ -43,6 +43,8 @@ export default function StoreCreateForm({
         min_order_amount: 0,
         processing_time_days: 1,
         return_policy_days: 7,
+        terms_and_conditions: "",
+        privacy_policy: "",
       },
       profile: {
         country: "Bangladesh",
@@ -52,7 +54,7 @@ export default function StoreCreateForm({
 
   const userType = watch("user_type");
 
-  // 🔹 Image Upload Renderer without Supabase
+  // 🔹 Image Upload Renderer
   const renderImageUpload = (
     field: ControllerRenderProps<
       CreateUserType,
@@ -76,7 +78,7 @@ export default function StoreCreateForm({
 
             reader.onload = () => {
               const result = reader.result as string;
-              field.onChange(result); // set base64 string
+              field.onChange(result);
               if (onSuccess) onSuccess({ url: result }, file as RcFile);
             };
 
@@ -99,6 +101,58 @@ export default function StoreCreateForm({
             <div style={{ marginTop: 8 }}>Upload</div>
           </div>
         )}
+      </Upload>
+    );
+  };
+
+  // 🔹 Document Upload Renderer (for T&C & Privacy Policy)
+  const renderFileUpload = (
+    field: ControllerRenderProps<
+      CreateUserType,
+      "store_settings.terms_and_conditions" | "store_settings.privacy_policy"
+    >,
+    label: string
+  ) => {
+    const fileList: UploadFile[] = field.value
+      ? [
+          {
+            uid: "-1",
+            name: field.value.split("/").pop() || label,
+            status: "done",
+            url: field.value,
+          },
+        ]
+      : [];
+
+    return (
+      <Upload
+        fileList={fileList}
+        onRemove={() => field.onChange(undefined)}
+        customRequest={async ({ file, onSuccess, onError }) => {
+          try {
+            const reader = new FileReader();
+            reader.readAsDataURL(file as RcFile); // convert to base64
+
+            reader.onload = () => {
+              const result = reader.result as string;
+              field.onChange(result);
+              if (onSuccess) onSuccess({ url: result }, file as RcFile);
+            };
+
+            reader.onerror = () => {
+              const error = new Error("File reading failed");
+              notify.error(error.message);
+              if (onError) onError(error);
+            };
+          } catch (err) {
+            const error =
+              err instanceof Error ? err : new Error("Upload failed");
+            notify.error(error.message);
+            if (onError) onError(error);
+          }
+        }}
+      >
+        <Button>{label}</Button>
       </Upload>
     );
   };
@@ -314,20 +368,39 @@ export default function StoreCreateForm({
                   )}
                 />
               </Form.Item>
-              {/* Active Switch */}
+
               <Form.Item label="Is Active">
                 <Controller
                   name="is_active"
                   control={control}
                   render={({ field }) => (
                     <Switch
-                      checked={field.value ?? true} // ✅ fallback to true if undefined
+                      checked={field.value ?? true}
                       onChange={field.onChange}
                     />
                   )}
                 />
               </Form.Item>
             </div>
+
+            {/* File Uploads for T&C & Privacy Policy */}
+            <Form.Item label="Terms & Conditions">
+              <Controller
+                name="store_settings.terms_and_conditions"
+                control={control}
+                render={({ field }) => renderFileUpload(field, "Upload T&C")}
+              />
+            </Form.Item>
+
+            <Form.Item label="Privacy Policy">
+              <Controller
+                name="store_settings.privacy_policy"
+                control={control}
+                render={({ field }) =>
+                  renderFileUpload(field, "Upload Privacy Policy")
+                }
+              />
+            </Form.Item>
           </>
         )}
 
