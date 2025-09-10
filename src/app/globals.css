@@ -155,17 +155,7 @@
 }
 
 /* Buttons */
-.ant-btn {
-  background-color: var(--primary-foreground) !important;
-  color: var(--primary) !important;
-  border: none !important;
-  border-radius: var(--radius-md) !important;
-}
 
-.ant-btn:hover {
-  background-color: var(--accent) !important;
-  color: var(--accent-foreground) !important;
-}
 
 /* Form labels */
 .ant-form-item-label > label {
