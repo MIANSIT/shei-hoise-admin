@@ -1,18 +1,31 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Typography } from "antd";
+import UserTable from "@/app/component/store/view/UserTable";
 import { viewStoreOwners } from "@/lib/queries/users/viewUser";
+import { UserWithRelationsType } from "@/lib/schema/user.types";
 
-function StoreOwnersPage() {
+const { Title } = Typography;
+
+export default function StoreOwnersPage() {
+  const [users, setUsers] = useState<UserWithRelationsType[]>([]);
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchUsers = async () => {
+      setLoading(true);
       const res = await viewStoreOwners();
-      console.log("Store owners with their stores:", res);
+      if (res.success && Array.isArray(res.data))
+        setUsers(res.data as UserWithRelationsType[]);
+      setLoading(false);
     };
-    fetchData();
+    fetchUsers();
   }, []);
 
-  return <div>Store Owners Page</div>;
+  return (
+    <div className="min-h-screen">
+      <UserTable users={users} />
+    </div>
+  );
 }
-
-export default StoreOwnersPage;
