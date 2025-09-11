@@ -10,7 +10,7 @@ const userProfileSchema = z.object({
   city: z.string().optional(),
   state: z.string().optional(),
   postal_code: z.string().optional(),
-  country: z.string().default("Bangladesh"),
+  country: z.string(),
 });
 
 // Store schema
@@ -29,13 +29,13 @@ const storeSchema = z.object({
 
 // Store settings schema
 const storeSettingsSchema = z.object({
-  currency: z.string().default("BDT"),
-  tax_rate: z.number().default(0),
-  shipping_fee: z.number().default(0),
+  currency: z.string(),
+  tax_rate: z.number(),
+  shipping_fee: z.number(),
   free_shipping_threshold: z.number().optional(),
-  min_order_amount: z.number().default(0),
-  processing_time_days: z.number().default(1),
-  return_policy_days: z.number().default(7),
+  min_order_amount: z.number(),
+  processing_time_days: z.number(),
+  return_policy_days: z.number(),
   terms_and_conditions: z.string().optional(),
   privacy_policy: z.string().optional(),
 });
@@ -51,6 +51,8 @@ export const createUserSchema = z.object({
   profile: userProfileSchema.optional(),
   store: storeSchema.optional(),
   store_settings: storeSettingsSchema.optional(),
+  is_active: z.boolean(),
 });
 
-export type CreateUserInput = z.infer<typeof createUserSchema>;
+// 🔹 Types
+export type CreateUserType = z.infer<typeof createUserSchema>; // parsed output (with defaults)

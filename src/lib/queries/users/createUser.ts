@@ -1,43 +1,53 @@
-import { CreateUserInput, createUserSchema } from "@/lib/schema/user.schema";
-import { supabase } from "@/lib/supabase";
+"use server";
 
-export async function createUser(input: CreateUserInput) {
-  // Validate input using Zod
-  const payload = createUserSchema.parse(input);
+import { CreateUserType, createUserSchema } from "@/lib/schema/user.schema";
+import { supabase, supabaseAdmin } from "@/lib/supabase";
 
-  // 1. Create Supabase Auth user
-  const { data: authData, error: authError } =
-    await supabase.auth.admin.createUser({
-      email: payload.email,
-      password: payload.password,
-      email_confirm: true,
-      user_metadata: {
-        first_name: payload.first_name,
-        last_name: payload.last_name,
-        user_type: payload.user_type,
-      },
-    });
-
-  if (authError) throw authError;
-  const userId = authData.user.id;
+export async function createUser(data: CreateUserType) {
+  const payload = createUserSchema.parse(data);
+  let userId: string | null = null;
 
   try {
-    // Insert into users table
+    // 1️⃣ Create Supabase Auth user
+    const { data: authData, error: authError } =
+      await supabaseAdmin.auth.admin.createUser({
+        email: payload.email,
+        password: payload.password,
+        email_confirm: true,
+        user_metadata: {
+          first_name: payload.first_name,
+          last_name: payload.last_name,
+          user_type: payload.user_type,
+        },
+      });
+
+    if (authError) {
+      console.error("Auth creation error:", authError);
+      throw authError;
+    }
+
+    userId = authData.user.id;
+    console.log("Auth user created, ID:", userId);
+
+    // 2️⃣ Insert into users table
     const { error: userError } = await supabase.from("users").insert({
       id: userId,
       email: payload.email,
-      password_hash: "AUTH_MANAGED", // Supabase Auth handles password
+      password_hash: "AUTH_MANAGED",
       first_name: payload.first_name,
       last_name: payload.last_name,
-      phone: payload.phone,
+      phone: payload.phone || null,
       user_type: payload.user_type,
       email_verified: true,
       is_active: true,
     });
 
-    if (userError) throw userError;
+    if (userError) {
+      console.error("Users table insert error:", userError);
+      throw userError;
+    }
 
-    // Insert user profile
+    // 3️⃣ Insert profile if exists
     if (payload.profile) {
       const { error: profileError } = await supabase
         .from("user_profiles")
@@ -45,34 +55,61 @@ export async function createUser(input: CreateUserInput) {
           user_id: userId,
           ...payload.profile,
         });
-      if (profileError) throw profileError;
+
+      if (profileError) {
+        console.error("Profile insert error:", profileError);
+        throw profileError;
+      }
     }
 
-    // Insert store for store_owner
+    // 4️⃣ Insert store for store_owner
+    let storeId: string | null = null;
     if (payload.user_type === "store_owner" && payload.store) {
+      console.log("Creating store:", payload.store);
       const { data: storeData, error: storeError } = await supabase
         .from("stores")
         .insert({ owner_id: userId, ...payload.store })
         .select("id")
         .single();
-      if (storeError) throw storeError;
 
-      // Insert store settings
+      if (storeError) {
+        console.error("Store insert error:", storeError);
+        throw storeError;
+      }
+
+      storeId = storeData.id;
+      console.log("Store created, ID:", storeId);
+
+      // 5️⃣ Insert store settings if exists
       if (payload.store_settings) {
         const { error: settingsError } = await supabase
           .from("store_settings")
           .insert({
-            store_id: storeData.id,
+            store_id: storeId,
             ...payload.store_settings,
           });
-        if (settingsError) throw settingsError;
+
+        if (settingsError) {
+          console.error("Store settings insert error:", settingsError);
+          throw settingsError;
+        }
       }
     }
 
-    return { success: true, userId };
+    return { success: true, userId, storeId };
   } catch (err) {
-    // Rollback: delete Supabase Auth user if any insert fails
-    await supabase.auth.admin.deleteUser(userId);
-    throw err;
+    console.error("CreateUser failed:", err);
+
+    // Rollback: delete auth user if created
+    if (userId) {
+      try {
+        await supabase.auth.admin.deleteUser(userId);
+        console.log("Rolled back auth user:", userId);
+      } catch (deleteErr) {
+        console.error("Failed to rollback auth user:", deleteErr);
+      }
+    }
+
+    throw err; // propagate error to client
   }
 }

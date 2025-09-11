@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Sidebar from "@/app/component/sidebar/Sidebar";
-import ProtectedRoute from "@/app/component/common/ProtectedRoute";
 import Breadcrumb from "@/app/component/common/Breadcrumb";
 import { Toaster } from "@/app/component/ui/sheiSonner/sonner";
 import { PanelLeft, Sun, Moon } from "lucide-react";
@@ -12,7 +11,7 @@ import { ThemeProvider, useTheme } from "@/lib/context/ThemeContext";
 import "antd/dist/reset.css"; // or your antd styles
 import "@ant-design/v5-patch-for-react-19"; // patch for React 19
 import { useSupabaseAuth } from "@/lib/hooks/userCheckAuth";
-import { redirect, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;

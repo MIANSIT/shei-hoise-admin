@@ -7,33 +7,38 @@ import {
   CreditCard,
   DollarSign,
   PlusCircle,
-  List,
   Clipboard,
-  Edit,
   BarChart2,
   FolderPlus,
   Store,
-  Building2,
+  Users,
+  ShoppingBag,
+  Warehouse,
+  FilePlus2,
+  Boxes,
 } from "lucide-react";
 import React from "react";
 
+// ✅ Define MenuItem type
 export interface MenuItem {
   title: string;
   href?: string;
-  icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>; // ✅ required now
   children?: MenuItem[];
 }
 
 export const sideMenu: MenuItem[] = [
   { title: "Dashboard", href: "/dashboard", icon: Home },
+
   {
     title: "Users",
-    icon: User,
+    icon: Users,
     children: [
       { title: "All Users", href: "/account/profile", icon: User },
       { title: "Create Users", href: "/account/settings", icon: UserPlus },
     ],
   },
+
   {
     title: "Products",
     icon: Package,
@@ -41,14 +46,14 @@ export const sideMenu: MenuItem[] = [
       {
         title: "Add Product",
         href: "/dashboard/products/add-product",
-        icon: PlusCircle,
+        icon: FilePlus2,
       },
       {
         title: "Stock Update",
         href: "/dashboard/products/stocks-update",
-        icon: Edit,
+        icon: Warehouse,
       },
-      { title: "All Products", href: "/dashboard/products", icon: List },
+      { title: "All Products", href: "/dashboard/products", icon: Boxes },
       {
         title: "All Categories",
         href: "/dashboard/products/view-category",
@@ -56,6 +61,7 @@ export const sideMenu: MenuItem[] = [
       },
     ],
   },
+
   {
     title: "Orders",
     icon: ShoppingCart,
@@ -72,14 +78,20 @@ export const sideMenu: MenuItem[] = [
       },
     ],
   },
+
   {
     title: "Store",
     icon: Store,
     children: [
       {
+        title: "View Store",
+        href: "/dashboard/store",
+        icon: ShoppingBag,
+      },
+      {
         title: "Create Store",
         href: "/dashboard/store/create-store",
-        icon: Building2,
+        icon: PlusCircle,
       },
     ],
   },
