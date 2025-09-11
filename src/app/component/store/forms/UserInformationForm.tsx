@@ -20,7 +20,7 @@ export default function UserInformationForm({
           render={({ field }) => (
             <Select
               {...field}
-              options={[{ label: "Super Admin", value: "super_admin" }]}
+              options={[{ label: "Store Owner", value: "store_owner" }]}
             />
           )}
         />
