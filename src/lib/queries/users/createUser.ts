@@ -6,6 +6,7 @@ import { supabase, supabaseAdmin } from "@/lib/supabase";
 export async function createUser(data: CreateUserType) {
   const payload = createUserSchema.parse(data);
   let userId: string | null = null;
+  let storeId: string | null = null;
 
   try {
     // 1️⃣ Create Supabase Auth user
@@ -63,7 +64,6 @@ export async function createUser(data: CreateUserType) {
     }
 
     // 4️⃣ Insert store for store_owner
-    let storeId: string | null = null;
     if (payload.user_type === "store_owner" && payload.store) {
       console.log("Creating store:", payload.store);
       const { data: storeData, error: storeError } = await supabase
@@ -79,6 +79,17 @@ export async function createUser(data: CreateUserType) {
 
       storeId = storeData.id;
       console.log("Store created, ID:", storeId);
+
+      // ✅ Update user with store_id
+      const { error: updateUserError } = await supabase
+        .from("users")
+        .update({ store_id: storeId })
+        .eq("id", userId);
+
+      if (updateUserError) {
+        console.error("Failed to update user with store_id:", updateUserError);
+        throw updateUserError;
+      }
 
       // 5️⃣ Insert store settings if exists
       if (payload.store_settings) {
@@ -100,13 +111,30 @@ export async function createUser(data: CreateUserType) {
   } catch (err) {
     console.error("CreateUser failed:", err);
 
-    // Rollback: delete auth user if created
+    // 🔄 Rollback: delete auth + user record if created
     if (userId) {
       try {
         await supabase.auth.admin.deleteUser(userId);
         console.log("Rolled back auth user:", userId);
       } catch (deleteErr) {
         console.error("Failed to rollback auth user:", deleteErr);
+      }
+
+      try {
+        await supabase.from("users").delete().eq("id", userId);
+        console.log("Rolled back users table row:", userId);
+      } catch (deleteErr) {
+        console.error("Failed to rollback users table row:", deleteErr);
+      }
+    }
+
+    // 🔄 Optionally rollback store if created (safe-guard)
+    if (storeId) {
+      try {
+        await supabase.from("stores").delete().eq("id", storeId);
+        console.log("Rolled back store:", storeId);
+      } catch (deleteErr) {
+        console.error("Failed to rollback store:", deleteErr);
       }
     }
 
