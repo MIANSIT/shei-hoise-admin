@@ -5,7 +5,6 @@ import type { ColumnsType } from "antd/es/table";
 
 const { Text } = Typography;
 
-// StoreRow type
 export type StoreRow = {
   id: string;
   store_name: string;
@@ -36,6 +35,8 @@ export default function StoreTable({ stores }: StoreTableProps) {
     {
       title: "Media",
       key: "media",
+      width: 220,
+      fixed: "left",
       render: (_, store) => (
         <div className="flex gap-4 items-center">
           {store.logo_url ? (
@@ -76,15 +77,17 @@ export default function StoreTable({ stores }: StoreTableProps) {
         </div>
       ),
     },
-
     {
       title: "Name",
       key: "store_name",
+      width: 160,
+      fixed: "left",
       render: (_, store) => <Text strong>{store.store_name}</Text>,
     },
     {
       title: "Slug",
       key: "store_slug",
+      width: 160,
       render: (_, store) => <Tag color="purple">{store.store_slug}</Tag>,
     },
     {
@@ -171,8 +174,8 @@ export default function StoreTable({ stores }: StoreTableProps) {
       dataSource={stores}
       pagination={false}
       bordered
-      className="bg-white rounded-lg shadow-sm"
-      scroll={{ x: "max-content" }}
+      className="rounded-lg shadow-sm"
+      scroll={{ x: "max-content", y: 300 }} // ✅ horizontal + vertical scroll with sticky header
     />
   );
 }

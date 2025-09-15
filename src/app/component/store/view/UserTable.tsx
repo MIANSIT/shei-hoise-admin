@@ -61,24 +61,25 @@ export default function UserTable({
     {
       title: "Actions",
       key: "actions",
+      fixed: "right", // ✅ sticky actions
+      width: 100,
+      align: "center",
       render: (_, record) => (
         <div className="flex gap-2">
           <Tooltip title="Edit User">
             <EditOutlined
-              style={{ color: "#1890ff", cursor: "pointer" }} // blue for edit
+              style={{ color: "#1890ff", cursor: "pointer" }}
               onClick={() => onEdit?.(record)}
             />
           </Tooltip>
           <Tooltip title="Delete User">
             <DeleteOutlined
-              style={{ color: "#ff4d4f", cursor: "pointer" }} // red for delete
+              style={{ color: "#ff4d4f", cursor: "pointer" }}
               onClick={() => onDelete?.(record)}
             />
           </Tooltip>
         </div>
       ),
-      width: 100,
-      align: "center",
     },
   ];
 
@@ -107,7 +108,12 @@ export default function UserTable({
       })),
     }));
 
-    return <StoreTable stores={storeRows} />;
+    // ✅ Wrap StoreTable inside scroll container
+    return (
+      <div style={{ overflowX: "auto" }}>
+        <StoreTable stores={storeRows} />
+      </div>
+    );
   };
 
   // Handle expand/collapse: only allow one row expanded at a time
@@ -128,7 +134,7 @@ export default function UserTable({
       loading={loading}
       pagination={{ pageSize: 5 }}
       bordered
-      className="shadow-2xl rounded-3xl overflow-hidden "
+      className="shadow-2xl rounded-3xl overflow-hidden"
       scroll={{ x: "max-content" }}
     />
   );
