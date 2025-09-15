@@ -174,7 +174,6 @@ export default function StoreTable({ stores }: StoreTableProps) {
       dataSource={stores}
       pagination={false}
       bordered
-      className="rounded-lg shadow-sm"
       scroll={{ x: "max-content", y: 300 }} // ✅ horizontal + vertical scroll with sticky header
     />
   );
