@@ -43,7 +43,12 @@ const storeSettingsSchema = z.object({
 // Main user schema
 export const createUserSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(8),
+  password: z
+    .string()
+    .min(8, { message: "Password must be at least 8 characters" })
+    .regex(/[A-Z]/, {
+      message: "Password must contain at least one uppercase letter",
+    }),
   first_name: z.string(),
   last_name: z.string(),
   phone: z.string().optional(),
