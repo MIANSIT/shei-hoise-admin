@@ -1,7 +1,8 @@
 import { Form, InputNumber, Input, Switch } from "antd";
 import { Controller, Control } from "react-hook-form";
 import { CreateUserType } from "@/lib/schema/user.schema";
-import UploadFile from "../uploads/UploadFile";
+
+const { TextArea } = Input;
 
 interface StoreSettingsFormProps {
   control: Control<CreateUserType>;
@@ -70,14 +71,14 @@ export default function StoreSettingsForm({ control }: StoreSettingsFormProps) {
         </Form.Item>
       </div>
 
-      {/* Upload files side by side */}
+      {/* Terms & Privacy Policy as TextArea */}
       <div className="grid grid-cols-2 gap-4 mt-4">
         <Form.Item label="Terms & Conditions">
           <Controller
             name="store_settings.terms_and_conditions"
             control={control}
             render={({ field }) => (
-              <UploadFile field={field} label="Upload T&C" />
+              <TextArea {...field} rows={4} placeholder="Enter Terms & Conditions" />
             )}
           />
         </Form.Item>
@@ -87,7 +88,7 @@ export default function StoreSettingsForm({ control }: StoreSettingsFormProps) {
             name="store_settings.privacy_policy"
             control={control}
             render={({ field }) => (
-              <UploadFile field={field} label="Upload Privacy Policy" />
+              <TextArea {...field} rows={4} placeholder="Enter Privacy Policy" />
             )}
           />
         </Form.Item>
