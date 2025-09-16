@@ -18,8 +18,8 @@ const storeSchema = z.object({
   store_name: z.string(),
   store_slug: z.string(),
   description: z.string().optional(),
-  logo_url: z.string().optional(),
-  banner_url: z.string().optional(),
+  logo_url: z.union([z.string().url(), z.instanceof(File)]).optional(),
+  banner_url: z.union([z.string().url(), z.instanceof(File)]).optional(),
   contact_email: z.string().email().optional(),
   contact_phone: z.string().optional(),
   business_address: z.string().optional(),
@@ -54,5 +54,4 @@ export const createUserSchema = z.object({
   is_active: z.boolean(),
 });
 
-// 🔹 Types
-export type CreateUserType = z.infer<typeof createUserSchema>; // parsed output (with defaults)
+export type CreateUserType = z.infer<typeof createUserSchema>;

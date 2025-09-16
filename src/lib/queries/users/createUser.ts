@@ -80,6 +80,56 @@ export async function createUser(data: CreateUserType) {
       storeId = storeData.id;
       console.log("Store created, ID:", storeId);
 
+      // 🆕 Upload logo & banner if provided
+      const uploads: Record<string, string | undefined> = {};
+
+      if (payload.store.logo_url && payload.store.logo_url instanceof File) {
+        const file = payload.store.logo_url as File;
+        const filePath = `store/${storeId}/logo.png`; // fixed path
+        const { error } = await supabaseAdmin.storage
+          .from("store_logo")
+          .upload(filePath, file, { upsert: true });
+
+        if (error) {
+          console.error("Logo upload error:", error);
+          throw error;
+        }
+
+        const { data: urlData } = supabaseAdmin.storage
+          .from("store_logo")
+          .getPublicUrl(filePath);
+        uploads.logo_url = urlData.publicUrl;
+      }
+
+      if (payload.store.banner_url && payload.store.banner_url instanceof File) {
+        const file = payload.store.banner_url as File;
+        const filePath = `store/${storeId}/banner.png`; // fixed path
+        const { error } = await supabaseAdmin.storage
+          .from("store-banner")
+          .upload(filePath, file, { upsert: true });
+
+        if (error) {
+          console.error("Banner upload error:", error);
+          throw error;
+        }
+
+        const { data: urlData } = supabase.storage
+          .from("store_banner")
+          .getPublicUrl(filePath);
+        uploads.banner_url = urlData.publicUrl;
+      }
+
+      if (Object.keys(uploads).length > 0) {
+        const { error: updateStoreError } = await supabase
+          .from("stores")
+          .update(uploads)
+          .eq("id", storeId);
+        if (updateStoreError) {
+          console.error("Failed to update store with logo/banner:", updateStoreError);
+          throw updateStoreError;
+        }
+      }
+
       // ✅ Update user with store_id
       const { error: updateUserError } = await supabase
         .from("users")
