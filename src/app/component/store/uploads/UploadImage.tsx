@@ -28,6 +28,17 @@ export default function UploadImage<T extends FieldValues>({
       ]
     : [];
 
+  const handleBeforeUpload = (file: File) => {
+    const isValidSize = file.size / 1024 / 1024 <= 5; // 5 MB
+    if (!isValidSize) {
+      setError("File must be smaller than 5 MB!");
+      return Upload.LIST_IGNORE; // prevent adding this file
+    }
+    setError(null);
+    field.onChange(file); // save File object into RHF
+    return false; // prevent auto-upload
+  };
+
   return (
     <>
       <Upload
@@ -37,10 +48,7 @@ export default function UploadImage<T extends FieldValues>({
           field.onChange(undefined);
           setError(null);
         }}
-        beforeUpload={(file) => {
-          field.onChange(file); // ✅ save File object into RHF
-          return false; // ❌ prevent auto-upload
-        }}
+        beforeUpload={handleBeforeUpload}
       >
         {fileList.length >= 1 ? null : (
           <div>
