@@ -132,13 +132,7 @@ export default function StoreTable({ stores }: StoreTableProps) {
       key: "terms_and_conditions",
       render: (_, store) =>
         store.store_settings?.[0]?.terms_and_conditions ? (
-          <a
-            href={store.store_settings[0].terms_and_conditions}
-            target="_blank"
-            className="text-blue-600 underline"
-          >
-            View
-          </a>
+          <Text>{store.store_settings[0].terms_and_conditions}</Text> // ✅ plain text
         ) : (
           "-"
         ),
@@ -148,13 +142,7 @@ export default function StoreTable({ stores }: StoreTableProps) {
       key: "privacy_policy",
       render: (_, store) =>
         store.store_settings?.[0]?.privacy_policy ? (
-          <a
-            href={store.store_settings[0].privacy_policy}
-            target="_blank"
-            className="text-blue-600 underline"
-          >
-            View
-          </a>
+          <Text>{store.store_settings[0].privacy_policy}</Text> // ✅ plain text
         ) : (
           "-"
         ),

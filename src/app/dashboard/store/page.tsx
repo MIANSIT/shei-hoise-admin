@@ -15,6 +15,7 @@ export default function StoreOwnersPage() {
       const res = await viewStoreOwners();
       if (res.success && Array.isArray(res.data))
         setUsers(res.data as UserWithRelationsType[]);
+      console.log("✅ Users fetched:", res.data);
       setLoading(false);
     };
     fetchUsers();

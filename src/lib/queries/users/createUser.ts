@@ -114,7 +114,7 @@ export async function createUser(data: CreateUserType) {
         }
 
         const { data: urlData } = supabase.storage
-          .from("store_banner")
+          .from("store-banner")
           .getPublicUrl(filePath);
         uploads.banner_url = urlData.publicUrl;
       }
