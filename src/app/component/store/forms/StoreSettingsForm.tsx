@@ -1,14 +1,27 @@
-import { Form, InputNumber, Input, Switch } from "antd";
-import { Controller, Control } from "react-hook-form";
+import { Form, InputNumber, Input, Switch, Select, Button, Space } from "antd";
+import { Controller, Control, useFieldArray } from "react-hook-form";
 import { CreateUserType } from "@/lib/schema/user.schema";
+import { PlusOutlined, MinusOutlined } from "@ant-design/icons";
 
 const { TextArea } = Input;
+const { Option } = Select;
 
 interface StoreSettingsFormProps {
   control: Control<CreateUserType>;
 }
 
+const shippingOptions = ["Inside Dhaka", "Outside Dhaka"] as const;
+
 export default function StoreSettingsForm({ control }: StoreSettingsFormProps) {
+  // Dynamic shipping fees array
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "store_settings.shipping_fees",
+  });
+
+  // Track selected locations to hide them from dropdown
+  const selectedOptions = fields.map((f) => f.location);
+
   return (
     <>
       <h3 className="text-lg font-medium mt-6 mb-2">Store Settings</h3>
@@ -28,9 +41,9 @@ export default function StoreSettingsForm({ control }: StoreSettingsFormProps) {
           />
         </Form.Item>
 
-        <Form.Item label="Shipping Fee">
+        <Form.Item label="Min Order Amount">
           <Controller
-            name="store_settings.shipping_fee"
+            name="store_settings.min_order_amount"
             control={control}
             render={({ field }) => (
               <InputNumber {...field} min={0} className="w-full" />
@@ -39,7 +52,7 @@ export default function StoreSettingsForm({ control }: StoreSettingsFormProps) {
         </Form.Item>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-4 mt-4">
         <Form.Item label="Processing Time (days)">
           <Controller
             name="store_settings.processing_time_days"
@@ -71,14 +84,95 @@ export default function StoreSettingsForm({ control }: StoreSettingsFormProps) {
         </Form.Item>
       </div>
 
-      {/* Terms & Privacy Policy as TextArea */}
+      {/* Shipping Fees */}
+      <h3 className="text-lg font-medium mt-6 mb-2">Shipping Fees</h3>
+      {fields.map((field, index) => (
+        <Form.Item key={field.id} label={`Shipping Fee ${index + 1}`}>
+          <Space>
+            <Controller
+              name={`store_settings.shipping_fees.${index}.location`}
+              control={control}
+              render={({ field: controllerField }) => (
+                <Select
+                  {...controllerField}
+                  placeholder="Select Location"
+                  style={{ width: 150 }}
+                  value={
+                    controllerField.value as
+                      | (typeof shippingOptions)[number]
+                      | undefined
+                  }
+                >
+                  {shippingOptions
+                    .filter(
+                      (option) =>
+                        !selectedOptions.includes(option) ||
+                        option === controllerField.value
+                    )
+                    .map((option) => (
+                      <Option key={option} value={option}>
+                        {option}
+                      </Option>
+                    ))}
+                </Select>
+              )}
+            />
+
+            <Controller
+              name={`store_settings.shipping_fees.${index}.fee`}
+              control={control}
+              render={({ field: feeField }) => (
+                <InputNumber
+                  {...feeField}
+                  min={0}
+                  placeholder="Enter Fee"
+                  style={{ width: 120 }}
+                />
+              )}
+            />
+
+            <Button
+              type="text"
+              icon={<MinusOutlined />}
+              onClick={() => remove(index)}
+            />
+          </Space>
+        </Form.Item>
+      ))}
+
+      {/* Add button */}
+      {fields.length < 2 && (
+        <Form.Item>
+          <Button
+            type="dashed"
+            onClick={() => {
+              // Pick a location that hasn't been selected yet
+              const availableLocation = shippingOptions.find(
+                (option) => !selectedOptions.includes(option)
+              );
+              if (availableLocation) {
+                append({ location: availableLocation, fee: 0 });
+              }
+            }}
+            icon={<PlusOutlined />}
+          >
+            Add Shipping Fee
+          </Button>
+        </Form.Item>
+      )}
+
+      {/* Terms & Privacy Policy */}
       <div className="grid grid-cols-2 gap-4 mt-4">
         <Form.Item label="Terms & Conditions">
           <Controller
             name="store_settings.terms_and_conditions"
             control={control}
             render={({ field }) => (
-              <TextArea {...field} rows={4} placeholder="Enter Terms & Conditions" />
+              <TextArea
+                {...field}
+                rows={4}
+                placeholder="Enter Terms & Conditions"
+              />
             )}
           />
         </Form.Item>
@@ -88,7 +182,11 @@ export default function StoreSettingsForm({ control }: StoreSettingsFormProps) {
             name="store_settings.privacy_policy"
             control={control}
             render={({ field }) => (
-              <TextArea {...field} rows={4} placeholder="Enter Privacy Policy" />
+              <TextArea
+                {...field}
+                rows={4}
+                placeholder="Enter Privacy Policy"
+              />
             )}
           />
         </Form.Item>

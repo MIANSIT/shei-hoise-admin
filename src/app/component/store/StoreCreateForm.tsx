@@ -38,7 +38,7 @@ export default function StoreCreateForm({
       store_settings: {
         currency: "BDT",
         tax_rate: 0,
-        shipping_fee: 0,
+        shipping_fees: [], // ✅ Updated: dynamic array of shipping fees
         min_order_amount: 0,
         processing_time_days: 1,
         return_policy_days: 7,
@@ -53,7 +53,6 @@ export default function StoreCreateForm({
 
   const userType = watch("user_type");
 
-  // ✅ Only pass reset to parent, no notifications here
   const handleFormSubmit = (data: CreateUserType) => {
     return onSubmit(data, reset);
   };

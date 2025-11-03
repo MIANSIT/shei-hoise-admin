@@ -31,7 +31,14 @@ const storeSchema = z.object({
 const storeSettingsSchema = z.object({
   currency: z.string(),
   tax_rate: z.number(),
-  shipping_fee: z.number(),
+  shipping_fees: z
+    .array(
+      z.object({
+        location: z.enum(["Inside Dhaka", "Outside Dhaka"]),
+        fee: z.number().min(0),
+      })
+    )
+    .optional(),
   free_shipping_threshold: z.number().optional(),
   min_order_amount: z.number(),
   processing_time_days: z.number(),
