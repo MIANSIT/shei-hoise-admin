@@ -34,11 +34,12 @@ const storeSettingsSchema = z.object({
   shipping_fees: z
     .array(
       z.object({
-        location: z.enum(["Inside Dhaka", "Outside Dhaka"]),
+        location: z.string(), // allow any string
         fee: z.number().min(0),
       })
     )
     .min(1, { message: "At least one shipping fee is required" }),
+
   free_shipping_threshold: z.number().optional(),
   min_order_amount: z.number(),
   processing_time_days: z.number(),

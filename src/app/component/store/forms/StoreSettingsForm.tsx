@@ -1,3 +1,5 @@
+"use client";
+
 import { Form, InputNumber, Input, Switch, Select, Button, Space } from "antd";
 import { Controller, Control, useFieldArray } from "react-hook-form";
 import { CreateUserType } from "@/lib/schema/user.schema";
@@ -13,13 +15,11 @@ interface StoreSettingsFormProps {
 const shippingOptions = ["Inside Dhaka", "Outside Dhaka"] as const;
 
 export default function StoreSettingsForm({ control }: StoreSettingsFormProps) {
-  // Dynamic shipping fees array
   const { fields, append, remove } = useFieldArray({
     control,
     name: "store_settings.shipping_fees",
   });
 
-  // Track selected locations to hide them from dropdown
   const selectedOptions = fields.map((f) => f.location);
 
   return (
@@ -86,91 +86,105 @@ export default function StoreSettingsForm({ control }: StoreSettingsFormProps) {
 
       {/* Shipping Fees */}
       <h3 className="text-lg font-medium mt-6 mb-2">Shipping Fees</h3>
-      {fields.map((field, index) => (
-        <Form.Item
-          key={field.id}
-          label={
-            field.location
-              ? `Shipping Fee (${field.location})`
-              : `Shipping Fee ${index + 1}`
-          }
-        >
-          <Space>
-            <Controller
-              name={`store_settings.shipping_fees.${index}.location`}
-              control={control}
-              rules={{ required: true }} // ✅ must select location
-              render={({ field: controllerField }) => (
-                <Select
-                  {...controllerField}
-                  placeholder="Select Location"
-                  style={{ width: 150 }}
-                  value={
-                    controllerField.value as
-                      | (typeof shippingOptions)[number]
-                      | undefined
-                  }
-                >
-                  {shippingOptions
-                    .filter(
-                      (option) =>
-                        !selectedOptions.includes(option) ||
-                        option === controllerField.value
-                    )
-                    .map((option) => (
-                      <Option key={option} value={option}>
-                        {option}
-                      </Option>
-                    ))}
-                </Select>
-              )}
-            />
+      {fields.map((field, index) => {
+        const isDropdown = index < 2;
 
-            <Controller
-              name={`store_settings.shipping_fees.${index}.fee`}
-              control={control}
-              rules={{ required: true, min: 0 }} // ✅ must enter fee
-              render={({ field: feeField }) => (
-                <InputNumber
-                  {...feeField}
-                  min={0}
-                  placeholder="Enter Fee"
-                  style={{ width: 120 }}
+        return (
+          <Form.Item
+            key={field.id}
+            label={
+              field.location
+                ? `Shipping Fee (${field.location})`
+                : `Shipping Fee ${index + 1}`
+            }
+          >
+            <Space>
+              {/* Location */}
+              <Controller
+                name={`store_settings.shipping_fees.${index}.location`}
+                control={control}
+                rules={{
+                  required: "Location is required", // ✅ only location is required
+                }}
+                render={({ field: locationField }) =>
+                  isDropdown ? (
+                    <Select
+                      {...locationField}
+                      placeholder="Select Location"
+                      style={{ width: 150 }}
+                      value={locationField.value as string | undefined}
+                    >
+                      {shippingOptions
+                        .filter(
+                          (option) =>
+                            !selectedOptions.includes(option) ||
+                            option === locationField.value
+                        )
+                        .map((option) => (
+                          <Option key={option} value={option}>
+                            {option}
+                          </Option>
+                        ))}
+                    </Select>
+                  ) : (
+                    <Input
+                      {...locationField}
+                      placeholder="Enter Location"
+                      style={{ width: 150 }}
+                    />
+                  )
+                }
+              />
+
+              {/* Fee */}
+              <Controller
+                name={`store_settings.shipping_fees.${index}.fee`}
+                control={control}
+                render={({ field: feeField }) => (
+                  <InputNumber
+                    {...feeField}
+                    min={0}
+                    placeholder="Enter Fee"
+                    style={{ width: 120 }}
+                  />
+                )}
+              />
+
+              {fields.length > 1 && (
+                <Button
+                  type="text"
+                  icon={<MinusOutlined />}
+                  onClick={() => remove(index)}
                 />
               )}
-            />
-
-            {/* Hide minus button if only one row */}
-            {fields.length > 1 && (
-              <Button
-                type="text"
-                icon={<MinusOutlined />}
-                onClick={() => remove(index)}
-              />
-            )}
-          </Space>
-        </Form.Item>
-      ))}
+            </Space>
+          </Form.Item>
+        );
+      })}
 
       {/* Add button */}
-      {fields.length < 2 && (
-        <Form.Item>
-          <Button
-            type="dashed"
-            onClick={() => {
+      <Form.Item>
+        <Button
+          type="dashed"
+          onClick={() => {
+            if (fields.length < 2) {
+              // first two rows: pick available dropdown option
               const availableLocation = shippingOptions.find(
                 (option) => !selectedOptions.includes(option)
               );
               if (availableLocation) {
                 append({ location: availableLocation, fee: 0 });
               }
-            }}
-            icon={<PlusOutlined />}
-          >
-            Add Shipping Fee
-          </Button>
-        </Form.Item>
-      )}
+            } else {
+              // after 2 rows: allow custom location
+              append({ location: "", fee: 0 });
+            }
+          }}
+          icon={<PlusOutlined />}
+        >
+          Add Shipping Fee
+        </Button>
+      </Form.Item>
 
       {/* Terms & Privacy Policy */}
       <div className="grid grid-cols-2 gap-4 mt-4">
