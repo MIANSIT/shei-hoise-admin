@@ -87,11 +87,19 @@ export default function StoreSettingsForm({ control }: StoreSettingsFormProps) {
       {/* Shipping Fees */}
       <h3 className="text-lg font-medium mt-6 mb-2">Shipping Fees</h3>
       {fields.map((field, index) => (
-        <Form.Item key={field.id} label={`Shipping Fee ${index + 1}`}>
+        <Form.Item
+          key={field.id}
+          label={
+            field.location
+              ? `Shipping Fee (${field.location})`
+              : `Shipping Fee ${index + 1}`
+          }
+        >
           <Space>
             <Controller
               name={`store_settings.shipping_fees.${index}.location`}
               control={control}
+              rules={{ required: true }} // ✅ must select location
               render={({ field: controllerField }) => (
                 <Select
                   {...controllerField}
@@ -121,6 +129,7 @@ export default function StoreSettingsForm({ control }: StoreSettingsFormProps) {
             <Controller
               name={`store_settings.shipping_fees.${index}.fee`}
               control={control}
+              rules={{ required: true, min: 0 }} // ✅ must enter fee
               render={({ field: feeField }) => (
                 <InputNumber
                   {...feeField}
@@ -131,11 +140,14 @@ export default function StoreSettingsForm({ control }: StoreSettingsFormProps) {
               )}
             />
 
-            <Button
-              type="text"
-              icon={<MinusOutlined />}
-              onClick={() => remove(index)}
-            />
+            {/* Hide minus button if only one row */}
+            {fields.length > 1 && (
+              <Button
+                type="text"
+                icon={<MinusOutlined />}
+                onClick={() => remove(index)}
+              />
+            )}
           </Space>
         </Form.Item>
       ))}
@@ -146,7 +158,6 @@ export default function StoreSettingsForm({ control }: StoreSettingsFormProps) {
           <Button
             type="dashed"
             onClick={() => {
-              // Pick a location that hasn't been selected yet
               const availableLocation = shippingOptions.find(
                 (option) => !selectedOptions.includes(option)
               );

@@ -38,7 +38,13 @@ export default function StoreCreateForm({
       store_settings: {
         currency: "BDT",
         tax_rate: 0,
-        shipping_fees: [], // ✅ Updated: dynamic array of shipping fees
+        // ✅ Pre-fill first shipping fee row
+        shipping_fees: [
+          {
+            location: "Inside Dhaka",
+            fee: 0,
+          },
+        ],
         min_order_amount: 0,
         processing_time_days: 1,
         return_policy_days: 7,

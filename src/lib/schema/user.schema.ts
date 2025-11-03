@@ -38,7 +38,7 @@ const storeSettingsSchema = z.object({
         fee: z.number().min(0),
       })
     )
-    .optional(),
+    .min(1, { message: "At least one shipping fee is required" }),
   free_shipping_threshold: z.number().optional(),
   min_order_amount: z.number(),
   processing_time_days: z.number(),
