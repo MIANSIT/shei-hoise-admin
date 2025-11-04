@@ -20,7 +20,7 @@ export default function StoreSettingsForm({ control }: StoreSettingsFormProps) {
     name: "store_settings.shipping_fees",
   });
 
-  const selectedOptions = fields.map((f) => f.location);
+  const selectedOptions = fields.map((f) => f.name); // Changed from location to name
 
   return (
     <>
@@ -93,32 +93,34 @@ export default function StoreSettingsForm({ control }: StoreSettingsFormProps) {
           <Form.Item
             key={field.id}
             label={
-              field.location
-                ? `Shipping Fee (${field.location})`
+              field.name // Changed from location to name
+                ? `Shipping Fee (${field.name})` // Changed from location to name
                 : `Shipping Fee ${index + 1}`
             }
           >
             <Space>
-              {/* Location */}
+              {/* Name */}
               <Controller
-                name={`store_settings.shipping_fees.${index}.location`}
+                name={`store_settings.shipping_fees.${index}.name`} // Changed from location to name
                 control={control}
                 rules={{
-                  required: "Location is required", // ✅ only location is required
+                  required: "Name is required", // Changed from location to name
                 }}
-                render={({ field: locationField }) =>
+                render={(
+                  { field: nameField } // Changed from locationField to nameField
+                ) =>
                   isDropdown ? (
                     <Select
-                      {...locationField}
+                      {...nameField} // Changed from locationField to nameField
                       placeholder="Select Location"
                       style={{ width: 150 }}
-                      value={locationField.value as string | undefined}
+                      value={nameField.value as string | undefined} // Changed from locationField to nameField
                     >
                       {shippingOptions
                         .filter(
                           (option) =>
                             !selectedOptions.includes(option) ||
-                            option === locationField.value
+                            option === nameField.value // Changed from locationField to nameField
                         )
                         .map((option) => (
                           <Option key={option} value={option}>
@@ -128,23 +130,25 @@ export default function StoreSettingsForm({ control }: StoreSettingsFormProps) {
                     </Select>
                   ) : (
                     <Input
-                      {...locationField}
-                      placeholder="Enter Location"
+                      {...nameField} // Changed from locationField to nameField
+                      placeholder="Enter Location Name"
                       style={{ width: 150 }}
                     />
                   )
                 }
               />
 
-              {/* Fee */}
+              {/* Price */}
               <Controller
-                name={`store_settings.shipping_fees.${index}.fee`}
+                name={`store_settings.shipping_fees.${index}.price`} // Changed from fee to price
                 control={control}
-                render={({ field: feeField }) => (
+                render={(
+                  { field: priceField } // Changed from feeField to priceField
+                ) => (
                   <InputNumber
-                    {...feeField}
+                    {...priceField} // Changed from feeField to priceField
                     min={0}
-                    placeholder="Enter Fee"
+                    placeholder="Enter Price"
                     style={{ width: 120 }}
                   />
                 )}
@@ -173,11 +177,11 @@ export default function StoreSettingsForm({ control }: StoreSettingsFormProps) {
                 (option) => !selectedOptions.includes(option)
               );
               if (availableLocation) {
-                append({ location: availableLocation, fee: 0 });
+                append({ name: availableLocation, price: 0 }); // Changed from location to name, fee to price
               }
             } else {
-              // after 2 rows: allow custom location
-              append({ location: "", fee: 0 });
+              // after 2 rows: allow custom location name
+              append({ name: "", price: 0 }); // Changed from location to name, fee to price
             }
           }}
           icon={<PlusOutlined />}

@@ -41,8 +41,8 @@ export default function StoreCreateForm({
         // ✅ Pre-fill first shipping fee row
         shipping_fees: [
           {
-            location: "Inside Dhaka",
-            fee: 0,
+            name: "Inside Dhaka",
+            price: 0,
           },
         ],
         min_order_amount: 0,

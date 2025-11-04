@@ -34,8 +34,8 @@ const storeSettingsSchema = z.object({
   shipping_fees: z
     .array(
       z.object({
-        location: z.string(), // allow any string
-        fee: z.number().min(0),
+        name: z.string(), // allow any string
+        price: z.number().min(0),
       })
     )
     .min(1, { message: "At least one shipping fee is required" }),
