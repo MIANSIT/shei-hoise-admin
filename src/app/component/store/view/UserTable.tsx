@@ -22,7 +22,7 @@ export default function UserTable({
   onEdit,
   onDelete,
 }: UserTableProps) {
-  const [expandedRowKeys, setExpandedRowKeys] = useState<React.Key[]>([]); // track expanded row
+  const [expandedRowKeys, setExpandedRowKeys] = useState<React.Key[]>([]);
 
   const columns: ColumnsType<UserWithRelationsType> = [
     {
@@ -61,7 +61,7 @@ export default function UserTable({
     {
       title: "Actions",
       key: "actions",
-      fixed: "right", // ✅ sticky actions
+      fixed: "right",
       width: 100,
       align: "center",
       render: (_, record) => (
@@ -87,18 +87,23 @@ export default function UserTable({
     if (!record.stores || record.stores.length === 0)
       return <Text type="secondary">No stores found</Text>;
 
+    function toUrl(value?: string | File) {
+      if (!value) return undefined;
+      return typeof value === "string" ? value : URL.createObjectURL(value);
+    }
+
     const storeRows: StoreRow[] = record.stores.map((s) => ({
       id: s.id,
       store_name: s.store_name,
       store_slug: s.store_slug,
-      logo_url: s.logo_url,
-      banner_url: s.banner_url,
+      logo_url: toUrl(s.logo_url),
+      banner_url: toUrl(s.banner_url),
       description: s.description,
       store_settings: s.store_settings?.map((ss) => ({
         id: ss.id,
         currency: ss.currency,
         tax_rate: ss.tax_rate,
-        shipping_fee: ss.shipping_fee,
+        shipping_fees: ss.shipping_fees,
         min_order_amount: ss.min_order_amount,
         processing_time_days: ss.processing_time_days,
         return_policy_days: ss.return_policy_days,
@@ -108,7 +113,6 @@ export default function UserTable({
       })),
     }));
 
-    // ✅ Wrap StoreTable inside scroll container
     return (
       <div style={{ overflowX: "auto" }}>
         <StoreTable stores={storeRows} />
@@ -116,7 +120,6 @@ export default function UserTable({
     );
   };
 
-  // Handle expand/collapse: only allow one row expanded at a time
   const handleExpand = (expanded: boolean, record: UserWithRelationsType) => {
     setExpandedRowKeys(expanded ? [record.id] : []);
   };

@@ -4,8 +4,9 @@ import { Form, InputNumber, Input, Switch, Select, Button, Space } from "antd";
 import { Controller, Control, useFieldArray } from "react-hook-form";
 import { CreateUserType } from "@/lib/schema/user.schema";
 import { PlusOutlined, MinusOutlined } from "@ant-design/icons";
+import { useMemo, useRef } from "react";
+import JoditEditor from "jodit-react";
 
-const { TextArea } = Input;
 const { Option } = Select;
 
 interface StoreSettingsFormProps {
@@ -20,7 +21,53 @@ export default function StoreSettingsForm({ control }: StoreSettingsFormProps) {
     name: "store_settings.shipping_fees",
   });
 
-  const selectedOptions = fields.map((f) => f.name); // Changed from location to name
+  const selectedOptions = fields.map((f) => f.name);
+
+  // Jodit editor configuration with proper types
+  const editorConfig = useMemo(
+    () => ({
+      readonly: false,
+      placeholder: "Start typing...",
+      height: 300,
+      toolbarAdaptive: false,
+      toolbarButtonSize: "middle" as const, // Changed from "medium" to "middle"
+      buttons: [
+        "bold",
+        "italic",
+        "underline",
+        "strikethrough",
+        "|",
+        "ul",
+        "ol",
+        "|",
+        "font",
+        "fontsize",
+        "brush",
+        "|",
+        "align",
+        "|",
+        "link",
+        "image",
+        "table",
+        "|",
+        "hr",
+        "|",
+        "undo",
+        "redo",
+        "|",
+        "preview",
+        "print",
+      ],
+      removeButtons: ["source", "about"],
+      style: {
+        fontFamily: "Arial, sans-serif",
+      },
+    }),
+    []
+  );
+
+  const termsEditorRef = useRef(null);
+  const privacyEditorRef = useRef(null);
 
   return (
     <>
@@ -93,34 +140,32 @@ export default function StoreSettingsForm({ control }: StoreSettingsFormProps) {
           <Form.Item
             key={field.id}
             label={
-              field.name // Changed from location to name
-                ? `Shipping Fee (${field.name})` // Changed from location to name
+              field.name
+                ? `Shipping Fee (${field.name})`
                 : `Shipping Fee ${index + 1}`
             }
           >
             <Space>
               {/* Name */}
               <Controller
-                name={`store_settings.shipping_fees.${index}.name`} // Changed from location to name
+                name={`store_settings.shipping_fees.${index}.name`}
                 control={control}
                 rules={{
-                  required: "Name is required", // Changed from location to name
+                  required: "Name is required",
                 }}
-                render={(
-                  { field: nameField } // Changed from locationField to nameField
-                ) =>
+                render={({ field: nameField }) =>
                   isDropdown ? (
                     <Select
-                      {...nameField} // Changed from locationField to nameField
+                      {...nameField}
                       placeholder="Select Location"
                       style={{ width: 150 }}
-                      value={nameField.value as string | undefined} // Changed from locationField to nameField
+                      value={nameField.value as string | undefined}
                     >
                       {shippingOptions
                         .filter(
                           (option) =>
                             !selectedOptions.includes(option) ||
-                            option === nameField.value // Changed from locationField to nameField
+                            option === nameField.value
                         )
                         .map((option) => (
                           <Option key={option} value={option}>
@@ -130,7 +175,7 @@ export default function StoreSettingsForm({ control }: StoreSettingsFormProps) {
                     </Select>
                   ) : (
                     <Input
-                      {...nameField} // Changed from locationField to nameField
+                      {...nameField}
                       placeholder="Enter Location Name"
                       style={{ width: 150 }}
                     />
@@ -140,13 +185,11 @@ export default function StoreSettingsForm({ control }: StoreSettingsFormProps) {
 
               {/* Price */}
               <Controller
-                name={`store_settings.shipping_fees.${index}.price`} // Changed from fee to price
+                name={`store_settings.shipping_fees.${index}.price`}
                 control={control}
-                render={(
-                  { field: priceField } // Changed from feeField to priceField
-                ) => (
+                render={({ field: priceField }) => (
                   <InputNumber
-                    {...priceField} // Changed from feeField to priceField
+                    {...priceField}
                     min={0}
                     placeholder="Enter Price"
                     style={{ width: 120 }}
@@ -172,16 +215,14 @@ export default function StoreSettingsForm({ control }: StoreSettingsFormProps) {
           type="dashed"
           onClick={() => {
             if (fields.length < 2) {
-              // first two rows: pick available dropdown option
               const availableLocation = shippingOptions.find(
                 (option) => !selectedOptions.includes(option)
               );
               if (availableLocation) {
-                append({ name: availableLocation, price: 0 }); // Changed from location to name, fee to price
+                append({ name: availableLocation, price: 0 });
               }
             } else {
-              // after 2 rows: allow custom location name
-              append({ name: "", price: 0 }); // Changed from location to name, fee to price
+              append({ name: "", price: 0 });
             }
           }}
           icon={<PlusOutlined />}
@@ -190,36 +231,62 @@ export default function StoreSettingsForm({ control }: StoreSettingsFormProps) {
         </Button>
       </Form.Item>
 
-      {/* Terms & Privacy Policy */}
-      <div className="grid grid-cols-2 gap-4 mt-4">
-        <Form.Item label="Terms & Conditions">
+      {/* Terms & Privacy Policy with Jodit Editor */}
+      <div className="grid grid-cols-1 gap-6 mt-4">
+        <Form.Item label="Terms & Conditions" className="rich-editor-item">
           <Controller
             name="store_settings.terms_and_conditions"
             control={control}
             render={({ field }) => (
-              <TextArea
-                {...field}
-                rows={4}
-                placeholder="Enter Terms & Conditions"
-              />
+              <div className="border border-gray-300 rounded-md overflow-hidden">
+                <JoditEditor
+                  ref={termsEditorRef}
+                  value={field.value || ""}
+                  config={editorConfig}
+                  onBlur={(newContent) => field.onChange(newContent)}
+                />
+              </div>
             )}
           />
         </Form.Item>
 
-        <Form.Item label="Privacy Policy">
+        <Form.Item label="Privacy Policy" className="rich-editor-item">
           <Controller
             name="store_settings.privacy_policy"
             control={control}
             render={({ field }) => (
-              <TextArea
-                {...field}
-                rows={4}
-                placeholder="Enter Privacy Policy"
-              />
+              <div className="border border-gray-300 rounded-md overflow-hidden">
+                <JoditEditor
+                  ref={privacyEditorRef}
+                  value={field.value || ""}
+                  config={editorConfig}
+                  onBlur={(newContent) => field.onChange(newContent)}
+                />
+              </div>
             )}
           />
         </Form.Item>
       </div>
+
+      {/* Custom styles for better integration with Ant Design */}
+      <style jsx global>{`
+        .rich-editor-item .jodit-container {
+          border-radius: 6px;
+          border: 1px solid #d9d9d9;
+        }
+        .rich-editor-item .jodit-toolbar__box {
+          border-bottom: 1px solid #d9d9d9;
+        }
+        .rich-editor-item .jodit-wysiwyg {
+          min-height: 200px;
+          padding: 12px;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+            "Helvetica Neue", Arial, sans-serif;
+        }
+        .jodit-toolbar__box .jodit-ui-group {
+          margin-bottom: 0;
+        }
+      `}</style>
     </>
   );
 }
