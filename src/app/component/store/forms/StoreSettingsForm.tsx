@@ -23,14 +23,14 @@ export default function StoreSettingsForm({ control }: StoreSettingsFormProps) {
 
   const selectedOptions = fields.map((f) => f.name);
 
-  // Jodit editor configuration with proper types
+  // Jodit editor configuration with proper TypeScript types
   const editorConfig = useMemo(
     () => ({
       readonly: false,
       placeholder: "Start typing...",
       height: 300,
       toolbarAdaptive: false,
-      toolbarButtonSize: "middle" as const, // Changed from "medium" to "middle"
+      toolbarButtonSize: "middle" as const,
       buttons: [
         "bold",
         "italic",
@@ -39,29 +39,33 @@ export default function StoreSettingsForm({ control }: StoreSettingsFormProps) {
         "|",
         "ul",
         "ol",
+        "outdent",
+        "indent",
         "|",
         "font",
         "fontsize",
         "brush",
+        "paragraph",
         "|",
-        "align",
-        "|",
-        "link",
-        "image",
-        "table",
+        "left",
+        "center",
+        "right",
+        "justify",
         "|",
         "hr",
+        "|",
+        "link",
         "|",
         "undo",
         "redo",
         "|",
         "preview",
-        "print",
       ],
       removeButtons: ["source", "about"],
-      style: {
-        fontFamily: "Arial, sans-serif",
-      },
+      useSearch: false,
+      showCharsCounter: false,
+      showWordsCounter: false,
+      showXPathInStatusbar: false,
     }),
     []
   );
@@ -232,8 +236,9 @@ export default function StoreSettingsForm({ control }: StoreSettingsFormProps) {
       </Form.Item>
 
       {/* Terms & Privacy Policy with Jodit Editor */}
+        <h3 className="text-lg font-medium mt-6 mb-2">Terms & Privacy</h3>
       <div className="grid grid-cols-1 gap-6 mt-4">
-        <Form.Item label="Terms & Conditions" className="rich-editor-item">
+        <Form.Item label="Terms & Conditions" className="rich-editor-item ">
           <Controller
             name="store_settings.terms_and_conditions"
             control={control}
@@ -268,7 +273,7 @@ export default function StoreSettingsForm({ control }: StoreSettingsFormProps) {
         </Form.Item>
       </div>
 
-      {/* Custom styles for better integration with Ant Design */}
+      {/* Minimal CSS - only essential styles */}
       <style jsx global>{`
         .rich-editor-item .jodit-container {
           border-radius: 6px;
@@ -283,6 +288,18 @@ export default function StoreSettingsForm({ control }: StoreSettingsFormProps) {
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
             "Helvetica Neue", Arial, sans-serif;
         }
+
+        /* Force show bullets and numbers if still not visible */
+        .rich-editor-item .jodit-wysiwyg ul {
+          list-style-type: disc !important;
+          padding-left: 20px !important;
+        }
+
+        .rich-editor-item .jodit-wysiwyg ol {
+          list-style-type: decimal !important;
+          padding-left: 20px !important;
+        }
+
         .jodit-toolbar__box .jodit-ui-group {
           margin-bottom: 0;
         }

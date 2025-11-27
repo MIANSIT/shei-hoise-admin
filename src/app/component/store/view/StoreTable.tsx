@@ -10,6 +10,7 @@ import {
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useState } from "react";
+import parse from "html-react-parser";
 
 const { Text } = Typography;
 
@@ -25,7 +26,6 @@ export type StoreRow = {
     currency?: string;
     tax_rate?: number;
     shipping_fees?: Array<{
-      // Changed from shipping_fee to shipping_fees
       name: string;
       price: number;
     }>;
@@ -42,25 +42,93 @@ interface StoreTableProps {
   stores: StoreRow[];
 }
 
-// Utility function to strip HTML tags for preview
-const stripHtmlForPreview = (html: string, maxLength: number = 100): string => {
-  if (!html) return "";
+// Helper function to create formatted preview with line breaks and basic formatting
+const getFormattedPreview = (
+  html: string
+): { content: React.ReactNode; hasMore: boolean } => {
+  if (!html) return { content: "-", hasMore: false };
 
   // Create a temporary element to parse HTML
   const tempDiv = document.createElement("div");
   tempDiv.innerHTML = html;
 
-  let textContent = tempDiv.textContent || tempDiv.innerText || "";
+  // Get plain text with basic formatting
+  let formattedText = "";
 
-  if (textContent.length > maxLength) {
-    textContent = textContent.substring(0, maxLength) + "...";
-  }
+  // Process the content to preserve line breaks and lists
+  const processNode = (node: Node): string => {
+    let result = "";
 
-  return textContent;
+    if (node.nodeType === Node.TEXT_NODE) {
+      result += node.textContent || "";
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+      const element = node as HTMLElement;
+
+      if (element.tagName === "BR") {
+        result += "\n";
+      } else if (element.tagName === "LI") {
+        result += "• ";
+      } else if (element.tagName === "P") {
+        result += "\n";
+      } else if (element.tagName === "DIV") {
+        result += "\n";
+      }
+
+      // Process child nodes
+      element.childNodes.forEach((child) => {
+        result += processNode(child);
+      });
+
+      // Add line breaks after block elements
+      if (
+        ["P", "DIV", "LI", "H1", "H2", "H3", "H4", "H5", "H6"].includes(
+          element.tagName
+        )
+      ) {
+        result += "\n";
+      }
+    }
+
+    return result;
+  };
+
+  formattedText = processNode(tempDiv);
+
+  // Clean up multiple newlines and trim
+  formattedText = formattedText
+    .replace(/\n\s*\n/g, "\n") // Replace multiple newlines with single
+    .replace(/^\n+|\n+$/g, "") // Trim leading/trailing newlines
+    .trim();
+
+  // Split into lines and take first 2 lines
+  const lines = formattedText
+    .split("\n")
+    .filter((line) => line.trim().length > 0);
+  const previewLines = lines.slice(0, 2);
+  const hasMore = lines.length > 2 || formattedText.length > 200;
+
+  // Join the lines with actual line breaks
+  const previewContent = previewLines.join("\n");
+
+  return {
+    content: (
+      <div
+        className="rich-text-preview"
+        style={{
+          lineHeight: "1.4",
+          fontSize: "12px",
+          whiteSpace: "pre-line", // This preserves line breaks
+          maxHeight: "2.8em",
+          overflow: "hidden",
+        }}
+      >
+        {previewContent}
+      </div>
+    ),
+    hasMore,
+  };
 };
 
-// Helper function to format shipping fees for display
-// Helper function to format shipping fees for display with bullet points
 // Helper function to format shipping fees for display with bullet points and currency
 const formatShippingFees = (
   storeSettings: StoreRow["store_settings"] | undefined
@@ -211,20 +279,11 @@ export default function StoreTable({ stores }: StoreTableProps) {
         const terms = store.store_settings?.[0]?.terms_and_conditions;
         if (!terms) return "-";
 
-        const previewText = stripHtmlForPreview(terms, 80);
-        const hasMore = terms.length > 100;
+        const { content, hasMore } = getFormattedPreview(terms);
 
         return (
           <div>
-            <div
-              className="rich-text-preview"
-              style={{
-                lineHeight: "1.4",
-                marginBottom: hasMore ? "8px" : "0",
-              }}
-            >
-              {previewText}
-            </div>
+            {content}
             {hasMore && (
               <Button
                 type="link"
@@ -247,20 +306,11 @@ export default function StoreTable({ stores }: StoreTableProps) {
         const privacy = store.store_settings?.[0]?.privacy_policy;
         if (!privacy) return "-";
 
-        const previewText = stripHtmlForPreview(privacy, 80);
-        const hasMore = privacy.length > 100;
+        const { content, hasMore } = getFormattedPreview(privacy);
 
         return (
           <div>
-            <div
-              className="rich-text-preview"
-              style={{
-                lineHeight: "1.4",
-                marginBottom: hasMore ? "8px" : "0",
-              }}
-            >
-              {previewText}
-            </div>
+            {content}
             {hasMore && (
               <Button
                 type="link"
@@ -315,8 +365,9 @@ export default function StoreTable({ stores }: StoreTableProps) {
             padding: "16px",
             lineHeight: "1.6",
           }}
-          dangerouslySetInnerHTML={{ __html: modalContent }}
-        />
+        >
+          {parse(modalContent)}
+        </div>
       </Modal>
 
       {/* Styles for better rendering */}
@@ -324,50 +375,86 @@ export default function StoreTable({ stores }: StoreTableProps) {
         .modal-content {
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
             sans-serif;
+          font-size: 14px;
+          line-height: 1.6;
+          color: #333;
         }
 
-        .modal-content p {
-          margin-bottom: 12px;
+        .modal-content ul {
+          list-style-type: disc;
+          margin-left: 24px;
+          margin-bottom: 16px;
         }
 
-        .modal-content strong,
-        .modal-content b {
-          font-weight: 600;
+        .modal-content ol {
+          list-style-type: decimal;
+          margin-left: 24px;
+          margin-bottom: 16px;
+        }
+
+        .modal-content li {
+          margin-bottom: 8px;
+          padding-left: 4px;
         }
 
         .modal-content h1,
         .modal-content h2,
-        .modal-content h3 {
+        .modal-content h3,
+        .modal-content h4 {
           font-weight: 600;
-          margin: 16px 0 8px 0;
+          margin: 24px 0 16px 0;
+          color: #1f2937;
+          line-height: 1.3;
         }
 
         .modal-content h1 {
-          font-size: 20px;
+          font-size: 24px;
+          border-bottom: 2px solid #e5e7eb;
+          padding-bottom: 8px;
         }
 
         .modal-content h2 {
-          font-size: 18px;
+          font-size: 20px;
+          border-bottom: 1px solid #e5e7eb;
+          padding-bottom: 6px;
         }
 
         .modal-content h3 {
+          font-size: 18px;
+        }
+
+        .modal-content h4 {
           font-size: 16px;
         }
 
-        .modal-content ul,
-        .modal-content ol {
-          margin: 8px 0;
-          padding-left: 24px;
-        }
-
-        .modal-content li {
-          margin: 4px 0;
+        .modal-content p {
+          margin-bottom: 16px;
         }
 
         .modal-content hr {
-          margin: 16px 0;
+          margin: 24px 0;
           border: none;
-          border-top: 1px solid #d9d9d9;
+          border-top: 2px solid #e5e7eb;
+        }
+
+        .modal-content strong {
+          font-weight: 600;
+        }
+
+        .modal-content em {
+          font-style: italic;
+        }
+
+        .modal-content u {
+          text-decoration: underline;
+        }
+
+        .modal-content blockquote {
+          border-left: 4px solid #d1d5db;
+          padding-left: 16px;
+          margin: 16px 0;
+          color: #6b7280;
+          font-style: italic;
         }
 
         .rich-text-preview {
