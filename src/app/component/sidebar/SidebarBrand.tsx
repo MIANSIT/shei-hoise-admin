@@ -17,7 +17,7 @@ export default function SidebarBrand({ collapsed, themeMode = "light" }: Sidebar
         background: themeMode === "dark" ? "#111827" : "#ffffff",
       }}
     >
-      {collapsed ? "🛒" : "Shei Admin"}
+      {collapsed ? "🛒" : "Shei SuperAdmin"}
     </div>
   );
 }

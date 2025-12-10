@@ -15,7 +15,9 @@ import {
   ShoppingBag,
   Warehouse,
   FilePlus2,
+  Ticket,
   Boxes,
+  Inbox,
 } from "lucide-react";
 import React from "react";
 
@@ -102,6 +104,13 @@ export const sideMenu: MenuItem[] = [
     children: [
       { title: "Billing", href: "/financial/billing", icon: CreditCard },
       { title: "Cost", href: "/financial/cost", icon: BarChart2 },
+    ],
+  },
+  {
+    title: "Requests",
+    icon: Ticket,
+    children: [
+      { title: "User Requests", href: "/dashboard/user-requests", icon: Inbox },
     ],
   },
 ];
