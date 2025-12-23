@@ -84,7 +84,7 @@ export default function UserInformation({ control, formState }: Props) {
                       }
                       placement="topRight"
                     >
-                      <InfoCircleOutlined className="text-gray-400 cursor-pointer" />
+                      <InfoCircleOutlined className="text-red-600! cursor-pointer" />
                     </Tooltip>
                   }
                 />

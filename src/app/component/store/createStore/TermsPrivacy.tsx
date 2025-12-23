@@ -18,7 +18,6 @@ export default function TermsPrivacy({ control }: Props) {
         <Form layout="vertical">
           <FormItemWrapper
             label="Terms & Conditions"
-            required
             labelCol={{ span: 24 }}
             wrapperCol={{ span: 24 }}
           >
@@ -36,7 +35,6 @@ export default function TermsPrivacy({ control }: Props) {
 
           <FormItemWrapper
             label="Privacy Policy"
-            required
             labelCol={{ span: 24 }}
             wrapperCol={{ span: 24 }}
           >
@@ -55,9 +53,9 @@ export default function TermsPrivacy({ control }: Props) {
 
         <div className="p-4 bg-blue-50 border border-blue-100 rounded-md mt-6">
           <p className="text-sm text-blue-700">
-            <span className="font-medium">Note:</span> Please ensure your terms
-            & conditions and privacy policy are comprehensive and comply with
-            local regulations.
+            <span className="font-medium">Important:</span> Ensure that your
+            Terms & Conditions and Privacy Policy are thorough, accurate, and
+            fully compliant with applicable local laws and regulations.
           </p>
         </div>
       </div>
