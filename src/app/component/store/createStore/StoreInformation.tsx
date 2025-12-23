@@ -1,11 +1,11 @@
 "use client";
 
-import { Input, Switch } from "antd";
+import { Input, Select, Switch } from "antd";
 import { Controller, Control } from "react-hook-form";
 import { CreateUserType } from "@/lib/schema/user.schema";
 import UploadImage from "../uploads/UploadImage";
 import { FormItemWrapper } from "./FormItemWrapper";
-
+import { STORE_STATUS, STORE_STATUS_LABELS } from "@/lib/types/enums";
 interface Props {
   control: Control<CreateUserType>;
 }
@@ -101,6 +101,25 @@ export default function StoreInformation({ control }: Props) {
               error={fieldState.error?.message}
             >
               <Switch checked={field.value ?? true} onChange={field.onChange} />
+            </FormItemWrapper>
+          )}
+        />
+        <Controller
+          name="store.status"
+          control={control}
+          render={({ field, fieldState }) => (
+            <FormItemWrapper
+              label="Store Status"
+              required
+              error={fieldState.error?.message}
+            >
+              <Select {...field} value={field.value}>
+                {Object.values(STORE_STATUS).map((status) => (
+                  <Select.Option key={status} value={status}>
+                    {STORE_STATUS_LABELS[status]}
+                  </Select.Option>
+                ))}
+              </Select>
             </FormItemWrapper>
           )}
         />

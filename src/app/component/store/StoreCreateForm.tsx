@@ -5,7 +5,7 @@ import { Path, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { CreateUserType, createUserSchema } from "@/lib/schema/user.schema";
-import { USER_TYPES } from "@/lib/types/enums";
+import { STORE_STATUS, USER_TYPES } from "@/lib/types/enums";
 import { useStepForm } from "@/lib/hooks/useStepForm";
 
 import UserInformation from "./createStore/UserInformation";
@@ -39,6 +39,7 @@ export default function StoreCreateForm({
         store_name: "",
         store_slug: "",
         description: "",
+        status: STORE_STATUS.TRIAL,
         contact_email: "",
         contact_phone: "",
         business_address: "",

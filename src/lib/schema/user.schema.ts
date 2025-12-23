@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { USER_TYPES } from "@/lib/types/enums";
+import { STORE_STATUS, USER_TYPES } from "@/lib/types/enums";
 // Profile schema
 const userProfileSchema = z.object({
   avatar_url: z.string().optional(),
@@ -31,7 +31,12 @@ const storeSchema = z.object({
   banner_url: requiredFileOrUrl,
 
   description: z.string().optional(),
-
+  status: z.enum([
+    STORE_STATUS.PENDING,
+    STORE_STATUS.APPROVED,
+    STORE_STATUS.SUSPENDED,
+    STORE_STATUS.TRIAL,
+  ]),
   contact_email: z.email(),
   contact_phone: z.string().nonempty("Store Phone Number Required"),
   business_address: z.string().nonempty("Store Address Required"),
