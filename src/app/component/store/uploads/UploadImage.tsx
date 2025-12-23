@@ -21,7 +21,8 @@ export default function UploadImage<T extends FieldValues>({
     ? [
         {
           uid: "-1",
-          name: typeof field.value === "string" ? field.value : field.value.name,
+          name:
+            typeof field.value === "string" ? field.value : field.value.name,
           status: "done",
           url: typeof field.value === "string" ? field.value : undefined, // preview for uploaded file
         },
@@ -36,6 +37,8 @@ export default function UploadImage<T extends FieldValues>({
     }
     setError(null);
     field.onChange(file); // save File object into RHF
+    field.onBlur(); // ✅ trigger validation
+
     return false; // prevent auto-upload
   };
 
@@ -46,6 +49,7 @@ export default function UploadImage<T extends FieldValues>({
         fileList={fileList}
         onRemove={() => {
           field.onChange(undefined);
+          field.onBlur();
           setError(null);
         }}
         beforeUpload={handleBeforeUpload}
@@ -58,7 +62,9 @@ export default function UploadImage<T extends FieldValues>({
         )}
       </Upload>
 
-      {error && <Alert message={error} type="error" showIcon className="mt-2" />}
+      {error && (
+        <Alert message={error} type="error" showIcon className="mt-2" />
+      )}
     </>
   );
 }

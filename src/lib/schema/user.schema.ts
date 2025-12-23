@@ -1,5 +1,5 @@
 import { z } from "zod";
-
+import { USER_TYPES } from "@/lib/types/enums";
 // Profile schema
 const userProfileSchema = z.object({
   avatar_url: z.string().optional(),
@@ -13,23 +13,35 @@ const userProfileSchema = z.object({
   country: z.string(),
 });
 
+const fileOrUrl = z.union([z.instanceof(File), z.string().url()]);
+
+const requiredFileOrUrl = fileOrUrl.refine(
+  (val) => {
+    if (typeof val === "string") return val.trim().length > 0;
+    return val instanceof File;
+  },
+  { message: "This field is required" }
+);
+
 // Store schema
 const storeSchema = z.object({
-  store_name: z.string(),
-  store_slug: z.string(),
+  store_name: z.string().nonempty("Store name is required"),
+  store_slug: z.string().nonempty("Store slug is required"),
+  logo_url: requiredFileOrUrl,
+  banner_url: requiredFileOrUrl,
+
   description: z.string().optional(),
-  logo_url: z.union([z.string().url(), z.instanceof(File)]).optional(),
-  banner_url: z.union([z.string().url(), z.instanceof(File)]).optional(),
-  contact_email: z.string().email().optional(),
-  contact_phone: z.string().optional(),
-  business_address: z.string().optional(),
+
+  contact_email: z.email(),
+  contact_phone: z.string().nonempty("Store Phone Number Required"),
+  business_address: z.string().nonempty("Store Address Required"),
   business_license: z.string().optional(),
   tax_id: z.string().optional(),
 });
 
 // Store settings schema
 const storeSettingsSchema = z.object({
-  currency: z.string(),
+  currency: z.string().nonempty("Currency Required"),
   tax_rate: z.number(),
   shipping_fees: z
     .array(
@@ -50,19 +62,26 @@ const storeSettingsSchema = z.object({
 
 // Main user schema
 export const createUserSchema = z.object({
-  email: z.string().email(),
+  email: z.email().nonempty("Email Required"),
+
   password: z
     .string()
-    .min(6, { message: "Password must be at least 8 characters" })
-    .regex(/[A-Z]/, {
-      message: "Password must contain at least one uppercase letter",
+    .min(8, { message: "Password must be at least 8 characters" })
+    .regex(/[A-Z]/, { message: "Must contain an uppercase letter" })
+    .regex(/[a-z]/, { message: "Must contain a lowercase letter" })
+    .regex(/[0-9]/, { message: "Must contain a number" })
+    .regex(/[!@#$%^&*(),.?":{}|<>]/, {
+      message: "Must contain a special character",
     }),
-  first_name: z.string(),
-  last_name: z.string(),
-  phone: z.string().optional(),
-  user_type: z.enum(["super_admin", "store_owner", "customer"]),
+
+  first_name: z.string().nonempty("First name is required"),
+  last_name: z.string().nonempty("Last name is required"),
+  phone: z.string().nonempty("Phone number is required"),
+
+  user_type: z.enum(USER_TYPES),
+
   profile: userProfileSchema.optional(),
-  store: storeSchema.optional(),
+  store: storeSchema,
   store_settings: storeSettingsSchema.optional(),
   is_active: z.boolean(),
 });

@@ -1,6 +1,11 @@
 "use client";
 
-import { useForm, UseFormReturn, DefaultValues, Resolver } from "react-hook-form";
+import {
+  useForm,
+  UseFormReturn,
+  DefaultValues,
+  Resolver,
+} from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ZodObject, ZodTypeAny } from "zod";
 
@@ -16,5 +21,6 @@ export function useZodForm<T extends Record<string, unknown>>(
   return useForm<T>({
     resolver,
     defaultValues,
+    mode: "onChange",
   });
 }
