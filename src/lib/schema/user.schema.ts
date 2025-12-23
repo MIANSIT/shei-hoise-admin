@@ -92,3 +92,6 @@ export const createUserSchema = z.object({
 });
 
 export type CreateUserType = z.infer<typeof createUserSchema>;
+export type UserProfileType = z.infer<typeof userProfileSchema>;
+export type StoreType = z.infer<typeof storeSchema>;
+export type StoreSettingsType = z.infer<typeof storeSettingsSchema>;

@@ -1,193 +1,60 @@
+// lib/actions/users/createUser.ts
 "use server";
 
-import { CreateUserType, createUserSchema } from "@/lib/schema/user.schema";
+import { createUserSchema, CreateUserType } from "@/lib/schema/user.schema";
 import { supabase, supabaseAdmin } from "@/lib/supabase";
+import { createUserCore } from "@/lib/queries/users/store/createUserCore";
+import { createStoreWithSettings } from "@/lib/queries/users/store/createStoreWithSettings";
 
 export async function createUser(data: CreateUserType) {
+  // ✅ Validate input once (single source of truth)
   const payload = createUserSchema.parse(data);
+
   let userId: string | null = null;
   let storeId: string | null = null;
 
   try {
-    // 1️⃣ Create Supabase Auth user
-    const { data: authData, error: authError } =
-      await supabaseAdmin.auth.admin.createUser({
-        email: payload.email,
-        password: payload.password,
-        email_confirm: true,
-        user_metadata: {
-          first_name: payload.first_name,
-          last_name: payload.last_name,
-          user_type: payload.user_type,
-        },
+    // 1️⃣ Create user + user profile
+    userId = await createUserCore(payload);
+
+    // 2️⃣ Create store only for store_owner
+    if (payload.user_type === "store_owner") {
+      storeId = await createStoreWithSettings({
+        ownerId: userId,
+        store: payload.store,
+        settings: payload.store_settings,
       });
 
-    if (authError) {
-      console.error("Auth creation error:", authError);
-      throw authError;
-    }
-
-    userId = authData.user.id;
-    console.log("Auth user created, ID:", userId);
-
-    // 2️⃣ Insert into users table
-    const { error: userError } = await supabase.from("users").insert({
-      id: userId,
-      email: payload.email,
-      password_hash: "AUTH_MANAGED",
-      first_name: payload.first_name,
-      last_name: payload.last_name,
-      phone: payload.phone || null,
-      user_type: payload.user_type,
-      email_verified: true,
-      is_active: true,
-    });
-
-    if (userError) {
-      console.error("Users table insert error:", userError);
-      throw userError;
-    }
-
-    // 3️⃣ Insert profile if exists
-    if (payload.profile) {
-      const { error: profileError } = await supabase
-        .from("user_profiles")
-        .insert({
-          user_id: userId,
-          ...payload.profile,
-        });
-
-      if (profileError) {
-        console.error("Profile insert error:", profileError);
-        throw profileError;
-      }
-    }
-
-    // 4️⃣ Insert store for store_owner
-    if (payload.user_type === "store_owner" && payload.store) {
-      console.log("Creating store:", payload.store);
-      const { data: storeData, error: storeError } = await supabase
-        .from("stores")
-        .insert({ owner_id: userId, ...payload.store })
-        .select("id")
-        .single();
-
-      if (storeError) {
-        console.error("Store insert error:", storeError);
-        throw storeError;
-      }
-
-      storeId = storeData.id;
-      console.log("Store created, ID:", storeId);
-
-      // 🆕 Upload logo & banner if provided
-      const uploads: Record<string, string | undefined> = {};
-
-      if (payload.store.logo_url && payload.store.logo_url instanceof File) {
-        const file = payload.store.logo_url as File;
-        const filePath = `store/${storeId}/logo.png`; // fixed path
-        const { error } = await supabaseAdmin.storage
-          .from("store_logo")
-          .upload(filePath, file, { upsert: true });
-
-        if (error) {
-          console.error("Logo upload error:", error);
-          throw error;
-        }
-
-        const { data: urlData } = supabaseAdmin.storage
-          .from("store_logo")
-          .getPublicUrl(filePath);
-        uploads.logo_url = urlData.publicUrl;
-      }
-
-      if (payload.store.banner_url && payload.store.banner_url instanceof File) {
-        const file = payload.store.banner_url as File;
-        const filePath = `store/${storeId}/banner.png`; // fixed path
-        const { error } = await supabaseAdmin.storage
-          .from("store-banner")
-          .upload(filePath, file, { upsert: true });
-
-        if (error) {
-          console.error("Banner upload error:", error);
-          throw error;
-        }
-
-        const { data: urlData } = supabase.storage
-          .from("store-banner")
-          .getPublicUrl(filePath);
-        uploads.banner_url = urlData.publicUrl;
-      }
-
-      if (Object.keys(uploads).length > 0) {
-        const { error: updateStoreError } = await supabase
-          .from("stores")
-          .update(uploads)
-          .eq("id", storeId);
-        if (updateStoreError) {
-          console.error("Failed to update store with logo/banner:", updateStoreError);
-          throw updateStoreError;
-        }
-      }
-
-      // ✅ Update user with store_id
-      const { error: updateUserError } = await supabase
+      // 3️⃣ Link user → store
+      const { error: linkError } = await supabase
         .from("users")
         .update({ store_id: storeId })
         .eq("id", userId);
 
-      if (updateUserError) {
-        console.error("Failed to update user with store_id:", updateUserError);
-        throw updateUserError;
-      }
-
-      // 5️⃣ Insert store settings if exists
-      if (payload.store_settings) {
-        const { error: settingsError } = await supabase
-          .from("store_settings")
-          .insert({
-            store_id: storeId,
-            ...payload.store_settings,
-          });
-
-        if (settingsError) {
-          console.error("Store settings insert error:", settingsError);
-          throw settingsError;
-        }
-      }
+      if (linkError) throw linkError;
     }
 
-    return { success: true, userId, storeId };
+    return {
+      success: true,
+      userId,
+      storeId,
+    };
   } catch (err) {
-    console.error("CreateUser failed:", err);
+    console.error("createUser failed:", err);
 
-    // 🔄 Rollback: delete auth + user record if created
-    if (userId) {
-      try {
-        await supabase.auth.admin.deleteUser(userId);
-        console.log("Rolled back auth user:", userId);
-      } catch (deleteErr) {
-        console.error("Failed to rollback auth user:", deleteErr);
-      }
+    // 🔄 ROLLBACK (ORDER MATTERS)
 
-      try {
-        await supabase.from("users").delete().eq("id", userId);
-        console.log("Rolled back users table row:", userId);
-      } catch (deleteErr) {
-        console.error("Failed to rollback users table row:", deleteErr);
-      }
-    }
-
-    // 🔄 Optionally rollback store if created (safe-guard)
+    // 1️⃣ Delete store (cascades store_settings, store_profile if exists)
     if (storeId) {
-      try {
-        await supabase.from("stores").delete().eq("id", storeId);
-        console.log("Rolled back store:", storeId);
-      } catch (deleteErr) {
-        console.error("Failed to rollback store:", deleteErr);
-      }
+      await supabase.from("stores").delete().eq("id", storeId);
     }
 
-    throw err; // propagate error to client
+    // 2️⃣ Delete user (cascades user_profile)
+    if (userId) {
+      await supabase.from("users").delete().eq("id", userId);
+      await supabaseAdmin.auth.admin.deleteUser(userId);
+    }
+
+    throw err;
   }
 }
