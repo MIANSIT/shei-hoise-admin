@@ -36,10 +36,10 @@ export async function createStoreWithSettings({
     storeId = data.id;
 
     const uploads: Partial<Pick<StoreType, "logo_url" | "banner_url">> = {};
-
+    const uniqueId = `${Date.now()}-${Math.floor(Math.random() * 10000)}`;
     // 2️⃣ Logo upload
     if (store.logo_url instanceof File) {
-      const path = `store/${storeId}/logo.png`;
+      const path = `store/${storeId}/logo-${uniqueId}.png`;
 
       await supabaseAdmin.storage
         .from("store_logo")
@@ -54,8 +54,7 @@ export async function createStoreWithSettings({
 
     // 3️⃣ Banner upload
     if (store.banner_url instanceof File) {
-      const path = `store/${storeId}/banner.png`;
-
+      const path = `store/${storeId}/banner-${uniqueId}.png`;
       await supabaseAdmin.storage
         .from("store-banner")
         .upload(path, store.banner_url, { upsert: true });

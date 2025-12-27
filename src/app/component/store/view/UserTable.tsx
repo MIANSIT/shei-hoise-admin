@@ -99,6 +99,8 @@ export default function UserTable({
       logo_url: toUrl(s.logo_url),
       banner_url: toUrl(s.banner_url),
       description: s.description,
+      is_active: s.is_active,
+      status: s.status,
       store_settings: s.store_settings?.map((ss) => ({
         id: ss.id,
         currency: ss.currency,
