@@ -6,7 +6,10 @@ export type UserWithRelationsType = CreateUserType & {
   stores?: Array<
     NonNullable<CreateUserType["store"]> & {
       id: string;
-      store_settings?: Array<NonNullable<CreateUserType["store_settings"]> & { id: string }>;
+      is_active: boolean; // <-- Add this
+      store_settings?: Array<
+        NonNullable<CreateUserType["store_settings"]> & { id: string }
+      >;
     }
   >;
 };

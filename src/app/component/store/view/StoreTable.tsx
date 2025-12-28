@@ -7,11 +7,18 @@ import {
   Image as AntdImage,
   Modal,
   Button,
+  Select,
+  Switch,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useState } from "react";
 import parse from "html-react-parser";
-
+import {
+  STORE_STATUS,
+  STORE_STATUS_LABELS,
+  type StoreStatus,
+} from "@/lib/types/enums";
+import { updateStore } from "@/lib/queries/users/store/updateStore";
 const { Text } = Typography;
 
 export type StoreRow = {
@@ -21,6 +28,8 @@ export type StoreRow = {
   logo_url?: string;
   banner_url?: string;
   description?: string;
+  status?: StoreStatus; // <-- new
+  is_active?: boolean; // <-- Add it here
   store_settings?: {
     id?: string;
     currency?: string;
@@ -157,10 +166,11 @@ const formatShippingFees = (
   );
 };
 
-export default function StoreTable({ stores }: StoreTableProps) {
+export default function StoreTable({ stores: initialStores }: StoreTableProps) {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalContent, setModalContent] = useState("");
   const [modalTitle, setModalTitle] = useState("");
+  const [stores, setStores] = useState<StoreRow[]>(initialStores); // local state
 
   const handleViewMore = (content: string, title: string) => {
     setModalContent(content);
@@ -172,6 +182,28 @@ export default function StoreTable({ stores }: StoreTableProps) {
     setModalVisible(false);
     setModalContent("");
     setModalTitle("");
+  };
+
+  const handleActiveChange = async (storeId: string, checked: boolean) => {
+    try {
+      await updateStore({ storeId, isActive: checked });
+      setStores((prev) =>
+        prev.map((s) => (s.id === storeId ? { ...s, is_active: checked } : s))
+      );
+    } catch (err) {
+      console.error("Failed to update active status:", err);
+    }
+  };
+
+  const handleStatusChange = async (storeId: string, status: StoreStatus) => {
+    try {
+      await updateStore({ storeId, status });
+      setStores((prev) =>
+        prev.map((s) => (s.id === storeId ? { ...s, status } : s))
+      );
+    } catch (err) {
+      console.error("Failed to update store status:", err);
+    }
   };
 
   const storeColumns: ColumnsType<StoreRow> = [
@@ -330,6 +362,42 @@ export default function StoreTable({ stores }: StoreTableProps) {
       key: "free_shipping_threshold",
       render: (_, store) =>
         store.store_settings?.[0]?.free_shipping_threshold ?? "-",
+    },
+    {
+      title: "Active",
+      key: "is_active",
+      width: 100,
+      render: (_, store) => (
+        <Switch
+          checked={store.is_active ?? false}
+          onChange={(checked) => handleActiveChange(store.id, checked)}
+          checkedChildren="Active"
+          unCheckedChildren="Inactive"
+          style={{
+            backgroundColor: store.is_active ? "#52c41a" : "#ff4d4f",
+            borderColor: store.is_active ? "#52c41a" : "#ff4d4f",
+          }}
+        />
+      ),
+    },
+
+    {
+      title: "Status",
+      key: "status",
+      width: 180,
+      render: (_, store) => (
+        <Select
+          value={store.status ?? STORE_STATUS.PENDING}
+          style={{ width: "100%" }}
+          onChange={(value: StoreStatus) => handleStatusChange(store.id, value)}
+        >
+          {Object.entries(STORE_STATUS_LABELS).map(([key, label]) => (
+            <Select.Option key={key} value={key}>
+              {label}
+            </Select.Option>
+          ))}
+        </Select>
+      ),
     },
   ];
 

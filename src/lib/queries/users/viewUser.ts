@@ -6,7 +6,8 @@ export async function viewStoreOwners() {
   try {
     const { data, error } = await supabase
       .from("users")
-      .select(`
+      .select(
+        `
         id,
         email,
         first_name,
@@ -21,9 +22,12 @@ export async function viewStoreOwners() {
           description,
           logo_url,
           banner_url,
+          is_active,   
+          status,
           store_settings!store_id (*)
         )
-      `)
+      `
+      )
       .eq("user_type", "store_owner");
 
     if (error) throw error;

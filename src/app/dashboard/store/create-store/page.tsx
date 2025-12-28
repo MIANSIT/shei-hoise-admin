@@ -16,10 +16,8 @@ export default function StoreCreatePage() {
   ) => {
     setLoading(true);
     try {
-      // ✅ validate but don’t upload
-      const payload = createUserSchema.parse(values);
-      await createUser(payload);
-
+      const payload = createUserSchema.parse(values); // validate
+      await createUser(payload); // ✅ only called on Submit
       notify.success("Store owner created successfully!");
       resetForm();
     } catch (err: unknown) {
