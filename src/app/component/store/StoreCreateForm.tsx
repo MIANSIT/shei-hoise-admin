@@ -148,7 +148,7 @@ export default function StoreCreateForm({
     <div className="max-w-4xl mx-auto p-6">
       <h2 className="text-3xl font-bold mb-6">Create Store</h2>
 
-      <Steps current={currentStep} className="mb-6">
+      <Steps current={currentStep} className="mb-6!">
         {steps.map((step, index) => (
           <Step key={index} title={step.title} />
         ))}
