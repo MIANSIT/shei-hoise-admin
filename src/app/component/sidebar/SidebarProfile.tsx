@@ -1,111 +1,98 @@
 "use client";
 
 import React, { useState } from "react";
-import { Avatar, Dropdown, Tooltip, Spin } from "antd";
-import { LogOut } from "lucide-react";
-import { LucideIcon } from "@/lib/LucideIcon";
-import { useSheiNotification } from "@/lib/hooks/useSheiNotification";
-import { useRouter } from "next/navigation";
+import { Dropdown, MenuProps, Spin } from "antd";
+import { User, LogOut, Store } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
+import { useSheiNotification } from "@/lib/hooks/useSheiNotification";
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 
-interface SidebarProfileProps {
-  collapsed: boolean;
-  themeMode: "light" | "dark";
-}
-
-export default function SidebarProfile({
-  collapsed,
-  themeMode,
-}: SidebarProfileProps) {
-  const { success, error } = useSheiNotification();
+export default function SidebarProfile() {
+  const { user } = useCurrentUser();
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const notify = useSheiNotification();
+  const [logoutLoading, setLogoutLoading] = useState(false);
 
   const handleLogout = async () => {
     try {
-      setLoading(true);
-
-      // Call Supabase signOut
+      setLogoutLoading(true);
       await supabase.auth.signOut();
-      success("Logout successful!");
-      router.push("/");
+      notify.success("Logout successful!");
+      router.push("/admin-login");
     } catch (err: unknown) {
-      // Narrow the type before accessing message
+      console.error("Logout error:", err);
       if (err instanceof Error) {
-        console.error("Logout failed:", err.message);
-        error(`Logout failed: ${err.message}`);
+        notify.error(`Logout failed: ${err.message}`);
       } else {
-        console.error("Logout failed:", err);
-        error("Logout failed: Unknown error");
+        notify.error("Logout failed. Please try again.");
       }
     } finally {
-      setLoading(false);
+      setLogoutLoading(false);
     }
   };
 
-  const profileMenu = {
+  const userMenu: MenuProps = {
     items: [
       {
+        key: "user-info",
+        label: (
+          <div className="px-2 py-2 border-b border-gray-200 dark:border-gray-700">
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+              {user?.first_name} {user?.last_name}
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+              {user?.email}
+            </p>
+          </div>
+        ),
+        disabled: true,
+        className: "!cursor-default hover:!bg-transparent",
+      },
+      {
+        key: "profile",
+        icon: <User className="w-4 h-4" />,
+        label: <span className="text-sm font-medium">Profile</span>,
+        onClick: () => router.push("/dashboard/admin-profile"),
+        className: "!py-2",
+      },
+      {
+        key: "store-management",
+        icon: <Store className="w-4 h-4" />,
+        label: <span className="text-sm font-medium">Store Management</span>,
+        onClick: () => router.push("/dashboard/store-management"),
+        className: "!py-2",
+      },
+      { type: "divider" },
+      {
         key: "logout",
-        label: "Logout",
+        icon: <LogOut className="w-4 h-4" />,
+        label: <span className="text-sm font-medium">Logout</span>,
         danger: true,
-        icon: <LucideIcon icon={LogOut} size={16} />,
         onClick: handleLogout,
+        className: "!py-2",
       },
     ],
   };
 
   return (
-    <div
-      className="p-4 mt-auto"
-      style={{
-        borderTop: `1px solid ${themeMode === "dark" ? "#374151" : "#e5e7eb"}`,
-        background: themeMode === "dark" ? "#111827" : "#ffffff",
-        color: themeMode === "dark" ? "#e5e7eb" : "#111827",
+    <Dropdown
+      menu={userMenu}
+      trigger={["click"]}
+      placement="bottomRight"
+      overlayStyle={{
+        minWidth: "240px",
+        boxShadow:
+          "0 10px 25px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05)",
+        borderRadius: "12px",
       }}
     >
-      {collapsed ? (
-        <Dropdown menu={profileMenu} placement="topRight">
-          <Avatar
-            size={40}
-            style={{
-              backgroundColor: themeMode === "dark" ? "#3b82f6" : "#2563eb",
-            }}
-          >
-            AD
-          </Avatar>
-        </Dropdown>
-      ) : (
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <Avatar
-              size={40}
-              style={{
-                backgroundColor: themeMode === "dark" ? "#3b82f6" : "#2563eb",
-              }}
-            >
-              AD
-            </Avatar>
-            <div>
-              <div className="text-sm font-medium">Admin</div>
-              <div className="text-xs opacity-70">admin@sheihoise.com</div>
-            </div>
-          </div>
-          <Tooltip title="Logout">
-            <button
-              onClick={handleLogout}
-              className="transition hover:cursor-pointer"
-              disabled={loading}
-            >
-              {loading ? (
-                <Spin size="small" />
-              ) : (
-                <LucideIcon icon={LogOut} size={20} />
-              )}
-            </button>
-          </Tooltip>
+      <button className="flex items-center gap-2 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200 hover:scale-105 active:scale-95">
+        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-500 text-white font-medium">
+          {user?.first_name ? user.first_name.charAt(0).toUpperCase() : "U"}
         </div>
-      )}
-    </div>
+        {logoutLoading && <Spin size="small" />}
+      </button>
+    </Dropdown>
   );
 }

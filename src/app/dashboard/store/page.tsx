@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import UserTable from "@/app/component/store/view/UserTable";
+import UserTable from "@/app/component/onboarding/view/UserTable";
 import { viewStoreOwners } from "@/lib/queries/users/viewUser";
 import { UserWithRelationsType } from "@/lib/schema/user.types";
 

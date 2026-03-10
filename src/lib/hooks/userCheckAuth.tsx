@@ -20,7 +20,7 @@ export function useSupabaseAuth() {
       (_event, session) => {
         setSession(session);
         setLoading(false);
-      }
+      },
     );
 
     return () => {
