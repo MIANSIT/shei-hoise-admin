@@ -4,7 +4,12 @@ export enum StoreStatus {
   REJECTED = "rejected",
   TRIAL = "trial",
 }
-
+export const STORE_STATUS = {
+  PENDING: StoreStatus.PENDING,
+  APPROVED: StoreStatus.APPROVED,
+  REJECTED: StoreStatus.REJECTED,
+  TRIAL: StoreStatus.TRIAL,
+} as const;
 export const STORE_STATUS_LABELS: Record<StoreStatus, string> = {
   [StoreStatus.PENDING]: "PENDING",
   [StoreStatus.APPROVED]: "APPROVED",

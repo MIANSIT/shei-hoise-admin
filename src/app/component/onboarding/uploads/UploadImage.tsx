@@ -107,7 +107,9 @@ export default function UploadImage<T extends FieldValues>({
         </div>
       </Upload>
 
-      {error && <Alert title={error} type="error" showIcon className="mt-2" />}
+      {error && (
+        <Alert message={error} type="error" showIcon className="mt-2" />
+      )}
 
       <Modal
         open={previewOpen}

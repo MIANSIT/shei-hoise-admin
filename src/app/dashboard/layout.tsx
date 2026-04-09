@@ -52,7 +52,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     if (
       role !== undefined &&
       role !== USER_TYPES.SUPER_ADMIN &&
-      role !== USER_TYPES.ADMIN
+      role !== USER_TYPES.STORE_OWNER
     ) {
       router.push("/");
     }
@@ -282,23 +282,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               </div>
             </Drawer>
 
-            <main
-              className="flex-1 flex flex-col overflow-auto min-h-[calc(100vh-73px)] relative"
-              style={{
-                background: "var(--background)",
-                color: "var(--foreground)",
-              }}
-            >
+            <main className="flex-1 flex flex-col overflow-auto min-h-[calc(100vh-73px)] relative ">
               <Toaster position="top-right" />
 
-              <div className="flex justify-between items-center p-2 bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700">
+              <div className="flex justify-between items-center p-2 bg-white dark:bg-gray-950 shadow-sm border-b border-gray-200 dark:border-gray-800">
                 <Breadcrumb />
               </div>
 
-              <div
-                className="flex-1 overflow-auto p-3 bg-gray-50 dark:bg-gray-950"
-                ref={mainContentRef}
-              >
+              <div className="flex-1 overflow-auto" ref={mainContentRef}>
                 {children}
               </div>
             </main>

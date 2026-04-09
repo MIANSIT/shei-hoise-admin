@@ -24,9 +24,10 @@ export async function viewStoreOwners() {
           banner_url,
           is_active,   
           status,
+           created_at, 
           store_settings!store_id (*)
         )
-      `
+      `,
       )
       .eq("user_type", "store_owner");
 

@@ -18,7 +18,7 @@ import {
   STORE_STATUS_LABELS,
   type StoreStatus,
 } from "@/lib/types/enums";
-import { updateStore } from "@/lib/queries/users/store/updateStore";
+import { updateStore } from "@/lib/queries/onboarding/store/updateStore";
 const { Text } = Typography;
 
 export type StoreRow = {

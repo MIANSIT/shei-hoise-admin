@@ -4,11 +4,8 @@ import { Dashboard } from "@/app/component/MainDashboard";
 
 export default function DashboardPage() {
   return (
-      <div className="p-6">
-        {/* Add breadcrumb at the top */}
-
-        {/* Your main dashboard component */}
-        <Dashboard name="Shah Nawrose" />
-      </div>
+    <div className="p-6">
+      <Dashboard name="Shah Nawrose" />
+    </div>
   );
 }
