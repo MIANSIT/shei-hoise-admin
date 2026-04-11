@@ -1,6 +1,6 @@
 import { Input } from "antd";
 import { Controller, Control } from "react-hook-form";
-import { CreateUserType } from "@/lib/schema/user.schema";
+import { CreateUserType } from "@/lib/schema/onboarding/user.schema";
 import { FormItemWrapper } from "./FormItemWrapper"; // adjust path if needed
 
 interface Props {

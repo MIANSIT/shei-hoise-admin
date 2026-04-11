@@ -1,8 +1,9 @@
-import { JSX, useState } from "react";
+import { useState } from "react";
 import { Path } from "react-hook-form";
-import { CreateUserType } from "../schema/user.schema";
+import { CreateUserType } from "@/lib/schema/onboarding/user.schema";
+import { JSX } from "react/jsx-runtime";
 
-interface Step {
+export interface Step {
   title: string;
   content: JSX.Element;
   fields?: Path<CreateUserType>[];
@@ -13,21 +14,18 @@ export function useStepForm(steps: Step[]) {
 
   const next = () => {
     if (currentStep < steps.length - 1) {
-      console.log(`Moving from step ${currentStep} to ${currentStep + 1}`);
       setCurrentStep(currentStep + 1);
     }
   };
 
   const prev = () => {
     if (currentStep > 0) {
-      console.log(`Moving from step ${currentStep} to ${currentStep - 1}`);
       setCurrentStep(currentStep - 1);
     }
   };
 
   const goTo = (stepIndex: number) => {
     if (stepIndex >= 0 && stepIndex < steps.length) {
-      console.log(`Going to step ${stepIndex} from ${currentStep}`);
       setCurrentStep(stepIndex);
     }
   };
