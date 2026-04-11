@@ -1,3 +1,5 @@
+@import "jodit/es2021/jodit.min.css";
+
 @import "tailwindcss";
 
 @theme inline {
@@ -117,61 +119,3 @@
    =========================== */
 
 /* Inputs */
-.ant-input,
-.ant-input-password,
-.ant-input-number-input,
-.ant-select-selector,
-.ant-input-textarea {
-  background-color: var(--input) !important;
-  color: var(--foreground) !important;
-  border-color: var(--border) !important;
-  border-radius: var(--radius-md) !important;
-}
-
-/* Placeholder text */
-.ant-input::placeholder,
-.ant-input-password input::placeholder,
-.ant-input-number-input::placeholder,
-.ant-input-textarea::placeholder {
-  color: var(--muted-foreground) !important;
-}
-
-/* Focus state */
-.ant-input:focus,
-.ant-input-focused,
-.ant-select-focused .ant-select-selector,
-.ant-input-number-focused {
-  border-color: var(--ring) !important;
-  box-shadow: 0 0 0 2px var(--ring) !important;
-}
-
-/* Disabled state */
-.ant-input[disabled],
-.ant-input-number-input[disabled],
-.ant-select-disabled .ant-select-selector {
-  background-color: var(--muted) !important;
-  color: var(--muted-foreground) !important;
-  cursor: not-allowed;
-}
-
-/* Buttons */
-
-
-/* Form labels */
-.ant-form-item-label > label {
-  color: var(--foreground) !important;
-}
-
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}

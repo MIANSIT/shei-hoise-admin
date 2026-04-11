@@ -1,7 +1,11 @@
 "use client";
 
-import { useMemo, useState, useEffect, useRef } from "react";
-import JoditEditor from "jodit-react";
+import { useMemo, useState, useEffect } from "react";
+import dynamic from "next/dynamic";
+
+const JoditEditor = dynamic(() => import("jodit-react"), {
+  ssr: false,
+});
 
 interface UseRichTextProps {
   initialValue?: string;
@@ -46,7 +50,6 @@ export const useRichText = ({ initialValue = "" }: UseRichTextProps = {}) => {
         "preview",
       ],
       removeButtons: ["source", "about"],
-      useSearch: false,
       showCharsCounter: false,
       showWordsCounter: false,
       showXPathInStatusbar: false,
@@ -61,38 +64,22 @@ export const useRichText = ({ initialValue = "" }: UseRichTextProps = {}) => {
     value?: string | null;
     onChange: (val: string) => void;
   }) => {
-    const [content, setContent] = useState(value ?? initialValue);
-    const skipNextChange = useRef(false);
+    const [content, setContent] = useState<string>(value ?? initialValue ?? "");
 
-    // Sync external value
     useEffect(() => {
-      if (value !== content) {
-        setContent(value ?? "");
+      if (value !== undefined && value !== null && value !== content) {
+        setContent(value);
       }
-    }, [content, value]);
+    }, [value, content]);
 
     return (
-      <div className="border border-gray-300 rounded-md overflow-hidden">
+      <div className="border border-ring rounded-md overflow-hidden">
         <JoditEditor
           value={content}
           config={editorConfig}
           onBlur={(newContent: string) => {
-            if (newContent !== content) {
-              setContent(newContent);
-              onChange(newContent);
-            }
-          }}
-          onChange={(newContent: string) => {
-            // Skip if this is just setting initial value
-            if (skipNextChange.current) {
-              skipNextChange.current = false;
-              return;
-            }
-
-            if (newContent !== content) {
-              setContent(newContent);
-              onChange(newContent);
-            }
+            setContent(newContent);
+            onChange(newContent);
           }}
         />
       </div>

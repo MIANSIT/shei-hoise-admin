@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { ReactNode, useEffect } from "react";
-import { useAuthStore } from "@/lib/store/authStore";
+import { useSupabaseAuth } from "@/lib/hooks/userCheckAuth";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -10,30 +10,18 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const router = useRouter();
-  const isAdminLoggedIn = useAuthStore((state) => state.isAdminLoggedIn);
-  const hydrated = useAuthStore((state) => state.hydrated);
-  const checkAuth = useAuthStore((state) => state.checkAuth);
+  const { session, loading } = useSupabaseAuth();
 
   useEffect(() => {
-    const verify = async () => {
-      if (!hydrated) {
-        await checkAuth();
-      }
+    if (!loading && !session) {
+      router.replace("/");
+    }
+  }, [loading, session, router]);
 
-      // After hydration, redirect if not logged in
-      const state = useAuthStore.getState();
-      if (state.hydrated && !state.isAdminLoggedIn) {
-        router.replace("/");
-      }
-    };
-
-    verify();
-  }, [hydrated, checkAuth, router]);
-
-  if (!hydrated || !isAdminLoggedIn) {
+  if (loading || !session) {
     return (
-      <div className='flex items-center justify-center min-h-screen text-white'>
-        Checking admin authentication...
+      <div className="flex items-center justify-center min-h-screen text-white">
+        Checking authentication...
       </div>
     );
   }
