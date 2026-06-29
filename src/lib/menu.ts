@@ -18,6 +18,9 @@ import {
   Ticket,
   Boxes,
   Inbox,
+  LayoutList,
+  BadgeCheck,
+  FileText,
 } from "lucide-react";
 import React from "react";
 
@@ -94,6 +97,28 @@ export const sideMenu: MenuItem[] = [
         title: "Create Store",
         href: "/dashboard/store/create-store",
         icon: PlusCircle,
+      },
+    ],
+  },
+
+  {
+    title: "Subscription",
+    icon: BadgeCheck,
+    children: [
+      {
+        title: "Plans",
+        href: "/dashboard/subscription/plans",
+        icon: LayoutList,
+      },
+      {
+        title: "Store Subscriptions",
+        href: "/dashboard/subscription/store-subscriptions",
+        icon: CreditCard,
+      },
+      {
+        title: "Invoices",
+        href: "/dashboard/subscription/invoices",
+        icon: FileText,
       },
     ],
   },
