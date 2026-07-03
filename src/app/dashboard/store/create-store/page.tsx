@@ -27,7 +27,7 @@ export default function StoreCreatePage() {
       await createUser(payload);
       notify.success("Store owner created successfully!");
       resetForm();
-      router.push("/admin-login");
+      router.push("/");
     } catch (err: unknown) {
       console.error(err);
 

@@ -24,8 +24,9 @@ import {
   INVOICE_STATUS_LABELS,
   INVOICE_STATUS_COLORS,
 } from "@/lib/types/invoice.types";
-import { BILLING_CYCLE_LABELS } from "@/lib/types/subscription.types";
+import { BILLING_CYCLE_LABELS, SubscriptionStatus } from "@/lib/types/subscription.types";
 import { PAYMENT_DETAILS } from "@/lib/constants/paymentDetails";
+import { updateStoreSubscription } from "@/lib/queries/subscription/storeSubscriptions/updateStoreSubscription";
 
 function formatDate(iso?: string | null) {
   if (!iso) return "—";
@@ -111,7 +112,9 @@ export default function InvoiceDetailPage() {
     setMarking(true);
     const res = await markInvoicePaid(invoice.id, payMethod, payRef || undefined);
     if (res.success) {
-      success("Invoice marked as paid");
+      // Activate the subscription now that payment is confirmed
+      await updateStoreSubscription(invoice.subscription_id, { status: SubscriptionStatus.ACTIVE });
+      success("Invoice marked as paid — subscription activated");
       setInvoice((prev) =>
         prev
           ? { ...prev, status: "paid", paid_at: new Date().toISOString(), payment_method: payMethod, payment_reference: payRef || null }
@@ -256,13 +259,9 @@ export default function InvoiceDetailPage() {
   const owner = store?.owner;
   const pd = PAYMENT_DETAILS;
   const isUnpaid = invoice.status === "unpaid";
+  const isSubmitted = invoice.status === "submitted";
+  const canAction = isUnpaid || isSubmitted;
 
-  const bkashSendAmount      = Math.ceil(invoice.amount * (1 + pd.bkash.chargeRate));
-  const bkashCharge          = bkashSendAmount - invoice.amount;
-  const bkashPriyoSendAmount = Math.ceil(invoice.amount * (1 + pd.bkash.priyoChargeRate));
-  const bkashPriyoCharge     = bkashPriyoSendAmount - invoice.amount;
-  const nagadSendAmount      = Math.ceil(invoice.amount * (1 + pd.nagad.chargeRate));
-  const nagadCharge          = nagadSendAmount - invoice.amount;
 
   const inputCls =
     "w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/40 transition";
@@ -294,22 +293,28 @@ export default function InvoiceDetailPage() {
             Back to Invoices
           </button>
           <div className="flex items-center gap-2">
-            {isUnpaid && (
+            {canAction && (
               <button
-                onClick={() => setMarkPaidOpen(true)}
+                onClick={() => {
+                  if (isSubmitted) {
+                    if (invoice.payment_method) setPayMethod(invoice.payment_method);
+                    if (invoice.payment_reference) setPayRef(invoice.payment_reference);
+                  }
+                  setMarkPaidOpen(true);
+                }}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition"
               >
                 <CheckCircle className="w-4 h-4" />
-                Mark as Paid
+                {isSubmitted ? "Confirm Payment" : "Mark as Paid"}
               </button>
             )}
-            {isUnpaid && (
+            {canAction && (
               <button
                 onClick={() => setCancelOpen(true)}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-200 dark:bg-white/[0.08] hover:bg-red-50 dark:hover:bg-red-500/10 text-slate-600 dark:text-slate-300 hover:text-red-600 text-sm font-semibold transition"
               >
                 <XCircle className="w-4 h-4" />
-                Cancel Invoice
+                {isSubmitted ? "Reject Payment" : "Cancel Invoice"}
               </button>
             )}
             <button
@@ -410,6 +415,37 @@ export default function InvoiceDetailPage() {
               </table>
             </div>
 
+            {/* Submitted payment info — for admin to verify */}
+            {isSubmitted && (
+              <div className="mb-8 rounded-2xl border-2 border-blue-200 bg-blue-50 p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <Smartphone className="w-5 h-5 text-blue-600" />
+                  <p className="font-bold text-blue-800 text-sm uppercase tracking-wider">Customer Payment Submission</p>
+                  <span className="ml-auto text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 border border-blue-200">Pending Verification</span>
+                </div>
+                <div className="grid grid-cols-4 gap-4">
+                  <div className="bg-white rounded-xl border border-blue-100 px-4 py-3">
+                    <p className="text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-1">Amount Paid</p>
+                    <p className="text-sm font-extrabold text-emerald-700">৳{invoice.amount.toLocaleString()}</p>
+                    <p className="text-[10px] text-slate-400">{invoice.currency}</p>
+                  </div>
+                  <div className="bg-white rounded-xl border border-blue-100 px-4 py-3">
+                    <p className="text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-1">Payment Method</p>
+                    <p className="text-sm font-bold text-slate-800 capitalize">{invoice.payment_method ?? "—"}</p>
+                  </div>
+                  <div className="bg-white rounded-xl border border-blue-100 px-4 py-3">
+                    <p className="text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-1">Transaction / Reference ID</p>
+                    <p className="text-sm font-bold font-mono text-violet-700">{invoice.payment_reference ?? "—"}</p>
+                  </div>
+                  <div className="bg-white rounded-xl border border-blue-100 px-4 py-3">
+                    <p className="text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-1">Sender Number</p>
+                    <p className="text-sm font-bold font-mono text-slate-800">{invoice.sender_number ?? "—"}</p>
+                  </div>
+                </div>
+                <p className="text-xs text-blue-600 mt-3">Verify the transaction in your payment app, then click <strong>Confirm Payment</strong> above.</p>
+              </div>
+            )}
+
             {/* Payment methods (screen only) */}
             {isUnpaid && (
               <div className="mb-8">
@@ -418,15 +454,10 @@ export default function InvoiceDetailPage() {
                   <PaymentMethodCard icon={<Smartphone className="w-5 h-5 text-pink-600" />} title="bKash" color="border-pink-200 bg-pink-50">
                     <p className="text-xs text-slate-500 mb-1"><span className="font-semibold text-slate-700">Send to ({pd.bkash.accountType}):</span></p>
                     <p className="text-base font-mono font-bold text-pink-700 mb-3">{pd.bkash.number}</p>
-                    <div className="bg-emerald-500 rounded-xl px-3 py-2.5 mb-2 text-center">
-                      <p className="text-[10px] font-bold text-emerald-100 uppercase tracking-wider mb-0.5">⭐ Priyo — Send exactly</p>
-                      <p className="text-2xl font-extrabold text-white">৳{bkashPriyoSendAmount.toLocaleString()}</p>
-                      <p className="text-[11px] text-emerald-100 mt-0.5">৳{invoice.amount.toLocaleString()} + ৳{bkashPriyoCharge} ({pd.bkash.priyoCharge})</p>
-                    </div>
-                    <div className="bg-pink-600 rounded-xl px-3 py-2.5 mb-3 text-center">
-                      <p className="text-[10px] font-bold text-pink-200 uppercase tracking-wider mb-0.5">Regular — Send exactly</p>
-                      <p className="text-2xl font-extrabold text-white">৳{bkashSendAmount.toLocaleString()}</p>
-                      <p className="text-[11px] text-pink-200 mt-0.5">৳{invoice.amount.toLocaleString()} + ৳{bkashCharge} ({pd.bkash.cashoutCharge})</p>
+                    <div className="bg-pink-600 rounded-xl px-3 py-3 mb-3 text-center">
+                      <p className="text-[10px] font-bold text-pink-200 uppercase tracking-wider mb-0.5">Send Exactly</p>
+                      <p className="text-2xl font-extrabold text-white">৳{invoice.amount.toLocaleString()}</p>
+                      <p className="text-[11px] text-pink-200 mt-0.5">{invoice.currency}</p>
                     </div>
                     <p className="text-[11px] text-slate-500 leading-relaxed">{pd.bkash.instructions}</p>
                   </PaymentMethodCard>
@@ -435,9 +466,9 @@ export default function InvoiceDetailPage() {
                     <p className="text-xs text-slate-500 mb-1"><span className="font-semibold text-slate-700">Send to ({pd.nagad.accountType}):</span></p>
                     <p className="text-base font-mono font-bold text-orange-600 mb-3">{pd.nagad.number}</p>
                     <div className="bg-orange-500 rounded-xl px-3 py-3 mb-3 text-center">
-                      <p className="text-[10px] font-bold text-orange-100 uppercase tracking-wider mb-0.5">Send exactly</p>
-                      <p className="text-2xl font-extrabold text-white">৳{nagadSendAmount.toLocaleString()}</p>
-                      <p className="text-[11px] text-orange-100 mt-0.5">৳{invoice.amount.toLocaleString()} + ৳{nagadCharge} ({pd.nagad.cashoutCharge})</p>
+                      <p className="text-[10px] font-bold text-orange-100 uppercase tracking-wider mb-0.5">Send Exactly</p>
+                      <p className="text-2xl font-extrabold text-white">৳{invoice.amount.toLocaleString()}</p>
+                      <p className="text-[11px] text-orange-100 mt-0.5">{invoice.currency}</p>
                     </div>
                     <p className="text-[11px] text-slate-500 leading-relaxed">{pd.nagad.instructions}</p>
                   </PaymentMethodCard>
@@ -522,7 +553,7 @@ export default function InvoiceDetailPage() {
             <div style={{ fontSize: 28, fontWeight: 900, color: "#fff", letterSpacing: 4 }}>INVOICE</div>
             <div style={{ fontSize: 12, color: "#ddd8fe", fontFamily: "monospace", marginTop: 4 }}>#{invoice.invoice_number}</div>
             <div style={{ marginTop: 8, display: "inline-block", padding: "3px 14px", borderRadius: 20, backgroundColor: pdfStatus.bg, color: pdfStatus.text, fontSize: 11, fontWeight: 700 }}>
-              {INVOICE_STATUS_LABELS[invoice.status].toUpperCase()}
+              {(INVOICE_STATUS_LABELS[invoice.status] ?? invoice.status ?? "").toUpperCase()}
             </div>
           </div>
         </div>
@@ -671,21 +702,14 @@ export default function InvoiceDetailPage() {
             <div style={{ backgroundColor: "#fdf2f8", padding: "12px 20px", borderBottom: "1px solid #fbcfe8", display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ fontSize: 16 }}>📱</span>
               <span style={{ fontSize: 14, fontWeight: 700, color: "#be185d" }}>bKash</span>
-              <span style={{ fontSize: 12, color: "#64748b" }}>· Personal ·</span>
+              <span style={{ fontSize: 12, color: "#64748b" }}>· {pd.bkash.accountType} ·</span>
               <span style={{ fontSize: 14, fontWeight: 700, fontFamily: "monospace", color: "#db2777" }}>{pd.bkash.number}</span>
             </div>
-            <div style={{ padding: "16px 20px", display: "flex", gap: 14 }}>
-              {/* Priyo */}
-              <div style={{ flex: 1, backgroundColor: "#dcfce7", borderRadius: 8, padding: "14px 16px", textAlign: "center", border: "1px solid #86efac" }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: "#166534", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>⭐ Priyo — Send Exactly</div>
-                <div style={{ fontSize: 28, fontWeight: 900, color: "#15803d" }}>৳{bkashPriyoSendAmount.toLocaleString()}</div>
-                <div style={{ fontSize: 11, color: "#16a34a", marginTop: 4 }}>৳{invoice.amount.toLocaleString()} + ৳{bkashPriyoCharge} charge ({pd.bkash.priyoCharge})</div>
-              </div>
-              {/* Regular */}
-              <div style={{ flex: 1, backgroundColor: "#fce7f3", borderRadius: 8, padding: "14px 16px", textAlign: "center", border: "1px solid #f9a8d4" }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: "#9d174d", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Regular — Send Exactly</div>
-                <div style={{ fontSize: 28, fontWeight: 900, color: "#be185d" }}>৳{bkashSendAmount.toLocaleString()}</div>
-                <div style={{ fontSize: 11, color: "#db2777", marginTop: 4 }}>৳{invoice.amount.toLocaleString()} + ৳{bkashCharge} charge ({pd.bkash.cashoutCharge})</div>
+            <div style={{ padding: "16px 20px" }}>
+              <div style={{ backgroundColor: "#fce7f3", borderRadius: 8, padding: "14px 16px", textAlign: "center", border: "1px solid #f9a8d4" }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: "#9d174d", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Send Exactly</div>
+                <div style={{ fontSize: 28, fontWeight: 900, color: "#be185d" }}>৳{invoice.amount.toLocaleString()}</div>
+                <div style={{ fontSize: 11, color: "#db2777", marginTop: 4 }}>{invoice.currency}</div>
               </div>
             </div>
             <div style={{ padding: "0 20px 12px", fontSize: 11, color: "#64748b" }}>{pd.bkash.instructions}</div>
@@ -696,14 +720,14 @@ export default function InvoiceDetailPage() {
             <div style={{ backgroundColor: "#fff7ed", padding: "12px 20px", borderBottom: "1px solid #fed7aa", display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ fontSize: 16 }}>📱</span>
               <span style={{ fontSize: 14, fontWeight: 700, color: "#c2410c" }}>Nagad</span>
-              <span style={{ fontSize: 12, color: "#64748b" }}>· Personal ·</span>
+              <span style={{ fontSize: 12, color: "#64748b" }}>· {pd.nagad.accountType} ·</span>
               <span style={{ fontSize: 14, fontWeight: 700, fontFamily: "monospace", color: "#ea580c" }}>{pd.nagad.number}</span>
             </div>
             <div style={{ padding: "16px 20px" }}>
               <div style={{ backgroundColor: "#ffedd5", borderRadius: 8, padding: "14px 16px", textAlign: "center", border: "1px solid #fdba74" }}>
                 <div style={{ fontSize: 10, fontWeight: 700, color: "#9a3412", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Send Exactly</div>
-                <div style={{ fontSize: 28, fontWeight: 900, color: "#c2410c" }}>৳{nagadSendAmount.toLocaleString()}</div>
-                <div style={{ fontSize: 11, color: "#ea580c", marginTop: 4 }}>৳{invoice.amount.toLocaleString()} + ৳{nagadCharge} charge ({pd.nagad.cashoutCharge})</div>
+                <div style={{ fontSize: 28, fontWeight: 900, color: "#c2410c" }}>৳{invoice.amount.toLocaleString()}</div>
+                <div style={{ fontSize: 11, color: "#ea580c", marginTop: 4 }}>{invoice.currency}</div>
               </div>
             </div>
             <div style={{ padding: "0 20px 12px", fontSize: 11, color: "#64748b" }}>{pd.nagad.instructions}</div>
@@ -759,11 +783,26 @@ export default function InvoiceDetailPage() {
         okText={marking ? "Saving…" : "Confirm Payment"}
         okButtonProps={{ style: { backgroundColor: "#10b981", borderColor: "#10b981" }, loading: marking }}
         cancelText="Cancel"
-        title="Mark Invoice as Paid"
-        width={420}
+        title={isSubmitted ? "Confirm Customer Payment" : "Mark Invoice as Paid"}
+        width={440}
         destroyOnHidden
       >
         <div className="flex flex-col gap-3 py-1">
+          {isSubmitted && (
+            <div className="rounded-xl bg-blue-50 border border-blue-200 px-4 py-3">
+              <p className="text-[10px] font-bold text-blue-500 uppercase tracking-wider mb-2">Customer Submitted</p>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                <span className="text-slate-500">Amount Paid:</span>
+                <span className="font-extrabold text-emerald-700">৳{invoice.amount.toLocaleString()} {invoice.currency}</span>
+                <span className="text-slate-500">Method:</span>
+                <span className="font-semibold text-slate-800 capitalize">{invoice.payment_method ?? "—"}</span>
+                <span className="text-slate-500">Ref / TxID:</span>
+                <span className="font-mono font-bold text-violet-700">{invoice.payment_reference ?? "—"}</span>
+                <span className="text-slate-500">Sender No:</span>
+                <span className="font-mono font-semibold text-slate-700">{invoice.sender_number ?? "—"}</span>
+              </div>
+            </div>
+          )}
           <div>
             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Payment Method</label>
             <Select
@@ -786,20 +825,22 @@ export default function InvoiceDetailPage() {
         </div>
       </Modal>
 
-      {/* Cancel Modal */}
+      {/* Cancel / Reject Modal */}
       <Modal
         open={cancelOpen}
         onCancel={() => setCancelOpen(false)}
         onOk={handleCancel}
-        okText={canceling ? "Canceling…" : "Cancel Invoice"}
+        okText={canceling ? "Processing…" : isSubmitted ? "Reject Payment" : "Cancel Invoice"}
         okButtonProps={{ danger: true, loading: canceling }}
         cancelText="Keep"
-        title="Cancel Invoice"
+        title={isSubmitted ? "Reject Customer Payment" : "Cancel Invoice"}
         width={400}
         destroyOnHidden
       >
         <p className="text-sm text-slate-600">
-          Mark this invoice as canceled? The store owner will no longer be expected to pay it.
+          {isSubmitted
+            ? "Reject this submitted payment? The invoice will be marked as canceled and the customer will need to resubmit."
+            : "Mark this invoice as canceled? The store owner will no longer be expected to pay it."}
         </p>
       </Modal>
     </>

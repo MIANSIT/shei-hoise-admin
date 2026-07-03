@@ -1,7 +1,7 @@
 // lib/actions/stores/updateStore.ts
 "use server";
 
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase";
 import { StoreStatus } from "@/lib/types/enums";
 
 type UpdateStoreArgs = {
@@ -25,7 +25,7 @@ export async function updateStore({
       return { success: false, message: "Nothing to update" };
     }
 
-    const { error, data } = await supabase
+    const { error, data } = await supabaseAdmin
       .from("stores")
       .update(updates)
       .eq("id", storeId)

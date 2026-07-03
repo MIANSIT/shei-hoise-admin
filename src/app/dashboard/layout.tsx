@@ -45,7 +45,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     if (authLoading || userLoading) return;
 
     if (!session) {
-      router.replace("/admin-login");
+      router.replace("/");
       return;
     }
 

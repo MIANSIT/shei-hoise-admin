@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Modal } from "antd";
-import { Plus, Pencil, Trash2, LayoutList, Star, Globe, EyeOff } from "lucide-react";
+import { Plus, Pencil, Trash2, LayoutList, Star, Globe, EyeOff, Gift } from "lucide-react";
 import { useSheiNotification } from "@/lib/hooks/useSheiNotification";
 import { getSubscriptionPlans } from "@/lib/queries/subscription/plans/getPlans";
 import { createSubscriptionPlan } from "@/lib/queries/subscription/plans/createPlan";
@@ -123,14 +123,25 @@ export default function SubscriptionPlansPage() {
 
   const handleToggle = async (
     plan: SubscriptionPlan,
-    key: "is_active" | "is_featured" | "is_public"
+    key: "is_active" | "is_featured" | "is_public" | "is_default_trial_plan"
   ) => {
     const val = !plan[key];
     const res = await updateSubscriptionPlan(plan.id, { [key]: val });
     if (res.success) {
-      setPlans((prev) =>
-        prev.map((p) => (p.id === plan.id ? { ...p, [key]: val } : p))
-      );
+      if (key === "is_default_trial_plan" && val) {
+        // Clearing others happens server-side; mirror it in local state.
+        setPlans((prev) =>
+          prev.map((p) =>
+            p.id === plan.id
+              ? { ...p, is_default_trial_plan: true }
+              : { ...p, is_default_trial_plan: false }
+          )
+        );
+      } else {
+        setPlans((prev) =>
+          prev.map((p) => (p.id === plan.id ? { ...p, [key]: val } : p))
+        );
+      }
     } else {
       notifyError("Failed to update plan");
     }
@@ -255,6 +266,7 @@ export default function SubscriptionPlansPage() {
                         </span>
                         <FlagBadge active={plan.is_featured} label="⭐ Featured" />
                         <FlagBadge active={!plan.is_public} label="🔒 Private" />
+                        <FlagBadge active={plan.is_default_trial_plan} label="🎁 Default Trial" />
                       </div>
 
                       {plan.description && (
@@ -327,6 +339,21 @@ export default function SubscriptionPlansPage() {
                           }`}
                         >
                           {plan.is_public ? <Globe className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                        </button>
+                        <button
+                          title={
+                            plan.is_default_trial_plan
+                              ? "This is the default trial plan"
+                              : "Set as default trial plan (unsets it on all other plans)"
+                          }
+                          onClick={() => handleToggle(plan, "is_default_trial_plan")}
+                          className={`p-1.5 rounded-lg transition ${
+                            plan.is_default_trial_plan
+                              ? "text-pink-500 bg-pink-50 dark:bg-pink-500/10"
+                              : "text-slate-300 dark:text-slate-600 hover:text-pink-500"
+                          }`}
+                        >
+                          <Gift className="w-3.5 h-3.5" />
                         </button>
                       </div>
 

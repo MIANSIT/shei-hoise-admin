@@ -21,7 +21,7 @@ export const SUBSCRIPTION_STATUS_LABELS: Record<SubscriptionStatus, string> = {
   [SubscriptionStatus.CANCELED]: "Canceled",
   [SubscriptionStatus.EXPIRED]: "Expired",
   [SubscriptionStatus.PAUSED]: "Paused",
-  [SubscriptionStatus.INCOMPLETE]: "Incomplete",
+  [SubscriptionStatus.INCOMPLETE]: "DUE",
 };
 
 export const SUBSCRIPTION_STATUS_COLORS: Record<
@@ -85,6 +85,7 @@ export interface SubscriptionPlan {
   is_active: boolean;
   is_featured: boolean;
   is_public: boolean;
+  is_default_trial_plan: boolean;
   sort_order: number;
   created_at: string;
   updated_at: string;
@@ -150,6 +151,7 @@ export type CreatePlanInput = {
   is_active?: boolean;
   is_featured?: boolean;
   is_public?: boolean;
+  is_default_trial_plan?: boolean;
   sort_order?: number;
 };
 

@@ -25,13 +25,18 @@ const PRESET_FEATURES = [
   { key: "export_data", label: "Export Data" },
   { key: "seo_tools", label: "SEO Tools" },
   { key: "advanced_reports", label: "Advanced Reports" },
+  { key: "conversion_api", label: "Conversions API" },
+  { key: "meta_pixel", label: "Meta Pixel" },
+  { key: "expense_tracking", label: "Expense Tracking" },
 ];
 
 const PRESET_LIMITS = [
   { key: "max_products", label: "Max Products" },
   { key: "max_orders_per_month", label: "Max Orders/Month" },
   { key: "max_images_per_product", label: "Max Images/Product" },
+  { key: "max_variants_per_product", label: "Max Variants/Product" },
   { key: "max_staff", label: "Max Staff" },
+  { key: "max_users", label: "Max Users" },
   { key: "max_categories", label: "Max Categories" },
   { key: "max_coupons", label: "Max Coupons" },
 ];
@@ -47,6 +52,7 @@ const DEFAULT_FORM: CreatePlanInput = {
   is_active: true,
   is_featured: false,
   is_public: true,
+  is_default_trial_plan: false,
   sort_order: 0,
   features: {},
   limits: {},
@@ -78,6 +84,7 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
         is_active: plan.is_active,
         is_featured: plan.is_featured,
         is_public: plan.is_public,
+        is_default_trial_plan: plan.is_default_trial_plan,
         sort_order: plan.sort_order,
         features: plan.features,
         limits: plan.limits,
@@ -273,6 +280,18 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
               {label}
             </label>
           ))}
+          <label
+            className="flex items-center gap-2 cursor-pointer select-none text-sm text-slate-700 dark:text-slate-300"
+            title="Only one plan can be the default trial plan at a time. Enabling this will disable it on every other plan."
+          >
+            <input
+              type="checkbox"
+              className="w-4 h-4 rounded accent-violet-600"
+              checked={!!form.is_default_trial_plan}
+              onChange={(e) => set("is_default_trial_plan", e.target.checked)}
+            />
+            Default trial plan (auto-assigned to new stores at signup)
+          </label>
         </div>
 
         {/* ── FEATURES ── */}
@@ -381,7 +400,7 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
             <div>
               <p className={labelCls + " mb-0"}>Limits</p>
               <p className="text-[11px] text-slate-400">
-                Set numeric limits. Check "Unlimited" to remove a cap.
+                Set numeric limits. Check &quot;Unlimited&quot; to remove a cap.
               </p>
             </div>
             <button

@@ -8,6 +8,16 @@ export async function updateSubscriptionPlan(
   input: Partial<CreatePlanInput>
 ) {
   try {
+    if (input.is_default_trial_plan) {
+      const { error: clearError } = await supabaseAdmin
+        .from("subscription_plans")
+        .update({ is_default_trial_plan: false })
+        .neq("id", id)
+        .eq("is_default_trial_plan", true);
+
+      if (clearError) throw clearError;
+    }
+
     const { data, error } = await supabaseAdmin
       .from("subscription_plans")
       .update(input)

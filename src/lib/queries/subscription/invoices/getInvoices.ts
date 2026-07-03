@@ -22,7 +22,12 @@ export async function getInvoices() {
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-    return { success: true, data: data as SubscriptionInvoice[] };
+    const validStatuses = ["unpaid", "submitted", "paid", "canceled", "refunded"];
+    const normalized = (data ?? []).map((inv) => ({
+      ...inv,
+      status: validStatuses.includes(inv.status) ? inv.status : "unpaid",
+    }));
+    return { success: true, data: normalized as SubscriptionInvoice[] };
   } catch (err) {
     console.error("getInvoices failed:", err);
     return { success: false, error: err, data: [] as SubscriptionInvoice[] };
@@ -49,7 +54,12 @@ export async function getInvoiceById(id: string) {
       .single();
 
     if (error) throw error;
-    return { success: true, data: data as SubscriptionInvoice };
+    const validStatuses = ["unpaid", "submitted", "paid", "canceled", "refunded"];
+    const normalized = {
+      ...data,
+      status: validStatuses.includes(data.status) ? data.status : "unpaid",
+    };
+    return { success: true, data: normalized as SubscriptionInvoice };
   } catch (err) {
     console.error("getInvoiceById failed:", err);
     return { success: false, error: err, data: null };

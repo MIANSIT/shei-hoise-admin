@@ -19,7 +19,7 @@ export default function SidebarProfile() {
       setLogoutLoading(true);
       await supabase.auth.signOut();
       notify.success("Logout successful!");
-      router.push("/admin-login");
+      router.push("/");
     } catch (err: unknown) {
       console.error("Logout error:", err);
       if (err instanceof Error) {

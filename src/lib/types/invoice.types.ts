@@ -1,9 +1,10 @@
 import { BillingCycle } from "./subscription.types";
 
-export type InvoiceStatus = "unpaid" | "paid" | "canceled" | "refunded";
+export type InvoiceStatus = "unpaid" | "submitted" | "paid" | "canceled" | "refunded";
 
 export const INVOICE_STATUS_LABELS: Record<InvoiceStatus, string> = {
   unpaid: "Unpaid",
+  submitted: "Submitted",
   paid: "Paid",
   canceled: "Canceled",
   refunded: "Refunded",
@@ -17,6 +18,11 @@ export const INVOICE_STATUS_COLORS: Record<
     bg: "bg-orange-50 dark:bg-orange-500/10",
     text: "text-orange-700 dark:text-orange-400",
     dot: "bg-orange-500",
+  },
+  submitted: {
+    bg: "bg-blue-50 dark:bg-blue-500/10",
+    text: "text-blue-700 dark:text-blue-400",
+    dot: "bg-blue-500",
   },
   paid: {
     bg: "bg-emerald-50 dark:bg-emerald-500/10",
@@ -53,6 +59,7 @@ export interface SubscriptionInvoice {
   paid_at?: string | null;
   payment_method?: string | null;
   payment_reference?: string | null;
+  sender_number?: string | null;
   notes?: string | null;
   created_at: string;
   updated_at: string;
