@@ -28,6 +28,7 @@ const PRESET_FEATURES = [
   { key: "conversion_api", label: "Conversions API" },
   { key: "meta_pixel", label: "Meta Pixel" },
   { key: "expense_tracking", label: "Expense Tracking" },
+  { key: "courier_tracking", label: "Courier Tracking" },
 ];
 
 const PRESET_LIMITS = [
