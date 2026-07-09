@@ -22,10 +22,11 @@ export async function getInvoices() {
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-    const validStatuses = ["unpaid", "submitted", "paid", "canceled", "refunded"];
+    const validStatuses = ["unpaid", "submitted", "paid", "cancelled", "refunded"];
     const normalized = (data ?? []).map((inv) => ({
       ...inv,
-      status: validStatuses.includes(inv.status) ? inv.status : "unpaid",
+      // "canceled" (single-L) is the pre-fix spelling still present on older rows.
+      status: inv.status === "canceled" ? "cancelled" : validStatuses.includes(inv.status) ? inv.status : "unpaid",
     }));
     return { success: true, data: normalized as SubscriptionInvoice[] };
   } catch (err) {
@@ -54,10 +55,11 @@ export async function getInvoiceById(id: string) {
       .single();
 
     if (error) throw error;
-    const validStatuses = ["unpaid", "submitted", "paid", "canceled", "refunded"];
+    const validStatuses = ["unpaid", "submitted", "paid", "cancelled", "refunded"];
     const normalized = {
       ...data,
-      status: validStatuses.includes(data.status) ? data.status : "unpaid",
+      // "canceled" (single-L) is the pre-fix spelling still present on older rows.
+      status: data.status === "canceled" ? "cancelled" : validStatuses.includes(data.status) ? data.status : "unpaid",
     };
     return { success: true, data: normalized as SubscriptionInvoice };
   } catch (err) {

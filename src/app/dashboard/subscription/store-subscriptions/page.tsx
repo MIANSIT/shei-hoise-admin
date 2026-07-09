@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Modal, Select } from "antd";
 import {
   Plus, Pencil, Trash2, CreditCard, XCircle, Store,
-  FileText, TrendingUp, Users, AlertCircle, CheckCircle2,
+  FileText, TrendingUp, Users, AlertCircle, CheckCircle2, Eye,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSheiNotification } from "@/lib/hooks/useSheiNotification";
@@ -70,7 +70,9 @@ function SubscriptionRow({
   const store = sub.stores;
   const plan = sub.subscription_plans;
   const owner = store?.owner;
+  const latestInvoice = sub.subscription_invoices?.[0];
   const [expanded, setExpanded] = useState(false);
+  const router = useRouter();
 
   const planAmount = plan
     ? calcAmount(plan as SubscriptionPlan, sub.billing_cycle)
@@ -191,13 +193,29 @@ function SubscriptionRow({
             { label: "Cancel at Period End", value: sub.cancels_at_period_end ? "Yes" : "No" },
             { label: "Payment Provider", value: sub.payment_provider ?? "—" },
             { label: "Plan Slug", value: plan?.slug ?? "—" },
-            { label: "Subscription ID", value: sub.id.slice(0, 8) + "…" },
           ].map(({ label, value }) => (
             <div key={label}>
               <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">{label}</div>
               <div className="text-xs text-slate-700 dark:text-slate-300 font-medium">{value}</div>
             </div>
           ))}
+          <div>
+            <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Invoice</div>
+            {latestInvoice ? (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  router.push(`/dashboard/subscription/invoices/${latestInvoice.id}`);
+                }}
+                className="flex items-center gap-1 text-xs font-mono font-bold text-violet-700 dark:text-violet-400 hover:underline cursor-pointer"
+              >
+                <Eye className="w-3 h-3" />
+                {latestInvoice.invoice_number}
+              </button>
+            ) : (
+              <div className="text-xs text-slate-700 dark:text-slate-300 font-medium">—</div>
+            )}
+          </div>
         </div>
       )}
     </div>

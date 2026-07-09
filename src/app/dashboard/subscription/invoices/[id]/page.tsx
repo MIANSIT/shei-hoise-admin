@@ -27,6 +27,7 @@ import {
 import { BILLING_CYCLE_LABELS, SubscriptionStatus } from "@/lib/types/subscription.types";
 import { PAYMENT_DETAILS } from "@/lib/constants/paymentDetails";
 import { updateStoreSubscription } from "@/lib/queries/subscription/storeSubscriptions/updateStoreSubscription";
+import { addBillingCycle } from "@/lib/utils/billingCycle";
 
 function formatDate(iso?: string | null) {
   if (!iso) return "—";
@@ -73,7 +74,7 @@ function PaymentMethodCard({
 const PDF_STATUS: Record<string, { bg: string; text: string }> = {
   unpaid:   { bg: "#FEF9C3", text: "#854D0E" },
   paid:     { bg: "#D1FAE5", text: "#065F46" },
-  canceled: { bg: "#FEE2E2", text: "#991B1B" },
+  cancelled: { bg: "#FEE2E2", text: "#991B1B" },
   refunded: { bg: "#E0E7FF", text: "#3730A3" },
 };
 
@@ -112,12 +113,35 @@ export default function InvoiceDetailPage() {
     setMarking(true);
     const res = await markInvoicePaid(invoice.id, payMethod, payRef || undefined);
     if (res.success) {
-      // Activate the subscription now that payment is confirmed
-      await updateStoreSubscription(invoice.subscription_id, { status: SubscriptionStatus.ACTIVE });
+      // Service period starts from confirmation, not from when it was requested —
+      // otherwise a delayed approval silently eats days off the customer's paid period.
+      const periodStart = new Date();
+      const periodEnd = addBillingCycle(periodStart, invoice.billing_cycle);
+      await Promise.all([
+        updateStoreSubscription(invoice.subscription_id, {
+          status: SubscriptionStatus.ACTIVE,
+          current_period_start: periodStart.toISOString(),
+          current_period_end: periodEnd.toISOString(),
+          expires_at: periodEnd.toISOString(),
+          payment_provider: payMethod,
+        }),
+        updateInvoice(invoice.id, {
+          period_start: periodStart.toISOString(),
+          period_end: periodEnd.toISOString(),
+        }),
+      ]);
       success("Invoice marked as paid — subscription activated");
       setInvoice((prev) =>
         prev
-          ? { ...prev, status: "paid", paid_at: new Date().toISOString(), payment_method: payMethod, payment_reference: payRef || null }
+          ? {
+              ...prev,
+              status: "paid",
+              paid_at: periodStart.toISOString(),
+              payment_method: payMethod,
+              payment_reference: payRef || null,
+              period_start: periodStart.toISOString(),
+              period_end: periodEnd.toISOString(),
+            }
           : prev
       );
       setMarkPaidOpen(false);
@@ -131,10 +155,23 @@ export default function InvoiceDetailPage() {
   const handleCancel = async () => {
     if (!invoice) return;
     setCanceling(true);
-    const res = await updateInvoice(invoice.id, { status: "canceled" });
-    if (res.success) {
-      success("Invoice canceled");
-      setInvoice((prev) => (prev ? { ...prev, status: "canceled" } : prev));
+    // Rejecting a payment also immediately cancels the linked subscription —
+    // otherwise the store stays "incomplete"/"active" and keeps open access
+    // (subscriptionAccess.ts only locks on a "cancelled" subscription status).
+    const [invoiceRes, subRes] = await Promise.all([
+      updateInvoice(invoice.id, { status: "cancelled" }),
+      updateStoreSubscription(invoice.subscription_id, {
+        status: SubscriptionStatus.CANCELED,
+        canceled_at: new Date().toISOString(),
+      }),
+    ]);
+    if (invoiceRes.success) {
+      success(
+        subRes.success
+          ? "Invoice cancelled — subscription locked"
+          : "Invoice cancelled, but failed to lock the subscription — cancel it manually"
+      );
+      setInvoice((prev) => (prev ? { ...prev, status: "cancelled" } : prev));
       setCancelOpen(false);
     } else {
       notifyError("Failed to cancel invoice");
@@ -271,7 +308,7 @@ export default function InvoiceDetailPage() {
   return (
     <>
       {/* ─── SCREEN UI ──────────────────────────────────────────────── */}
-      <div className="min-h-screen bg-slate-100 dark:bg-slate-950 py-8 px-4">
+      <div className="min-h-screen bg-slate-100 dark:bg-slate-950 py-6 sm:py-8 px-3 sm:px-4">
 
         {/* Generating overlay — hides the brief PDF render flash */}
         {generating && (
@@ -284,7 +321,7 @@ export default function InvoiceDetailPage() {
         )}
 
         {/* Action bar */}
-        <div className="max-w-[820px] mx-auto flex items-center justify-between mb-5">
+        <div className="max-w-[820px] mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
           <button
             onClick={() => router.back()}
             className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-violet-600 transition"
@@ -292,7 +329,7 @@ export default function InvoiceDetailPage() {
             <ArrowLeft className="w-4 h-4" />
             Back to Invoices
           </button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {canAction && (
               <button
                 onClick={() => {
@@ -332,22 +369,22 @@ export default function InvoiceDetailPage() {
         <div className="max-w-[820px] mx-auto bg-white rounded-3xl shadow-2xl shadow-slate-200/60 dark:shadow-none">
 
           {/* Header band */}
-          <div className="bg-gradient-to-r from-violet-600 to-purple-600 rounded-t-3xl px-10 py-7 flex items-center justify-between">
+          <div className="bg-gradient-to-r from-violet-600 to-purple-600 rounded-t-3xl px-5 sm:px-10 py-6 sm:py-7 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-extrabold text-white tracking-tight">{pd.company.name}</h1>
+              <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">{pd.company.name}</h1>
               <p className="text-violet-200 text-sm mt-0.5">{pd.company.email}</p>
               <p className="text-violet-200 text-sm">{pd.company.address}</p>
             </div>
-            <div className="text-right">
-              <div className="text-3xl font-black text-white tracking-widest">INVOICE</div>
+            <div className="text-left sm:text-right">
+              <div className="text-2xl sm:text-3xl font-black text-white tracking-widest">INVOICE</div>
               <div className="text-violet-200 font-mono text-sm mt-1">#{invoice.invoice_number}</div>
               <div className="mt-2"><StatusBadge status={invoice.status} /></div>
             </div>
           </div>
 
-          <div className="px-10 py-8">
+          <div className="px-5 sm:px-10 py-6 sm:py-8">
             {/* Bill To + Invoice Meta */}
-            <div className="grid grid-cols-2 gap-8 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 mb-8">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Bill To</p>
                 <p className="font-bold text-slate-900 text-base">{store?.store_name ?? "—"}</p>
@@ -359,7 +396,7 @@ export default function InvoiceDetailPage() {
                 )}
                 <p className="text-xs text-slate-400 mt-1">Store: {store?.store_slug}</p>
               </div>
-              <div className="text-right">
+              <div className="text-left sm:text-right">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Invoice Details</p>
                 {[
                   ["Invoice #", invoice.invoice_number],
@@ -367,17 +404,17 @@ export default function InvoiceDetailPage() {
                   ["Due Date", formatDate(invoice.due_date)],
                   ...(invoice.status === "paid" && invoice.paid_at ? [["Paid On", formatDate(invoice.paid_at)]] : []),
                 ].map(([label, value]) => (
-                  <div key={label} className="flex justify-end gap-4 text-sm mb-1">
+                  <div key={label} className="flex sm:justify-end gap-4 text-sm mb-1">
                     <span className="text-slate-400 font-medium">{label}:</span>
-                    <span className="text-slate-700 font-semibold w-36 text-left">{value}</span>
+                    <span className="text-slate-700 font-semibold sm:w-36 text-left">{value}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Line items */}
-            <div className="rounded-2xl overflow-hidden border border-slate-200 mb-8">
-              <table className="w-full text-sm">
+            <div className="rounded-2xl overflow-x-auto border border-slate-200 mb-8">
+              <table className="w-full text-sm min-w-[520px]">
                 <thead>
                   <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
                     <th className="px-5 py-3 text-left font-semibold">Description</th>
@@ -417,13 +454,13 @@ export default function InvoiceDetailPage() {
 
             {/* Submitted payment info — for admin to verify */}
             {isSubmitted && (
-              <div className="mb-8 rounded-2xl border-2 border-blue-200 bg-blue-50 p-5">
-                <div className="flex items-center gap-2 mb-4">
+              <div className="mb-8 rounded-2xl border-2 border-blue-200 bg-blue-50 p-4 sm:p-5">
+                <div className="flex flex-wrap items-center gap-2 mb-4">
                   <Smartphone className="w-5 h-5 text-blue-600" />
                   <p className="font-bold text-blue-800 text-sm uppercase tracking-wider">Customer Payment Submission</p>
-                  <span className="ml-auto text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 border border-blue-200">Pending Verification</span>
+                  <span className="sm:ml-auto text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 border border-blue-200">Pending Verification</span>
                 </div>
-                <div className="grid grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                   <div className="bg-white rounded-xl border border-blue-100 px-4 py-3">
                     <p className="text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-1">Amount Paid</p>
                     <p className="text-sm font-extrabold text-emerald-700">৳{invoice.amount.toLocaleString()}</p>
@@ -839,8 +876,8 @@ export default function InvoiceDetailPage() {
       >
         <p className="text-sm text-slate-600">
           {isSubmitted
-            ? "Reject this submitted payment? The invoice will be marked as canceled and the customer will need to resubmit."
-            : "Mark this invoice as canceled? The store owner will no longer be expected to pay it."}
+            ? "Reject this submitted payment? The invoice will be marked as cancelled and the store's subscription will be cancelled immediately, locking the store. The customer will need to resubmit."
+            : "Mark this invoice as cancelled? The store's subscription will be cancelled immediately, locking the store."}
         </p>
       </Modal>
     </>

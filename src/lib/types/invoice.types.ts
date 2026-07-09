@@ -1,12 +1,12 @@
 import { BillingCycle } from "./subscription.types";
 
-export type InvoiceStatus = "unpaid" | "submitted" | "paid" | "canceled" | "refunded";
+export type InvoiceStatus = "unpaid" | "submitted" | "paid" | "cancelled" | "refunded";
 
 export const INVOICE_STATUS_LABELS: Record<InvoiceStatus, string> = {
   unpaid: "Unpaid",
   submitted: "Submitted",
   paid: "Paid",
-  canceled: "Canceled",
+  cancelled: "Cancelled",
   refunded: "Refunded",
 };
 
@@ -29,7 +29,7 @@ export const INVOICE_STATUS_COLORS: Record<
     text: "text-emerald-700 dark:text-emerald-400",
     dot: "bg-emerald-500",
   },
-  canceled: {
+  cancelled: {
     bg: "bg-slate-100 dark:bg-slate-500/10",
     text: "text-slate-600 dark:text-slate-400",
     dot: "bg-slate-400",
@@ -105,4 +105,6 @@ export interface UpdateInvoiceInput {
   notes?: string | null;
   amount?: number;
   due_date?: string;
+  period_start?: string;
+  period_end?: string;
 }

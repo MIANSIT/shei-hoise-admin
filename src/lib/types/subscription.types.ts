@@ -129,6 +129,12 @@ export interface StoreSubscription {
     price_monthly: number;
     price_yearly: number;
   } | null;
+  subscription_invoices?: {
+    id: string;
+    invoice_number: string;
+    status: string;
+    created_at: string;
+  }[];
 }
 
 export interface SimpleStore {

@@ -7,8 +7,9 @@ import { useRouter } from "next/navigation";
 import { useSheiNotification } from "@/lib/hooks/useSheiNotification";
 import { getInvoices } from "@/lib/queries/subscription/invoices/getInvoices";
 import { deleteInvoice } from "@/lib/queries/subscription/invoices/deleteInvoice";
-import { markInvoicePaid } from "@/lib/queries/subscription/invoices/updateInvoice";
+import { markInvoicePaid, updateInvoice } from "@/lib/queries/subscription/invoices/updateInvoice";
 import { updateStoreSubscription } from "@/lib/queries/subscription/storeSubscriptions/updateStoreSubscription";
+import { addBillingCycle } from "@/lib/utils/billingCycle";
 import {
   SubscriptionInvoice,
   InvoiceStatus,
@@ -78,17 +79,41 @@ export default function InvoicesPage() {
   const handleMarkPaid = async () => {
     if (!markPaidId) return;
     setMarking(true);
+    const inv = invoices.find((i) => i.id === markPaidId);
     const res = await markInvoicePaid(markPaidId, payMethod, payRef || undefined);
-    if (res.success) {
-      const inv = invoices.find((i) => i.id === markPaidId);
-      if (inv?.subscription_id) {
-        await updateStoreSubscription(inv.subscription_id, { status: SubscriptionStatus.ACTIVE });
-      }
+    if (res.success && inv) {
+      // Service period starts from confirmation, not from when it was requested —
+      // otherwise a delayed approval silently eats days off the customer's paid period.
+      const periodStart = new Date();
+      const periodEnd = addBillingCycle(periodStart, inv.billing_cycle);
+      await Promise.all([
+        inv.subscription_id
+          ? updateStoreSubscription(inv.subscription_id, {
+              status: SubscriptionStatus.ACTIVE,
+              current_period_start: periodStart.toISOString(),
+              current_period_end: periodEnd.toISOString(),
+              expires_at: periodEnd.toISOString(),
+              payment_provider: payMethod,
+            })
+          : Promise.resolve(),
+        updateInvoice(markPaidId, {
+          period_start: periodStart.toISOString(),
+          period_end: periodEnd.toISOString(),
+        }),
+      ]);
       success("Invoice marked as paid — subscription activated");
       setInvoices((prev) =>
         prev.map((i) =>
           i.id === markPaidId
-            ? { ...i, status: "paid", paid_at: new Date().toISOString(), payment_method: payMethod, payment_reference: payRef || null }
+            ? {
+                ...i,
+                status: "paid",
+                paid_at: periodStart.toISOString(),
+                payment_method: payMethod,
+                payment_reference: payRef || null,
+                period_start: periodStart.toISOString(),
+                period_end: periodEnd.toISOString(),
+              }
             : i
         )
       );
@@ -147,9 +172,9 @@ export default function InvoicesPage() {
           </div>
         </div>
 
-        <div className="max-w-[1100px] mx-auto px-6 py-8">
+        <div className="max-w-[1100px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
           {/* Stats */}
-          <div className="grid grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
             {[
               {
                 label: "Awaiting Payment",
@@ -182,21 +207,21 @@ export default function InvoicesPage() {
             ].map((s) => (
               <div
                 key={s.label}
-                className="bg-white dark:bg-white/[0.025] border border-slate-200 dark:border-white/[0.07] rounded-2xl px-5 py-4 flex items-center gap-4"
+                className="bg-white dark:bg-white/[0.025] border border-slate-200 dark:border-white/[0.07] rounded-2xl px-4 sm:px-5 py-4 flex items-center gap-3 sm:gap-4 min-w-0"
               >
                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${s.iconBg}`}>
                   {s.icon}
                 </div>
-                <div>
-                  <div className={`text-xl font-extrabold ${s.color}`}>{s.value}</div>
-                  <div className="text-xs text-slate-400 mt-0.5">{s.label}</div>
+                <div className="min-w-0">
+                  <div className={`text-lg sm:text-xl font-extrabold truncate ${s.color}`}>{s.value}</div>
+                  <div className="text-xs text-slate-400 mt-0.5 truncate">{s.label}</div>
                 </div>
               </div>
             ))}
           </div>
 
           {/* Search + Filter */}
-          <div className="flex gap-3 mb-5">
+          <div className="flex flex-col sm:flex-row gap-3 mb-5">
             <input
               className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/40 transition"
               placeholder="Search by invoice number, store name, plan, or email…"
@@ -206,14 +231,14 @@ export default function InvoicesPage() {
             <Select
               value={statusFilter}
               onChange={(v) => setStatusFilter(v as InvoiceStatus | "all")}
-              className="w-[150px]"
+              className="w-full sm:w-[150px]"
               size="large"
               options={[
                 { value: "all", label: "All Status" },
                 { value: "unpaid", label: "Unpaid" },
                 { value: "submitted", label: "Submitted" },
                 { value: "paid", label: "Paid" },
-                { value: "canceled", label: "Canceled" },
+                { value: "cancelled", label: "Cancelled" },
                 { value: "refunded", label: "Refunded" },
               ]}
             />
@@ -221,14 +246,12 @@ export default function InvoicesPage() {
 
           {/* Column headers */}
           {!loading && filtered.length > 0 && (
-            <div className="flex items-center gap-4 px-5 py-2 text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest mb-1.5">
+            <div className="hidden lg:flex items-center gap-4 px-5 py-2 text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest mb-1.5">
               <div className="flex-[0_0_160px]">Invoice #</div>
               <div className="flex-[0_0_190px]">Store / Owner</div>
               <div className="flex-[0_0_120px]">Plan</div>
-              <div className="flex-[0_0_90px] text-right">Amount</div>
+              <div className="flex-[0_0_90px] text-right pr-4">Amount</div>
               <div className="flex-[0_0_110px]">Status</div>
-              <div className="flex-1">Due / Payment Info</div>
-              <div className="w-[100px] shrink-0 text-right">Actions</div>
             </div>
           )}
 
@@ -260,24 +283,29 @@ export default function InvoicesPage() {
               {filtered.map((inv) => (
                 <div
                   key={inv.id}
-                  className={`flex items-center gap-4 px-5 py-4 bg-white dark:bg-white/[0.025] border rounded-2xl hover:shadow-sm transition group ${
+                  className={`grid grid-cols-2 gap-x-3 gap-y-2 lg:flex lg:flex-wrap lg:items-center lg:gap-x-4 lg:gap-y-2 px-4 sm:px-5 py-4 bg-white dark:bg-white/[0.025] border rounded-2xl hover:shadow-sm transition group ${
                     inv.status === "submitted"
                       ? "border-blue-200 dark:border-blue-500/30"
                       : "border-slate-200 dark:border-white/[0.07] hover:border-slate-300 dark:hover:border-white/[0.14]"
                   }`}
                 >
-                  {/* Invoice # */}
-                  <div className="flex-[0_0_160px] min-w-0">
-                    <span className="text-sm font-bold font-mono text-violet-700 dark:text-violet-400">
-                      {inv.invoice_number}
-                    </span>
-                    <div className="text-[10px] text-slate-400 mt-0.5">
-                      {formatDate(inv.created_at)}
+                  {/* Invoice # (+ status inline below lg) */}
+                  <div className="col-span-2 lg:flex-[0_0_160px] min-w-0 flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <span className="text-sm font-bold font-mono text-violet-700 dark:text-violet-400">
+                        {inv.invoice_number}
+                      </span>
+                      <div className="text-[10px] text-slate-400 mt-0.5">
+                        {formatDate(inv.created_at)}
+                      </div>
+                    </div>
+                    <div className="lg:hidden shrink-0">
+                      <StatusBadge status={inv.status} />
                     </div>
                   </div>
 
                   {/* Store */}
-                  <div className="flex-[0_0_190px] min-w-0">
+                  <div className="col-span-2 lg:flex-[0_0_190px] min-w-0">
                     <div className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">
                       {inv.stores?.store_name ?? "—"}
                     </div>
@@ -287,7 +315,7 @@ export default function InvoicesPage() {
                   </div>
 
                   {/* Plan */}
-                  <div className="flex-[0_0_120px] min-w-0">
+                  <div className="lg:flex-[0_0_120px] min-w-0">
                     <div className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">
                       {inv.plan_name}
                     </div>
@@ -297,15 +325,15 @@ export default function InvoicesPage() {
                   </div>
 
                   {/* Amount */}
-                  <div className="flex-[0_0_90px] text-right">
+                  <div className="lg:flex-[0_0_90px] text-right lg:pr-4">
                     <span className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
                       ৳{inv.amount.toLocaleString()}
                     </span>
                     <div className="text-[10px] text-slate-400">{inv.currency}</div>
                   </div>
 
-                  {/* Status */}
-                  <div className="flex-[0_0_110px]">
+                  {/* Status (lg+ only, shown inline below lg above) */}
+                  <div className="hidden lg:block lg:flex-[0_0_110px]">
                     <StatusBadge status={inv.status} />
                     {inv.status === "paid" && inv.payment_method && (
                       <div className="text-[10px] text-slate-400 mt-0.5 capitalize">
@@ -318,10 +346,25 @@ export default function InvoicesPage() {
                       </div>
                     )}
                   </div>
+                  {/* Status sub-info (below lg only) */}
+                  {(inv.status === "paid" && inv.payment_method) || inv.status === "submitted" ? (
+                    <div className="col-span-2 lg:hidden -mt-1">
+                      {inv.status === "paid" && inv.payment_method && (
+                        <div className="text-[10px] text-slate-400 capitalize">
+                          via {inv.payment_method}
+                        </div>
+                      )}
+                      {inv.status === "submitted" && (
+                        <div className="text-[10px] text-blue-500 font-semibold">
+                          Pending confirm
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
 
                   {/* Due / payment info */}
-                  <div className="flex-1 text-xs text-slate-500 dark:text-slate-400">
-                    <span>{formatDate(inv.due_date)}</span>
+                  <div className="col-span-2 lg:flex-1 lg:basis-[200px] text-xs text-slate-500 dark:text-slate-400">
+                    <span>Due: {formatDate(inv.due_date)}</span>
                     {inv.status === "submitted" && inv.payment_reference && (
                       <div className="mt-0.5 font-mono text-[11px] text-violet-600 dark:text-violet-400 font-semibold">
                         Ref: {inv.payment_reference}
@@ -336,7 +379,7 @@ export default function InvoicesPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-1 w-[100px] justify-end shrink-0">
+                  <div className="col-span-2 lg:w-[100px] lg:ml-auto flex items-center gap-1 justify-end shrink-0 border-t lg:border-t-0 border-slate-100 dark:border-white/[0.06] pt-2 lg:pt-0">
                     <button
                       title="View invoice"
                       onClick={() => router.push(`/dashboard/subscription/invoices/${inv.id}`)}
