@@ -84,7 +84,14 @@ export default function InvoicesPage() {
     if (res.success && inv) {
       // Service period starts from confirmation, not from when it was requested —
       // otherwise a delayed approval silently eats days off the customer's paid period.
-      const periodStart = new Date();
+      // For a renewal confirmed before the current period ends, stack onto the
+      // existing current_period_end instead, so early renewals don't discard
+      // days the store already paid for.
+      const now = new Date();
+      const existingPeriodEnd = inv.store_subscriptions?.current_period_end
+        ? new Date(inv.store_subscriptions.current_period_end)
+        : null;
+      const periodStart = existingPeriodEnd && existingPeriodEnd > now ? existingPeriodEnd : now;
       const periodEnd = addBillingCycle(periodStart, inv.billing_cycle);
       await Promise.all([
         inv.subscription_id
@@ -94,6 +101,7 @@ export default function InvoicesPage() {
               current_period_end: periodEnd.toISOString(),
               expires_at: periodEnd.toISOString(),
               payment_provider: payMethod,
+              canceled_at: null,
             })
           : Promise.resolve(),
         updateInvoice(markPaidId, {
@@ -108,7 +116,7 @@ export default function InvoicesPage() {
             ? {
                 ...i,
                 status: "paid",
-                paid_at: periodStart.toISOString(),
+                paid_at: now.toISOString(),
                 payment_method: payMethod,
                 payment_reference: payRef || null,
                 period_start: periodStart.toISOString(),

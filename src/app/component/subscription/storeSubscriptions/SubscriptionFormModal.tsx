@@ -316,22 +316,28 @@ export function SubscriptionFormModal({
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className={labelCls}>Trial Ends At</label>
-                  <input type="date" className={inputCls} value={trialEndsAt} onChange={(e) => setTrialEndsAt(e.target.value)} />
+                  <label className={labelCls}>Period Start</label>
+                  <input type="date" className={inputCls} value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} />
                 </div>
                 <div>
                   <label className={labelCls}>Period End</label>
                   <input type="date" className={inputCls} value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} />
                 </div>
               </div>
-              <div>
-                <label className={labelCls}>Payment Provider</label>
-                <input
-                  className={inputCls}
-                  placeholder="e.g. bkash, nagad, stripe"
-                  value={paymentProvider}
-                  onChange={(e) => setPaymentProvider(e.target.value)}
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelCls}>Trial Ends At</label>
+                  <input type="date" className={inputCls} value={trialEndsAt} onChange={(e) => setTrialEndsAt(e.target.value)} />
+                </div>
+                <div>
+                  <label className={labelCls}>Payment Provider</label>
+                  <input
+                    className={inputCls}
+                    placeholder="e.g. bkash, nagad, stripe"
+                    value={paymentProvider}
+                    onChange={(e) => setPaymentProvider(e.target.value)}
+                  />
+                </div>
               </div>
               <label className="flex items-start gap-3 cursor-pointer select-none bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.07] rounded-xl px-4 py-3">
                 <input

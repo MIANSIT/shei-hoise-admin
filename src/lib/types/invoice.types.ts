@@ -80,6 +80,9 @@ export interface SubscriptionInvoice {
     name: string;
     slug: string;
   } | null;
+  store_subscriptions?: {
+    current_period_end: string | null;
+  } | null;
 }
 
 export interface CreateInvoiceInput {

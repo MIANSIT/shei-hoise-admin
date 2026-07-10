@@ -16,7 +16,8 @@ export async function getInvoices() {
           store_slug,
           owner:owner_id (id, email, first_name, last_name)
         ),
-        subscription_plans:plan_id (id, name, slug)
+        subscription_plans:plan_id (id, name, slug),
+        store_subscriptions:subscription_id (current_period_end)
       `
       )
       .order("created_at", { ascending: false });
@@ -48,7 +49,8 @@ export async function getInvoiceById(id: string) {
           store_slug,
           owner:owner_id (id, email, first_name, last_name)
         ),
-        subscription_plans:plan_id (id, name, slug)
+        subscription_plans:plan_id (id, name, slug),
+        store_subscriptions:subscription_id (current_period_end)
       `
       )
       .eq("id", id)

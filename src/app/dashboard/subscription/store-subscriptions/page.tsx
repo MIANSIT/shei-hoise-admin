@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Modal, Select } from "antd";
 import {
   Plus, Pencil, Trash2, CreditCard, XCircle, Store,
-  FileText, TrendingUp, Users, AlertCircle, CheckCircle2, Eye,
+  FileText, TrendingUp, Users, AlertCircle, CheckCircle2, Eye, RefreshCw,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSheiNotification } from "@/lib/hooks/useSheiNotification";
@@ -19,6 +19,7 @@ import { getSubscriptionPlans } from "@/lib/queries/subscription/plans/getPlans"
 import { getAllStoresForDropdown } from "@/lib/queries/subscription/getAllStores";
 import { createInvoice } from "@/lib/queries/subscription/invoices/createInvoice";
 import { SubscriptionFormModal } from "@/app/component/subscription/storeSubscriptions/SubscriptionFormModal";
+import { RenewSubscriptionModal } from "@/app/component/subscription/storeSubscriptions/RenewSubscriptionModal";
 import {
   StoreSubscription,
   SubscriptionPlan,
@@ -60,12 +61,14 @@ function SubscriptionRow({
   onDelete,
   onCancel,
   onStatusChange,
+  onRenew,
 }: {
   sub: StoreSubscription;
   onEdit: (sub: StoreSubscription) => void;
   onDelete: (id: string) => void;
   onCancel: (id: string) => void;
   onStatusChange: (id: string, status: SubscriptionStatus) => void;
+  onRenew: (sub: StoreSubscription) => void;
 }) {
   const store = sub.stores;
   const plan = sub.subscription_plans;
@@ -156,6 +159,13 @@ function SubscriptionRow({
             }))}
           />
           <button
+            title="Renew subscription"
+            onClick={() => onRenew(sub)}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+          </button>
+          <button
             title="Edit"
             onClick={() => onEdit(sub)}
             className="p-1.5 rounded-lg text-slate-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition"
@@ -234,6 +244,8 @@ export default function StoreSubscriptionsPage() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<StoreSubscription | null>(null);
+
+  const [renewTarget, setRenewTarget] = useState<StoreSubscription | null>(null);
 
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -335,6 +347,57 @@ export default function StoreSubscriptionsPage() {
     setCanceling(false);
     setCancelConfirm(null);
     setCancelPeriodEnd(false);
+  };
+
+  const openRenew = (sub: StoreSubscription) => {
+    const pending = sub.subscription_invoices?.[0];
+    if (pending && (pending.status === "unpaid" || pending.status === "submitted")) {
+      notifyError(`There's already a pending invoice (${pending.invoice_number}) for this subscription — resolve it before renewing.`);
+      return;
+    }
+    setRenewTarget(sub);
+  };
+
+  const handleRenew = async ({
+    plan_id,
+    billing_cycle,
+    period_start,
+    period_end,
+  }: {
+    plan_id: string;
+    billing_cycle: BillingCycle;
+    period_start: string;
+    period_end: string;
+  }) => {
+    if (!renewTarget) return;
+    const plan = plans.find((p) => p.id === plan_id);
+    if (!plan) {
+      notifyError("Plan not found");
+      return;
+    }
+    const amount = calcAmount(plan, billing_cycle);
+    const dueDate = new Date(Date.now() + PAYMENT_DETAILS.invoiceDueDays * 24 * 60 * 60 * 1000);
+
+    const res = await createInvoice({
+      subscription_id: renewTarget.id,
+      store_id: renewTarget.store_id,
+      user_id: renewTarget.user_id,
+      plan_id,
+      plan_name: plan.name,
+      amount,
+      currency: plan.currency,
+      billing_cycle,
+      period_start,
+      period_end,
+      due_date: dueDate.toISOString(),
+    });
+    if (res.success) {
+      success("Renewal invoice generated");
+      setRenewTarget(null);
+      await fetchAll();
+    } else {
+      notifyError("Failed to generate renewal invoice");
+    }
   };
 
   const filtered = subs.filter((s) => {
@@ -475,7 +538,7 @@ export default function StoreSubscriptionsPage() {
               <div className="flex-[0_0_170px]">Plan / Amount</div>
               <div className="flex-[0_0_120px]">Status</div>
               <div className="flex-1">Period</div>
-              <div className="w-[220px] shrink-0 text-right">Actions</div>
+              <div className="w-[250px] shrink-0 text-right">Actions</div>
             </div>
           )}
 
@@ -512,6 +575,7 @@ export default function StoreSubscriptionsPage() {
                   onDelete={(id) => setDeleteConfirm(id)}
                   onCancel={(id) => { setCancelConfirm(id); setCancelPeriodEnd(false); }}
                   onStatusChange={handleStatusChange}
+                  onRenew={openRenew}
                 />
               ))}
             </div>
@@ -527,6 +591,14 @@ export default function StoreSubscriptionsPage() {
         onClose={() => { setModalOpen(false); setEditing(null); }}
         onCreate={handleCreate}
         onUpdate={handleUpdate}
+      />
+
+      <RenewSubscriptionModal
+        open={!!renewTarget}
+        subscription={renewTarget}
+        plans={plans}
+        onClose={() => setRenewTarget(null)}
+        onRenew={handleRenew}
       />
 
       {/* Cancel Confirm */}
