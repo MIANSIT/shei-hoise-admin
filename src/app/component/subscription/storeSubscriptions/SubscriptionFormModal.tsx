@@ -34,6 +34,19 @@ const CYCLE_OPTIONS = [
   { value: BillingCycle.YEARLY, label: "Yearly" },
 ];
 
+const CYCLE_MONTHS: Record<BillingCycle, number> = {
+  [BillingCycle.MONTHLY]: 1,
+  [BillingCycle.HALF_YEARLY]: 6,
+  [BillingCycle.YEARLY]: 12,
+};
+
+function addMonths(dateInput: string, months: number): string {
+  if (!dateInput) return "";
+  const d = new Date(dateInput);
+  d.setMonth(d.getMonth() + months);
+  return d.toISOString().slice(0, 10);
+}
+
 function calcAmount(plan: SubscriptionPlan, cycle: BillingCycle): number {
   if (cycle === BillingCycle.YEARLY) return plan.price_yearly || plan.price_monthly * 12;
   if (cycle === BillingCycle.HALF_YEARLY) return plan.price_monthly * 6;
@@ -84,15 +97,16 @@ export function SubscriptionFormModal({
       setCancelsAtPeriodEnd(subscription.cancels_at_period_end);
       setPaymentProvider(subscription.payment_provider ?? "");
     } else {
+      const today = toDateInput(new Date().toISOString());
       setStoreId("");
       setPlanId("");
       setStatus(SubscriptionStatus.INCOMPLETE);
       setBillingCycle(BillingCycle.MONTHLY);
-      setStartedAt(toDateInput(new Date().toISOString()));
-      setExpiresAt("");
+      setStartedAt(today);
+      setExpiresAt(addMonths(today, CYCLE_MONTHS[BillingCycle.MONTHLY]));
       setTrialEndsAt("");
-      setPeriodStart(toDateInput(new Date().toISOString()));
-      setPeriodEnd("");
+      setPeriodStart(today);
+      setPeriodEnd(addMonths(today, CYCLE_MONTHS[BillingCycle.MONTHLY]));
       setCancelsAtPeriodEnd(false);
       setPaymentProvider("");
     }
@@ -260,7 +274,12 @@ export function SubscriptionFormModal({
               <button
                 key={opt.value}
                 type="button"
-                onClick={() => setBillingCycle(opt.value)}
+                onClick={() => {
+                  setBillingCycle(opt.value);
+                  const months = CYCLE_MONTHS[opt.value];
+                  setExpiresAt(addMonths(startedAt, months));
+                  setPeriodEnd(addMonths(periodStart, months));
+                }}
                 className={`py-2.5 rounded-xl text-sm font-semibold border transition-all ${
                   billingCycle === opt.value
                     ? "bg-violet-600 border-violet-600 text-white shadow-md shadow-violet-500/25"
@@ -307,7 +326,15 @@ export function SubscriptionFormModal({
                     <Calendar className="w-3 h-3" />
                     Started At
                   </label>
-                  <input type="date" className={inputCls} value={startedAt} onChange={(e) => setStartedAt(e.target.value)} />
+                  <input
+                    type="date"
+                    className={inputCls}
+                    value={startedAt}
+                    onChange={(e) => {
+                      setStartedAt(e.target.value);
+                      setExpiresAt(addMonths(e.target.value, CYCLE_MONTHS[billingCycle]));
+                    }}
+                  />
                 </div>
                 <div>
                   <label className={labelCls}>Expires At</label>
@@ -317,7 +344,15 @@ export function SubscriptionFormModal({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={labelCls}>Period Start</label>
-                  <input type="date" className={inputCls} value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} />
+                  <input
+                    type="date"
+                    className={inputCls}
+                    value={periodStart}
+                    onChange={(e) => {
+                      setPeriodStart(e.target.value);
+                      setPeriodEnd(addMonths(e.target.value, CYCLE_MONTHS[billingCycle]));
+                    }}
+                  />
                 </div>
                 <div>
                   <label className={labelCls}>Period End</label>
