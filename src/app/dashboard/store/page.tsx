@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Modal } from "antd";
 import { viewStoreOwners } from "@/lib/queries/users/viewUser";
 import { updateStore } from "@/lib/queries/onboarding/store/updateStore";
+import { deleteStore } from "@/lib/queries/onboarding/store/deleteStore";
+import { useSheiNotification } from "@/lib/hooks/useSheiNotification";
 import { UserWithRelationsType } from "@/lib/schema/user.types";
 import { StoreStatus } from "@/lib/types/enums";
 import { FilterType, StoreWithTrial } from "@/lib/types/store/storeOwner.types";
@@ -14,10 +17,13 @@ import { UserRow } from "@/app/component/store/viewStore/UserRow";
 const isStoreActive = (val: unknown): boolean => val === true || val === "true";
 
 export default function StoreOwnersPage() {
+  const { success, error: notifyError } = useSheiNotification();
   const [users, setUsers] = useState<UserWithRelationsType[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
+  const [deleteTarget, setDeleteTarget] = useState<StoreWithTrial | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -50,6 +56,31 @@ export default function StoreOwnersPage() {
         ),
       })),
     );
+  };
+
+  const handleDeleteStore = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const res = await deleteStore(deleteTarget.id);
+    if (res.success) {
+      success(
+        res.ownerDeleted
+          ? "Store deleted along with the store admin's account"
+          : "Store deleted",
+      );
+      setUsers((prev) =>
+        res.ownerDeleted
+          ? prev.filter((u) => u.id !== res.ownerId)
+          : prev.map((u) => ({
+              ...u,
+              stores: u.stores?.filter((s) => s.id !== deleteTarget.id),
+            })),
+      );
+    } else {
+      notifyError("Failed to delete store");
+    }
+    setDeleting(false);
+    setDeleteTarget(null);
   };
 
   const filtered = users.filter((u) => {
@@ -156,12 +187,34 @@ export default function StoreOwnersPage() {
                   index={i}
                   onStatusChange={handleStatusChange}
                   onActiveChange={handleActiveChange}
+                  onDeleteStore={setDeleteTarget}
                 />
               ))}
             </div>
           )}
         </div>
       </div>
+
+      {/* Delete Confirm Modal */}
+      <Modal
+        open={!!deleteTarget}
+        onCancel={() => setDeleteTarget(null)}
+        onOk={handleDeleteStore}
+        okText={deleting ? "Deleting…" : "Delete"}
+        okButtonProps={{ danger: true, loading: deleting }}
+        cancelText="Cancel"
+        title="Delete Store"
+        width={440}
+      >
+        <p className="text-slate-600 dark:text-slate-400 text-sm">
+          Are you sure you want to delete{" "}
+          <strong>{deleteTarget?.store_name}</strong>? This permanently
+          removes the store, its settings, subscriptions, invoices, and
+          uploaded files. If this is the owner&apos;s only store, their admin
+          account and login credentials will be deleted too. This action
+          cannot be undone.
+        </p>
+      </Modal>
     </>
   );
 }

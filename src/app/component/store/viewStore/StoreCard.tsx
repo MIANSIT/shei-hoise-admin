@@ -14,6 +14,7 @@ import {
   IconChevron,
   IconDollar,
   IconTruck,
+  IconTrash,
 } from "./StoreOwnerIcons";
 
 function formatCurrency(amount?: number | string, currency = "BDT") {
@@ -25,12 +26,14 @@ interface StoreCardProps {
   store: StoreWithTrial;
   onStatusChange: (storeId: string, status: StoreStatus) => void;
   onActiveChange: (storeId: string, isActive: boolean) => void;
+  onDelete: (store: StoreWithTrial) => void;
 }
 
 export function StoreCard({
   store,
   onStatusChange,
   onActiveChange,
+  onDelete,
 }: StoreCardProps) {
   const [open, setOpen] = useState(false);
   const settings = store.store_settings?.[0];
@@ -95,6 +98,16 @@ export function StoreCard({
             className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.1] text-slate-400 dark:text-slate-500 cursor-pointer hover:bg-slate-200 dark:hover:bg-white/[0.1] transition-colors"
           >
             <IconChevron open={open} />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(store);
+            }}
+            title="Delete store"
+            className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.1] text-slate-400 dark:text-slate-500 cursor-pointer hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-500/20 transition-colors"
+          >
+            <IconTrash />
           </button>
         </div>
       </div>

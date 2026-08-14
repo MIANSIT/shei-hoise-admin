@@ -25,9 +25,10 @@ interface UserRowProps {
   index: number;
   onStatusChange: (storeId: string, status: StoreStatus) => void;
   onActiveChange: (storeId: string, isActive: boolean) => void;
+  onDeleteStore: (store: StoreWithTrial) => void;
 }
 
-export function UserRow({ user, index, onStatusChange, onActiveChange }: UserRowProps) {
+export function UserRow({ user, index, onStatusChange, onActiveChange, onDeleteStore }: UserRowProps) {
   const [expanded, setExpanded] = useState(false);
   const profile    = user.user_profiles?.[0];
   const fullName   = `${user.first_name} ${user.last_name}`;
@@ -111,7 +112,7 @@ export function UserRow({ user, index, onStatusChange, onActiveChange }: UserRow
             </div>
           ) : (
             (user.stores as StoreWithTrial[])?.map(store => (
-              <StoreCard key={store.id} store={store} onStatusChange={onStatusChange} onActiveChange={onActiveChange} />
+              <StoreCard key={store.id} store={store} onStatusChange={onStatusChange} onActiveChange={onActiveChange} onDelete={onDeleteStore} />
             ))
           )}
         </div>
