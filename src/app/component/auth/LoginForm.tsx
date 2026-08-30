@@ -13,6 +13,7 @@ import { SheiLoader } from "../ui/SheiLoader/loader";
 import { useSheiNotification } from "@/lib/hooks/useSheiNotification";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { USER_TYPES } from "@/lib/types/enums";
 
 interface LoginFormProps {
   submitText?: string;
@@ -26,13 +27,28 @@ export function LoginForm({
   const { success, error } = useSheiNotification();
   const router = useRouter();
   const handleAdminLogin = async (values: LoginFormType) => {
-    const { error: loginError } = await supabase.auth.signInWithPassword({
+    const { data, error: loginError } = await supabase.auth.signInWithPassword({
       email: values.username, // we renamed username → email in schema
       password: values.password,
     });
 
     if (loginError) {
       error(loginError.message || "Login failed. Please try again.");
+      return;
+    }
+
+    // This panel is super-admin only. Credentials being valid isn't enough —
+    // store owners and customers share the same auth pool, so drop the session
+    // again unless the account is actually a super admin.
+    const { data: profile, error: profileError } = await supabase
+      .from("users")
+      .select("user_type")
+      .eq("id", data.user.id)
+      .maybeSingle();
+
+    if (profileError || profile?.user_type !== USER_TYPES.SUPER_ADMIN) {
+      await supabase.auth.signOut();
+      error("This account doesn't have admin access.");
       return;
     }
 

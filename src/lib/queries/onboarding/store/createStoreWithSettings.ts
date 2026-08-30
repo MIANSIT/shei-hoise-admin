@@ -1,7 +1,8 @@
 // lib/queries/onboarding/store/createStoreWithSettings.ts
 "use server";
 
-import { supabaseAdmin } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { requireSuperAdmin } from "@/lib/auth/requireSuperAdmin";
 import {
   StoreType,
   StoreSettingsType,
@@ -23,6 +24,9 @@ export async function createStoreWithSettings({
   store,
   settings,
 }: CreateStoreArgs) {
+  // "use server" makes this independently callable, not just via createUser.
+  await requireSuperAdmin();
+
   let storeId: string | null = null;
   const uploadedFiles: { bucket: string; path: string }[] = [];
 

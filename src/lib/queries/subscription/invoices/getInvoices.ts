@@ -1,10 +1,12 @@
 "use server";
 
-import { supabaseAdmin } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { requireSuperAdmin } from "@/lib/auth/requireSuperAdmin";
 import { SubscriptionInvoice } from "@/lib/types/invoice.types";
 
 export async function getInvoices() {
   try {
+    await requireSuperAdmin();
     const { data, error } = await supabaseAdmin
       .from("subscription_invoices")
       .select(
@@ -38,6 +40,7 @@ export async function getInvoices() {
 
 export async function getInvoiceById(id: string) {
   try {
+    await requireSuperAdmin();
     const { data, error } = await supabaseAdmin
       .from("subscription_invoices")
       .select(

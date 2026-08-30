@@ -1,10 +1,12 @@
 "use server";
 
-import { supabaseAdmin } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { requireSuperAdmin } from "@/lib/auth/requireSuperAdmin";
 import { SimpleStore } from "@/lib/types/subscription.types";
 
 export async function getAllStoresForDropdown() {
   try {
+    await requireSuperAdmin();
     const { data, error } = await supabaseAdmin
       .from("stores")
       .select("id, store_name, store_slug, owner_id")

@@ -1,6 +1,7 @@
 "use server";
 
-import { supabaseAdmin } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { requireSuperAdmin } from "@/lib/auth/requireSuperAdmin";
 import { CreatePlanInput } from "@/lib/types/subscription.types";
 
 export async function updateSubscriptionPlan(
@@ -8,6 +9,7 @@ export async function updateSubscriptionPlan(
   input: Partial<CreatePlanInput>
 ) {
   try {
+    await requireSuperAdmin();
     if (input.is_default_trial_plan) {
       const { error: clearError } = await supabaseAdmin
         .from("subscription_plans")

@@ -2,9 +2,14 @@
 "use server";
 
 import { CreateUserType } from "@/lib/schema/onboarding/user.schema";
-import { supabaseAdmin } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { requireSuperAdmin } from "@/lib/auth/requireSuperAdmin";
 
 export async function createUserCore(payload: CreateUserType) {
+  // "use server" makes this independently callable, and it mints Supabase Auth
+  // accounts with an arbitrary user_type — the highest-value action here.
+  await requireSuperAdmin();
+
   // 1️⃣ Auth user
   const { data, error: authError } = await supabaseAdmin.auth.admin.createUser({
     email: payload.email,

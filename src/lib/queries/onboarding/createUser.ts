@@ -5,13 +5,18 @@ import {
   createUserSchema,
   CreateUserType,
 } from "@/lib/schema/onboarding/user.schema";
-import { supabaseAdmin } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { requireSuperAdmin } from "@/lib/auth/requireSuperAdmin";
 import { createUserCore } from "@/lib/queries/onboarding/store/createUserCore";
 import { createStoreWithSettings } from "@/lib/queries/onboarding/store/createStoreWithSettings";
 import { DomainErrorCode } from "@/lib/errors/domainErrors";
 // ✅ Domain error codes for production
 
 export async function createUser(data: CreateUserType) {
+  // Guard outside the try below: an unauthorized call must not enter the
+  // rollback path, which would mask the auth failure as CREATE_USER_FAILED.
+  await requireSuperAdmin();
+
   const payload = createUserSchema.parse(data);
 
   let userId: string | null = null;

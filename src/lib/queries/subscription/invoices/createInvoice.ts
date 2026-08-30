@@ -1,6 +1,7 @@
 "use server";
 
-import { supabaseAdmin } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { requireSuperAdmin } from "@/lib/auth/requireSuperAdmin";
 import { CreateInvoiceInput } from "@/lib/types/invoice.types";
 import { PAYMENT_DETAILS } from "@/lib/constants/paymentDetails";
 
@@ -20,6 +21,7 @@ function getDefaultDueDate(): string {
 
 export async function createInvoice(input: CreateInvoiceInput) {
   try {
+    await requireSuperAdmin();
     const invoice_number = generateInvoiceNumber();
     const due_date = input.due_date || getDefaultDueDate();
 

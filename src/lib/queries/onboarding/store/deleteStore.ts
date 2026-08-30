@@ -1,10 +1,13 @@
 // lib/actions/stores/deleteStore.ts
 "use server";
 
-import { supabaseAdmin } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { requireSuperAdmin } from "@/lib/auth/requireSuperAdmin";
 
 export async function deleteStore(storeId: string) {
   try {
+    await requireSuperAdmin();
+
     // 1️⃣ Look up the owner before deleting anything (needed for the
     // toast/UI state update below — the RPC also computes this itself)
     const { data: store, error: fetchError } = await supabaseAdmin

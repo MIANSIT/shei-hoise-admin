@@ -49,11 +49,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       return;
     }
 
-    if (
-      role !== undefined &&
-      role !== USER_TYPES.SUPER_ADMIN &&
-      role !== USER_TYPES.STORE_OWNER
-    ) {
+    if (role !== undefined && role !== USER_TYPES.SUPER_ADMIN) {
       router.push("/");
     }
   }, [authLoading, userLoading, session, router, role]);
