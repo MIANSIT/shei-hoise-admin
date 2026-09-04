@@ -30,6 +30,7 @@ const PRESET_FEATURES = [
   { key: "expense_tracking", label: "Expense Tracking" },
   { key: "courier_tracking", label: "Courier Tracking" },
   { key: "vendor_flow", label: "Vendor Flow" },
+  { key: "storefront_design", label: "Storefront Design" },
 ];
 
 const PRESET_LIMITS = [
