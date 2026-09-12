@@ -15,6 +15,7 @@ import {
   SubscriptionPlan,
   CreatePlanInput,
 } from "@/lib/types/subscription.types";
+import { effectiveHalfYearlyPrice } from "@/lib/utils/planComparison";
 
 function PriceBadge({ amount, label }: { amount: number; label: string }) {
   return (
@@ -303,6 +304,7 @@ export default function SubscriptionPlansPage() {
                     {/* Center: pricing */}
                     <div className="flex items-center gap-6 shrink-0 border-l border-r border-slate-100 dark:border-white/[0.06] px-6">
                       <PriceBadge amount={plan.price_monthly} label="/ mo" />
+                      <PriceBadge amount={effectiveHalfYearlyPrice(plan)} label="/ 6mo" />
                       <PriceBadge amount={plan.price_yearly} label="/ yr" />
                     </div>
 

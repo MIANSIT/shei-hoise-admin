@@ -11,6 +11,8 @@ import {
   getComparisonFeatureKeys,
   getComparisonLimitKeys,
   yearlySavingsPct,
+  halfYearlySavingsPct,
+  effectiveHalfYearlyPrice,
 } from "@/lib/utils/planComparison";
 
 function formatMoney(amount: number, currency: string) {
@@ -147,6 +149,19 @@ export function PlanComparisonPdfButton({ plans }: { plans: SubscriptionPlan[] }
                   ))}
                 </tr>
                 <tr>
+                  <td style={{ padding: "10px 8px", color: "#64748b", borderBottom: "1px solid #f1f5f9" }}>Half Yearly</td>
+                  {comparable.map((p) => {
+                    const price = effectiveHalfYearlyPrice(p);
+                    const pct = halfYearlySavingsPct(p.price_monthly, price);
+                    return (
+                      <td key={p.id} style={{ textAlign: "center", padding: "10px 8px", borderBottom: "1px solid #f1f5f9", backgroundColor: p.is_featured ? "#f5f3ff" : "transparent" }}>
+                        <div style={{ fontWeight: 700 }}>{formatMoney(price, p.currency)}</div>
+                        {pct > 0 && <div style={{ fontSize: 9.5, color: "#b8892b" }}>save {pct}%</div>}
+                      </td>
+                    );
+                  })}
+                </tr>
+                <tr>
                   <td style={{ padding: "10px 8px", color: "#64748b", borderBottom: "1px solid #f1f5f9" }}>Yearly</td>
                   {comparable.map((p) => {
                     const pct = yearlySavingsPct(p.price_monthly, p.price_yearly);
@@ -157,6 +172,11 @@ export function PlanComparisonPdfButton({ plans }: { plans: SubscriptionPlan[] }
                       </td>
                     );
                   })}
+                </tr>
+                <tr>
+                  <td colSpan={comparable.length + 1} style={{ textAlign: "center", padding: "10px 8px", fontStyle: "italic", fontSize: 10.5, color: "#94a3b8", borderBottom: "1px solid #f1f5f9" }}>
+                    Need a custom-length term (2, 4, 5 months...)? Contact us — {pd.company.phone} · {pd.company.email}
+                  </td>
                 </tr>
 
                 {limitKeys.length > 0 && (

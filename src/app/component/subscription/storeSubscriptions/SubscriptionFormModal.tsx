@@ -14,6 +14,7 @@ import {
   CreateStoreSubscriptionInput,
   UpdateStoreSubscriptionInput,
 } from "@/lib/types/subscription.types";
+import { calcCycleAmount, cycleMonths, monthsBetween } from "@/lib/utils/billingCycle";
 
 interface SubscriptionFormModalProps {
   open: boolean;
@@ -32,25 +33,14 @@ const CYCLE_OPTIONS = [
   { value: BillingCycle.MONTHLY, label: "Monthly" },
   { value: BillingCycle.HALF_YEARLY, label: "6 Months" },
   { value: BillingCycle.YEARLY, label: "Yearly" },
+  { value: BillingCycle.CUSTOM, label: "Custom" },
 ];
-
-const CYCLE_MONTHS: Record<BillingCycle, number> = {
-  [BillingCycle.MONTHLY]: 1,
-  [BillingCycle.HALF_YEARLY]: 6,
-  [BillingCycle.YEARLY]: 12,
-};
 
 function addMonths(dateInput: string, months: number): string {
   if (!dateInput) return "";
   const d = new Date(dateInput);
   d.setMonth(d.getMonth() + months);
   return d.toISOString().slice(0, 10);
-}
-
-function calcAmount(plan: SubscriptionPlan, cycle: BillingCycle): number {
-  if (cycle === BillingCycle.YEARLY) return plan.price_yearly || plan.price_monthly * 12;
-  if (cycle === BillingCycle.HALF_YEARLY) return plan.price_monthly * 6;
-  return plan.price_monthly;
 }
 
 export function SubscriptionFormModal({
@@ -69,6 +59,7 @@ export function SubscriptionFormModal({
   const [planId, setPlanId] = useState("");
   const [status, setStatus] = useState<SubscriptionStatus>(SubscriptionStatus.INCOMPLETE);
   const [billingCycle, setBillingCycle] = useState<BillingCycle>(BillingCycle.MONTHLY);
+  const [customMonths, setCustomMonths] = useState(2);
   const [startedAt, setStartedAt] = useState(toDateInput(new Date().toISOString()));
   const [expiresAt, setExpiresAt] = useState("");
   const [trialEndsAt, setTrialEndsAt] = useState("");
@@ -80,7 +71,7 @@ export function SubscriptionFormModal({
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const selectedPlan = plans.find((p) => p.id === planId) ?? null;
-  const planAmount = selectedPlan ? calcAmount(selectedPlan, billingCycle) : null;
+  const planAmount = selectedPlan ? calcCycleAmount(selectedPlan, billingCycle, customMonths) : null;
 
   useEffect(() => {
     setValidationError(null);
@@ -89,6 +80,14 @@ export function SubscriptionFormModal({
       setPlanId(subscription.plan_id);
       setStatus(subscription.status);
       setBillingCycle(subscription.billing_cycle);
+      if (subscription.billing_cycle === BillingCycle.CUSTOM) {
+        setCustomMonths(
+          monthsBetween(
+            new Date(subscription.current_period_start),
+            new Date(subscription.current_period_end || subscription.expires_at || subscription.current_period_start)
+          )
+        );
+      }
       setStartedAt(toDateInput(subscription.started_at));
       setExpiresAt(toDateInput(subscription.expires_at));
       setTrialEndsAt(toDateInput(subscription.trial_ends_at));
@@ -102,11 +101,12 @@ export function SubscriptionFormModal({
       setPlanId("");
       setStatus(SubscriptionStatus.INCOMPLETE);
       setBillingCycle(BillingCycle.MONTHLY);
+      setCustomMonths(2);
       setStartedAt(today);
-      setExpiresAt(addMonths(today, CYCLE_MONTHS[BillingCycle.MONTHLY]));
+      setExpiresAt(addMonths(today, 1));
       setTrialEndsAt("");
       setPeriodStart(today);
-      setPeriodEnd(addMonths(today, CYCLE_MONTHS[BillingCycle.MONTHLY]));
+      setPeriodEnd(addMonths(today, 1));
       setCancelsAtPeriodEnd(false);
       setPaymentProvider("");
     }
@@ -269,14 +269,14 @@ export function SubscriptionFormModal({
         {/* Billing Cycle pills */}
         <div>
           <label className={labelCls}>Billing Cycle</label>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-4 gap-2">
             {CYCLE_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 type="button"
                 onClick={() => {
                   setBillingCycle(opt.value);
-                  const months = CYCLE_MONTHS[opt.value];
+                  const months = cycleMonths(opt.value, customMonths);
                   setExpiresAt(addMonths(startedAt, months));
                   setPeriodEnd(addMonths(periodStart, months));
                 }}
@@ -290,6 +290,23 @@ export function SubscriptionFormModal({
               </button>
             ))}
           </div>
+          {billingCycle === BillingCycle.CUSTOM && (
+            <div className="mt-2.5 flex items-center gap-2">
+              <input
+                type="number"
+                min={1}
+                className={inputCls + " w-28"}
+                value={customMonths}
+                onChange={(e) => {
+                  const months = Math.max(1, parseInt(e.target.value) || 1);
+                  setCustomMonths(months);
+                  setExpiresAt(addMonths(startedAt, months));
+                  setPeriodEnd(addMonths(periodStart, months));
+                }}
+              />
+              <span className="text-xs text-slate-500 dark:text-slate-400">months — priced at Monthly × {customMonths}</span>
+            </div>
+          )}
         </div>
 
         {/* Status */}
@@ -332,7 +349,7 @@ export function SubscriptionFormModal({
                     value={startedAt}
                     onChange={(e) => {
                       setStartedAt(e.target.value);
-                      setExpiresAt(addMonths(e.target.value, CYCLE_MONTHS[billingCycle]));
+                      setExpiresAt(addMonths(e.target.value, cycleMonths(billingCycle, customMonths)));
                     }}
                   />
                 </div>
@@ -350,7 +367,7 @@ export function SubscriptionFormModal({
                     value={periodStart}
                     onChange={(e) => {
                       setPeriodStart(e.target.value);
-                      setPeriodEnd(addMonths(e.target.value, CYCLE_MONTHS[billingCycle]));
+                      setPeriodEnd(addMonths(e.target.value, cycleMonths(billingCycle, customMonths)));
                     }}
                   />
                 </div>

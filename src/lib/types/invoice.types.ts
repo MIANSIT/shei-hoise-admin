@@ -81,7 +81,9 @@ export interface SubscriptionInvoice {
     slug: string;
   } | null;
   store_subscriptions?: {
+    plan_id: string;
     current_period_end: string | null;
+    metadata: Record<string, unknown>;
   } | null;
 }
 

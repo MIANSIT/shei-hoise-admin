@@ -11,6 +11,8 @@ import {
   getComparisonFeatureKeys,
   getComparisonLimitKeys,
   yearlySavingsPct,
+  halfYearlySavingsPct,
+  effectiveHalfYearlyPrice,
 } from "@/lib/utils/planComparison";
 
 // Baseline platform capabilities — always included, regardless of plan.
@@ -250,6 +252,19 @@ export default function PlanOverviewPage() {
                         ))}
                       </tr>
                       <tr className="border-b border-slate-100 dark:border-white/[0.05]">
+                        <td className="px-4 py-2.5 text-slate-500 dark:text-slate-400">Half Yearly</td>
+                        {comparable.map((p) => {
+                          const price = effectiveHalfYearlyPrice(p);
+                          const pct = halfYearlySavingsPct(p.price_monthly, price);
+                          return (
+                            <td key={p.id} className={`px-4 py-2.5 text-center ${p.is_featured ? "bg-violet-50 dark:bg-violet-500/10" : ""}`}>
+                              <div className="font-bold text-slate-800 dark:text-slate-100">{formatMoney(price, p.currency)}</div>
+                              {pct > 0 && <div className="text-[10px] text-amber-600 dark:text-amber-400">save {pct}%</div>}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                      <tr className="border-b border-slate-100 dark:border-white/[0.05]">
                         <td className="px-4 py-2.5 text-slate-500 dark:text-slate-400">Yearly</td>
                         {comparable.map((p) => {
                           const pct = yearlySavingsPct(p.price_monthly, p.price_yearly);
@@ -260,6 +275,11 @@ export default function PlanOverviewPage() {
                             </td>
                           );
                         })}
+                      </tr>
+                      <tr className="border-b border-slate-100 dark:border-white/[0.05]">
+                        <td colSpan={comparable.length + 1} className="px-4 py-2.5 text-center text-slate-500 dark:text-slate-400 italic">
+                          Need a custom-length term (2, 4, 5 months...)? Contact us — {pd.company.phone} · {pd.company.email}
+                        </td>
                       </tr>
 
                       {limitKeys.length > 0 && (

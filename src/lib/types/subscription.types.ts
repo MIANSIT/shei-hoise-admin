@@ -12,6 +12,7 @@ export enum BillingCycle {
   MONTHLY = "monthly",
   HALF_YEARLY = "half-yearly",
   YEARLY = "yearly",
+  CUSTOM = "custom",
 }
 
 export const SUBSCRIPTION_STATUS_LABELS: Record<SubscriptionStatus, string> = {
@@ -69,6 +70,7 @@ export const BILLING_CYCLE_LABELS: Record<BillingCycle, string> = {
   [BillingCycle.MONTHLY]: "Monthly",
   [BillingCycle.HALF_YEARLY]: "Half Yearly",
   [BillingCycle.YEARLY]: "Yearly",
+  [BillingCycle.CUSTOM]: "Custom",
 };
 
 export interface SubscriptionPlan {
@@ -77,6 +79,7 @@ export interface SubscriptionPlan {
   slug: string;
   description?: string | null;
   price_monthly: number;
+  price_half_yearly?: number | null;
   price_yearly: number;
   currency: string;
   features: Record<string, unknown>;
@@ -127,6 +130,7 @@ export interface StoreSubscription {
     name: string;
     slug: string;
     price_monthly: number;
+    price_half_yearly?: number | null;
     price_yearly: number;
   } | null;
   subscription_invoices?: {
@@ -149,6 +153,7 @@ export type CreatePlanInput = {
   slug: string;
   description?: string;
   price_monthly: number;
+  price_half_yearly?: number | null;
   price_yearly: number;
   currency?: string;
   features?: Record<string, unknown>;

@@ -18,6 +18,9 @@ import { deleteStoreSubscription } from "@/lib/queries/subscription/storeSubscri
 import { getSubscriptionPlans } from "@/lib/queries/subscription/plans/getPlans";
 import { getAllStoresForDropdown } from "@/lib/queries/subscription/getAllStores";
 import { createInvoice } from "@/lib/queries/subscription/invoices/createInvoice";
+import { calcCycleAmount, monthsBetween } from "@/lib/utils/billingCycle";
+import { getPendingPlanSwitch } from "@/lib/utils/planSwitch";
+import { promoteDuePlanSwitches } from "@/lib/queries/subscription/storeSubscriptions/promoteDuePlanSwitches";
 import { SubscriptionFormModal } from "@/app/component/subscription/storeSubscriptions/SubscriptionFormModal";
 import { RenewSubscriptionModal } from "@/app/component/subscription/storeSubscriptions/RenewSubscriptionModal";
 import {
@@ -49,14 +52,9 @@ function formatDate(iso?: string | null) {
   return new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 }
 
-function calcAmount(plan: SubscriptionPlan, cycle: BillingCycle): number {
-  if (cycle === BillingCycle.YEARLY) return plan.price_yearly || plan.price_monthly * 12;
-  if (cycle === BillingCycle.HALF_YEARLY) return plan.price_monthly * 6;
-  return plan.price_monthly;
-}
-
 function SubscriptionRow({
   sub,
+  plans,
   onEdit,
   onDelete,
   onCancel,
@@ -64,6 +62,7 @@ function SubscriptionRow({
   onRenew,
 }: {
   sub: StoreSubscription;
+  plans: SubscriptionPlan[];
   onEdit: (sub: StoreSubscription) => void;
   onDelete: (id: string) => void;
   onCancel: (id: string) => void;
@@ -76,9 +75,15 @@ function SubscriptionRow({
   const latestInvoice = sub.subscription_invoices?.[0];
   const [expanded, setExpanded] = useState(false);
   const router = useRouter();
+  const pendingSwitch = getPendingPlanSwitch(sub.metadata);
+  const pendingPlanName = pendingSwitch ? plans.find((p) => p.id === pendingSwitch.pending_plan_id)?.name : null;
 
+  const customMonths =
+    sub.billing_cycle === BillingCycle.CUSTOM && sub.current_period_end
+      ? monthsBetween(new Date(sub.current_period_start), new Date(sub.current_period_end))
+      : undefined;
   const planAmount = plan
-    ? calcAmount(plan as SubscriptionPlan, sub.billing_cycle)
+    ? calcCycleAmount(plan as SubscriptionPlan, sub.billing_cycle, customMonths)
     : null;
 
   const initials = store?.store_name
@@ -128,6 +133,11 @@ function SubscriptionRow({
               / {BILLING_CYCLE_LABELS[sub.billing_cycle]}
             </span>
           </div>
+          {pendingSwitch && (
+            <div className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold mt-0.5 truncate" title={`Applies once the current period ends — a manual "Apply due switches" run or the hourly job will pick it up.`}>
+              → {pendingPlanName ?? "plan"} on {formatDate(pendingSwitch.pending_plan_effective_at)}
+            </div>
+          )}
         </div>
 
         {/* Status */}
@@ -253,6 +263,7 @@ export default function StoreSubscriptionsPage() {
   const [cancelConfirm, setCancelConfirm] = useState<string | null>(null);
   const [cancelPeriodEnd, setCancelPeriodEnd] = useState(false);
   const [canceling, setCanceling] = useState(false);
+  const [applyingSwitches, setApplyingSwitches] = useState(false);
 
   const fetchAll = async () => {
     setLoading(true);
@@ -279,14 +290,17 @@ export default function StoreSubscriptionsPage() {
       };
       const plan = plans.find((p) => p.id === input.plan_id);
       if (plan) {
-        const amount = calcAmount(plan, input.billing_cycle ?? BillingCycle.MONTHLY);
+        const cycle = input.billing_cycle ?? BillingCycle.MONTHLY;
         const periodStart = sub.current_period_start || sub.started_at || new Date().toISOString();
         const periodEnd = sub.current_period_end || sub.expires_at || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+        const customMonths =
+          cycle === BillingCycle.CUSTOM ? monthsBetween(new Date(periodStart), new Date(periodEnd)) : undefined;
+        const amount = calcCycleAmount(plan, cycle, customMonths);
         const dueDate = new Date(Date.now() + PAYMENT_DETAILS.invoiceDueDays * 24 * 60 * 60 * 1000).toISOString();
         await createInvoice({
           subscription_id: sub.id, store_id: sub.store_id, user_id: sub.user_id,
           plan_id: sub.plan_id, plan_name: plan.name, amount,
-          currency: plan.currency, billing_cycle: input.billing_cycle ?? BillingCycle.MONTHLY,
+          currency: plan.currency, billing_cycle: cycle,
           period_start: periodStart, period_end: periodEnd, due_date: dueDate,
         });
       }
@@ -349,6 +363,18 @@ export default function StoreSubscriptionsPage() {
     setCancelPeriodEnd(false);
   };
 
+  const handleApplyDueSwitches = async () => {
+    setApplyingSwitches(true);
+    const res = await promoteDuePlanSwitches();
+    if (res.success) {
+      success(res.promoted > 0 ? `Applied ${res.promoted} due plan switch(es)` : "No plan switches were due yet");
+      if (res.promoted > 0) await fetchAll();
+    } else {
+      notifyError("Failed to apply due plan switches");
+    }
+    setApplyingSwitches(false);
+  };
+
   const openRenew = (sub: StoreSubscription) => {
     const pending = sub.subscription_invoices?.[0];
     if (pending && (pending.status === "unpaid" || pending.status === "submitted")) {
@@ -375,7 +401,11 @@ export default function StoreSubscriptionsPage() {
       notifyError("Plan not found");
       return;
     }
-    const amount = calcAmount(plan, billing_cycle);
+    const customMonths =
+      billing_cycle === BillingCycle.CUSTOM
+        ? monthsBetween(new Date(period_start), new Date(period_end))
+        : undefined;
+    const amount = calcCycleAmount(plan, billing_cycle, customMonths);
     const dueDate = new Date(Date.now() + PAYMENT_DETAILS.invoiceDueDays * 24 * 60 * 60 * 1000);
 
     const res = await createInvoice({
@@ -440,6 +470,15 @@ export default function StoreSubscriptionsPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                <button
+                  onClick={handleApplyDueSwitches}
+                  disabled={applyingSwitches}
+                  title="Apply any queued plan switches whose effective date has arrived — this also runs automatically every hour"
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.10] disabled:opacity-60 text-slate-700 dark:text-slate-300 text-sm font-semibold transition"
+                >
+                  <RefreshCw className={`w-4 h-4 ${applyingSwitches ? "animate-spin" : ""}`} />
+                  {applyingSwitches ? "Applying…" : "Apply Due Switches"}
+                </button>
                 <button
                   onClick={() => router.push("/dashboard/subscription/invoices")}
                   className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.10] text-slate-700 dark:text-slate-300 text-sm font-semibold transition"
@@ -571,6 +610,7 @@ export default function StoreSubscriptionsPage() {
                 <SubscriptionRow
                   key={sub.id}
                   sub={sub}
+                  plans={plans}
                   onEdit={(s) => { setEditing(s); setModalOpen(true); }}
                   onDelete={(id) => setDeleteConfirm(id)}
                   onCancel={(id) => { setCancelConfirm(id); setCancelPeriodEnd(false); }}

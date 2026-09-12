@@ -21,6 +21,7 @@ const DEFAULT_FORM: CreatePlanInput = {
   slug: "",
   description: "",
   price_monthly: 0,
+  price_half_yearly: null,
   price_yearly: 0,
   currency: "BDT",
   trial_days: 0,
@@ -53,6 +54,7 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
         slug: plan.slug,
         description: plan.description ?? "",
         price_monthly: plan.price_monthly,
+        price_half_yearly: plan.price_half_yearly ?? null,
         price_yearly: plan.price_yearly,
         currency: plan.currency,
         trial_days: plan.trial_days,
@@ -176,7 +178,7 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
         </div>
 
         {/* Pricing */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <div>
             <label className={labelCls}>Monthly Price (৳)</label>
             <input
@@ -185,6 +187,19 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
               className={inputCls}
               value={form.price_monthly}
               onChange={(e) => set("price_monthly", parseFloat(e.target.value) || 0)}
+            />
+          </div>
+          <div>
+            <label className={labelCls}>Half Yearly Price (৳)</label>
+            <input
+              type="number"
+              min={0}
+              placeholder={`Default: ${(form.price_monthly * 6).toLocaleString()}`}
+              className={inputCls}
+              value={form.price_half_yearly ?? ""}
+              onChange={(e) =>
+                set("price_half_yearly", e.target.value === "" ? null : parseFloat(e.target.value) || 0)
+              }
             />
           </div>
           <div>
@@ -208,6 +223,10 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
             />
           </div>
         </div>
+        <p className="text-[11px] text-slate-400 -mt-2">
+          Leave Half Yearly Price blank to default to Monthly × 6. A custom-length subscription
+          (e.g. 2 or 4 months) is priced per-store when assigning it — it isn&apos;t listed here.
+        </p>
 
         {/* Trial & Sort */}
         <div className="grid grid-cols-2 gap-3">

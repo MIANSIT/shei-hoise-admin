@@ -9,7 +9,7 @@ import {
   BillingCycle,
   BILLING_CYCLE_LABELS,
 } from "@/lib/types/subscription.types";
-import { addBillingCycle } from "@/lib/utils/billingCycle";
+import { addBillingCycle, calcCycleAmount } from "@/lib/utils/billingCycle";
 
 interface RenewSubscriptionModalProps {
   open: boolean;
@@ -28,13 +28,8 @@ const CYCLE_OPTIONS = [
   { value: BillingCycle.MONTHLY, label: "Monthly" },
   { value: BillingCycle.HALF_YEARLY, label: "6 Months" },
   { value: BillingCycle.YEARLY, label: "Yearly" },
+  { value: BillingCycle.CUSTOM, label: "Custom" },
 ];
-
-function calcAmount(plan: SubscriptionPlan, cycle: BillingCycle): number {
-  if (cycle === BillingCycle.YEARLY) return plan.price_yearly || plan.price_monthly * 12;
-  if (cycle === BillingCycle.HALF_YEARLY) return plan.price_monthly * 6;
-  return plan.price_monthly;
-}
 
 function formatDate(d: Date) {
   return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
@@ -53,6 +48,7 @@ export function RenewSubscriptionModal({
 }: RenewSubscriptionModalProps) {
   const [planId, setPlanId] = useState("");
   const [billingCycle, setBillingCycle] = useState<BillingCycle>(BillingCycle.MONTHLY);
+  const [customMonths, setCustomMonths] = useState(2);
   const [overrideDates, setOverrideDates] = useState(false);
   const [periodStartInput, setPeriodStartInput] = useState("");
   const [periodEndInput, setPeriodEndInput] = useState("");
@@ -63,6 +59,7 @@ export function RenewSubscriptionModal({
       setPlanId(subscription.plan_id);
       setBillingCycle(subscription.billing_cycle);
     }
+    setCustomMonths(2);
     setOverrideDates(false);
     setPeriodStartInput("");
     setPeriodEndInput("");
@@ -71,13 +68,13 @@ export function RenewSubscriptionModal({
   if (!subscription) return null;
 
   const selectedPlan = plans.find((p) => p.id === planId) ?? null;
-  const amount = selectedPlan ? calcAmount(selectedPlan, billingCycle) : null;
+  const amount = selectedPlan ? calcCycleAmount(selectedPlan, billingCycle, customMonths) : null;
 
   const now = new Date();
   const existingEnd = subscription.current_period_end ? new Date(subscription.current_period_end) : null;
   const isEarlyRenewal = !!existingEnd && existingEnd > now;
   const autoPeriodStart = isEarlyRenewal ? existingEnd! : now;
-  const autoPeriodEnd = addBillingCycle(autoPeriodStart, billingCycle);
+  const autoPeriodEnd = addBillingCycle(autoPeriodStart, billingCycle, customMonths);
 
   const periodStart = overrideDates && periodStartInput ? new Date(periodStartInput) : autoPeriodStart;
   const periodEnd = overrideDates && periodEndInput ? new Date(periodEndInput) : autoPeriodEnd;
@@ -141,7 +138,7 @@ export function RenewSubscriptionModal({
           <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 block">
             Billing Cycle
           </label>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-4 gap-2">
             {CYCLE_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
@@ -157,6 +154,18 @@ export function RenewSubscriptionModal({
               </button>
             ))}
           </div>
+          {billingCycle === BillingCycle.CUSTOM && (
+            <div className="mt-2.5 flex items-center gap-2">
+              <input
+                type="number"
+                min={1}
+                className="w-24 px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 transition"
+                value={customMonths}
+                onChange={(e) => setCustomMonths(Math.max(1, parseInt(e.target.value) || 1))}
+              />
+              <span className="text-xs text-slate-500 dark:text-slate-400">months — priced at Monthly × {customMonths}</span>
+            </div>
+          )}
         </div>
 
         <div className="rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.07] px-4 py-3">

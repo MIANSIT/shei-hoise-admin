@@ -18,7 +18,7 @@ export async function getStoreSubscriptions() {
           store_slug,
           owner:owner_id (id, email, first_name, last_name)
         ),
-        subscription_plans:plan_id (id, name, slug, price_monthly, price_yearly),
+        subscription_plans:plan_id (id, name, slug, price_monthly, price_half_yearly, price_yearly),
         subscription_invoices (id, invoice_number, status, created_at)
       `
       )

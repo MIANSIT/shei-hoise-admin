@@ -29,3 +29,14 @@ export function yearlySavingsPct(monthly: number, yearly: number): number {
   const equiv = monthly * 12;
   return equiv > 0 && yearly > 0 ? Math.round((1 - yearly / equiv) * 100) : 0;
 }
+
+export function halfYearlySavingsPct(monthly: number, halfYearly: number): number {
+  const equiv = monthly * 6;
+  return equiv > 0 && halfYearly > 0 ? Math.round((1 - halfYearly / equiv) * 100) : 0;
+}
+
+// Half-yearly price to display: the plan's own price when the admin has set one,
+// otherwise the plain monthly x 6 default (no discount implied).
+export function effectiveHalfYearlyPrice(plan: SubscriptionPlan): number {
+  return plan.price_half_yearly || plan.price_monthly * 6;
+}

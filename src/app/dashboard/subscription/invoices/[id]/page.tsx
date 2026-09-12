@@ -24,10 +24,11 @@ import {
   INVOICE_STATUS_LABELS,
   INVOICE_STATUS_COLORS,
 } from "@/lib/types/invoice.types";
-import { BILLING_CYCLE_LABELS, SubscriptionStatus } from "@/lib/types/subscription.types";
+import { BILLING_CYCLE_LABELS, BillingCycle, SubscriptionStatus } from "@/lib/types/subscription.types";
 import { PAYMENT_DETAILS } from "@/lib/constants/paymentDetails";
 import { updateStoreSubscription } from "@/lib/queries/subscription/storeSubscriptions/updateStoreSubscription";
-import { addBillingCycle } from "@/lib/utils/billingCycle";
+import { addBillingCycle, monthsBetween } from "@/lib/utils/billingCycle";
+import { withPendingPlanSwitch, withoutPendingPlanSwitch } from "@/lib/utils/planSwitch";
 
 function formatDate(iso?: string | null) {
   if (!iso) return "—";
@@ -123,16 +124,41 @@ export default function InvoiceDetailPage() {
         ? new Date(invoice.store_subscriptions.current_period_end)
         : null;
       const periodStart = existingPeriodEnd && existingPeriodEnd > now ? existingPeriodEnd : now;
-      const periodEnd = addBillingCycle(periodStart, invoice.billing_cycle);
+      const customMonths =
+        invoice.billing_cycle === BillingCycle.CUSTOM
+          ? monthsBetween(new Date(invoice.period_start), new Date(invoice.period_end))
+          : undefined;
+      const periodEnd = addBillingCycle(periodStart, invoice.billing_cycle, customMonths);
+      // A plan switch that lands before the current period ends is queued
+      // instead of applied now — otherwise the store gets the new plan's
+      // features/limits for days it already paid for under the old plan.
+      const currentPlanId = invoice.store_subscriptions?.plan_id;
+      const isEarlyRenewal = !!existingPeriodEnd && existingPeriodEnd > now;
+      const isPlanSwitch = !!currentPlanId && currentPlanId !== invoice.plan_id;
+      const existingMetadata = (invoice.store_subscriptions?.metadata as Record<string, unknown>) ?? {};
+      const subscriptionUpdate =
+        isPlanSwitch && isEarlyRenewal
+          ? {
+              status: SubscriptionStatus.ACTIVE,
+              current_period_start: periodStart.toISOString(),
+              current_period_end: periodEnd.toISOString(),
+              expires_at: periodEnd.toISOString(),
+              payment_provider: payMethod,
+              canceled_at: null,
+              metadata: withPendingPlanSwitch(existingMetadata, invoice.plan_id, periodStart.toISOString()),
+            }
+          : {
+              plan_id: invoice.plan_id,
+              status: SubscriptionStatus.ACTIVE,
+              current_period_start: periodStart.toISOString(),
+              current_period_end: periodEnd.toISOString(),
+              expires_at: periodEnd.toISOString(),
+              payment_provider: payMethod,
+              canceled_at: null,
+              metadata: withoutPendingPlanSwitch(existingMetadata),
+            };
       await Promise.all([
-        updateStoreSubscription(invoice.subscription_id, {
-          status: SubscriptionStatus.ACTIVE,
-          current_period_start: periodStart.toISOString(),
-          current_period_end: periodEnd.toISOString(),
-          expires_at: periodEnd.toISOString(),
-          payment_provider: payMethod,
-          canceled_at: null,
-        }),
+        updateStoreSubscription(invoice.subscription_id, subscriptionUpdate),
         updateInvoice(invoice.id, {
           period_start: periodStart.toISOString(),
           period_end: periodEnd.toISOString(),

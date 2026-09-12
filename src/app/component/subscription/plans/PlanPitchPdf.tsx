@@ -6,6 +6,7 @@ import { useSheiNotification } from "@/lib/hooks/useSheiNotification";
 import { SubscriptionPlan } from "@/lib/types/subscription.types";
 import { PAYMENT_DETAILS } from "@/lib/constants/paymentDetails";
 import { featureLabel, limitLabel } from "@/lib/constants/planFeaturePresets";
+import { effectiveHalfYearlyPrice, halfYearlySavingsPct } from "@/lib/utils/planComparison";
 
 function formatMoney(amount: number, currency: string) {
   const symbol = currency === "BDT" ? "৳" : `${currency} `;
@@ -32,6 +33,8 @@ export function PlanPitchPdfButton({ plan }: { plan: SubscriptionPlan }) {
     yearlyMonthlyEquivalent > 0 && plan.price_yearly > 0
       ? Math.round((1 - plan.price_yearly / yearlyMonthlyEquivalent) * 100)
       : 0;
+  const halfYearlyPrice = effectiveHalfYearlyPrice(plan);
+  const halfYearlySavings = halfYearlySavingsPct(plan.price_monthly, halfYearlyPrice);
 
   const downloadPDF = async () => {
     if (!pdfRef.current) return;
@@ -115,21 +118,40 @@ export function PlanPitchPdfButton({ plan }: { plan: SubscriptionPlan }) {
 
         <div style={{ padding: "32px 48px" }}>
           {/* Pricing */}
-          <div style={{ display: "flex", gap: 16, marginBottom: 28 }}>
-            <div style={{ flex: 1, borderRadius: 16, border: "2px solid #ede9fe", padding: "20px 24px", textAlign: "center" }}>
+          <div style={{ display: "flex", gap: 14, marginBottom: 16 }}>
+            <div style={{ flex: 1, borderRadius: 16, border: "2px solid #ede9fe", padding: "18px 16px", textAlign: "center" }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1 }}>
                 Monthly
               </div>
-              <div style={{ fontSize: 32, fontWeight: 900, color: "#0f172a", marginTop: 6 }}>
+              <div style={{ fontSize: 26, fontWeight: 900, color: "#0f172a", marginTop: 6 }}>
                 {formatMoney(plan.price_monthly, plan.currency)}
               </div>
               <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>billed every month</div>
             </div>
-            <div style={{ flex: 1, borderRadius: 16, border: "2px solid #7c3aed", padding: "20px 24px", textAlign: "center", position: "relative" }}>
+            <div style={{ flex: 1, borderRadius: 16, border: "2px solid #ede9fe", padding: "18px 16px", textAlign: "center", position: "relative" }}>
+              {halfYearlySavings > 0 && (
+                <div
+                  style={{
+                    position: "absolute", top: -12, right: 12, backgroundColor: "#16a34a", color: "#fff",
+                    fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 20,
+                  }}
+                >
+                  Save {halfYearlySavings}%
+                </div>
+              )}
+              <div style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1 }}>
+                Half Yearly
+              </div>
+              <div style={{ fontSize: 26, fontWeight: 900, color: "#0f172a", marginTop: 6 }}>
+                {formatMoney(halfYearlyPrice, plan.currency)}
+              </div>
+              <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>billed every 6 months</div>
+            </div>
+            <div style={{ flex: 1, borderRadius: 16, border: "2px solid #7c3aed", padding: "18px 16px", textAlign: "center", position: "relative" }}>
               {yearlySavingsPct > 0 && (
                 <div
                   style={{
-                    position: "absolute", top: -12, right: 16, backgroundColor: "#16a34a", color: "#fff",
+                    position: "absolute", top: -12, right: 12, backgroundColor: "#16a34a", color: "#fff",
                     fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 20,
                   }}
                 >
@@ -139,11 +161,15 @@ export function PlanPitchPdfButton({ plan }: { plan: SubscriptionPlan }) {
               <div style={{ fontSize: 10, fontWeight: 700, color: "#7c3aed", textTransform: "uppercase", letterSpacing: 1 }}>
                 Yearly
               </div>
-              <div style={{ fontSize: 32, fontWeight: 900, color: "#0f172a", marginTop: 6 }}>
+              <div style={{ fontSize: 26, fontWeight: 900, color: "#0f172a", marginTop: 6 }}>
                 {formatMoney(plan.price_yearly, plan.currency)}
               </div>
               <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>billed every year</div>
             </div>
+          </div>
+
+          <div style={{ textAlign: "center", fontSize: 11, color: "#94a3b8", marginBottom: 28 }}>
+            Need a different term — 2, 4, or any custom number of months? Contact us — {pd.company.phone} · {pd.company.email}
           </div>
 
           {plan.trial_days > 0 && (
