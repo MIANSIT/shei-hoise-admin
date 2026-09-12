@@ -9,6 +9,8 @@ import { createSubscriptionPlan } from "@/lib/queries/subscription/plans/createP
 import { updateSubscriptionPlan } from "@/lib/queries/subscription/plans/updatePlan";
 import { deleteSubscriptionPlan } from "@/lib/queries/subscription/plans/deletePlan";
 import { PlanFormModal } from "@/app/component/subscription/plans/PlanFormModal";
+import { PlanPitchPdfButton } from "@/app/component/subscription/plans/PlanPitchPdf";
+import { PlanComparisonPdfButton } from "@/app/component/subscription/plans/PlanComparisonPdf";
 import {
   SubscriptionPlan,
   CreatePlanInput,
@@ -192,13 +194,16 @@ export default function SubscriptionPlansPage() {
                 Manage pricing plans available to store owners
               </p>
             </div>
-            <button
-              onClick={() => { setEditing(null); setModalOpen(true); }}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold shadow transition"
-            >
-              <Plus className="w-4 h-4" />
-              New Plan
-            </button>
+            <div className="flex items-center gap-2">
+              <PlanComparisonPdfButton plans={plans} />
+              <button
+                onClick={() => { setEditing(null); setModalOpen(true); }}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold shadow transition"
+              >
+                <Plus className="w-4 h-4" />
+                New Plan
+              </button>
+            </div>
           </div>
 
           {/* Stats */}
@@ -359,6 +364,7 @@ export default function SubscriptionPlansPage() {
 
                       {/* Edit / Delete */}
                       <div className="flex gap-1.5">
+                        <PlanPitchPdfButton plan={plan} />
                         <button
                           onClick={() => { setEditing(plan); setModalOpen(true); }}
                           className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-white/[0.06] hover:bg-violet-50 dark:hover:bg-violet-500/10 text-slate-600 dark:text-slate-300 hover:text-violet-700 dark:hover:text-violet-400 text-xs font-medium transition"

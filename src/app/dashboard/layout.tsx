@@ -199,7 +199,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="min-h-screen flex flex-col">
           {/* Header */}
           <header
-            className="flex items-center justify-between p-1 shadow-md sticky top-0 z-50"
+            className="flex items-center justify-between p-1 shadow-md sticky top-0 z-50 print:hidden"
             style={{
               background: "var(--card)",
               color: "var(--card-foreground)",
@@ -246,7 +246,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           <div className="flex flex-1">
             {!isMobile && (
               <div
-                className={`sticky top-0 h-screen shadow-md transition-all duration-300 ${isSidebarOpen}`}
+                className={`sticky top-0 h-screen shadow-md transition-all duration-300 print:hidden ${isSidebarOpen}`}
                 style={{ background: "var(--sidebar)" }}
               >
                 <Sidebar collapsed={!isSidebarOpen} themeMode={theme} />
@@ -278,14 +278,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               </div>
             </Drawer>
 
-            <main className="flex-1 flex flex-col overflow-auto min-h-[calc(100vh-73px)] relative ">
+            <main className="flex-1 flex flex-col overflow-auto min-h-[calc(100vh-73px)] relative print:overflow-visible print:min-h-0 print:h-auto">
               <Toaster position="top-right" />
 
-              <div className="flex justify-between items-center p-2 bg-white dark:bg-gray-950 shadow-sm border-b border-gray-200 dark:border-gray-800">
+              <div className="flex justify-between items-center p-2 bg-white dark:bg-gray-950 shadow-sm border-b border-gray-200 dark:border-gray-800 print:hidden">
                 <Breadcrumb />
               </div>
 
-              <div className="flex-1 overflow-auto" ref={mainContentRef}>
+              <div className="flex-1 overflow-auto print:overflow-visible print:h-auto" ref={mainContentRef}>
                 {children}
               </div>
             </main>
@@ -294,7 +294,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           {showBackToTop && (
             <button
               onClick={scrollToTop}
-              className="fixed bottom-4 right-2 p-4 rounded-full shadow-2xl hover:shadow-xl transition-all duration-300 hover:scale-110"
+              className="fixed bottom-4 right-2 p-4 rounded-full shadow-2xl hover:shadow-xl transition-all duration-300 hover:scale-110 print:hidden"
               style={{ background: "#3b82f6", color: "#ffffff", zIndex: 9999 }}
               aria-label="Back to top"
             >

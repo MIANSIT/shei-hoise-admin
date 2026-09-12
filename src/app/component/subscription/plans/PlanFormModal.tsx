@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Modal, Switch } from "antd";
 import { Plus, X } from "lucide-react";
 import { SubscriptionPlan, CreatePlanInput } from "@/lib/types/subscription.types";
+import { PRESET_FEATURES, PRESET_LIMITS } from "@/lib/constants/planFeaturePresets";
 
 interface PlanFormModalProps {
   open: boolean;
@@ -14,35 +15,6 @@ interface PlanFormModalProps {
 
 type FeatureItem = { key: string; enabled: boolean };
 type LimitItem = { key: string; value: number };
-
-const PRESET_FEATURES = [
-  { key: "pos", label: "POS" },
-  { key: "analytics", label: "Analytics" },
-  { key: "custom_domain", label: "Custom Domain" },
-  { key: "priority_support", label: "Priority Support" },
-  { key: "api_access", label: "API Access" },
-  { key: "bulk_import", label: "Bulk Import" },
-  { key: "export_data", label: "Export Data" },
-  { key: "seo_tools", label: "SEO Tools" },
-  { key: "advanced_reports", label: "Advanced Reports" },
-  { key: "conversion_api", label: "Conversions API" },
-  { key: "meta_pixel", label: "Meta Pixel" },
-  { key: "expense_tracking", label: "Expense Tracking" },
-  { key: "courier_tracking", label: "Courier Tracking" },
-  { key: "vendor_flow", label: "Vendor Flow" },
-  { key: "storefront_design", label: "Storefront Design" },
-];
-
-const PRESET_LIMITS = [
-  { key: "max_products", label: "Max Products" },
-  { key: "max_orders_per_month", label: "Max Orders/Month" },
-  { key: "max_images_per_product", label: "Max Images/Product" },
-  { key: "max_variants_per_product", label: "Max Variants/Product" },
-  { key: "max_staff", label: "Max Staff" },
-  { key: "max_users", label: "Max Users" },
-  { key: "max_categories", label: "Max Categories" },
-  { key: "max_coupons", label: "Max Coupons" },
-];
 
 const DEFAULT_FORM: CreatePlanInput = {
   name: "",

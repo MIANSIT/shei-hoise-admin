@@ -9,6 +9,7 @@ import {
   LayoutList,
   BadgeCheck,
   FileText,
+  Presentation,
 } from "lucide-react";
 import React from "react";
 
@@ -48,6 +49,11 @@ export const sideMenu: MenuItem[] = [
         title: "Plans",
         href: "/dashboard/subscription/plans",
         icon: LayoutList,
+      },
+      {
+        title: "Plan Overview",
+        href: "/dashboard/subscription/overview",
+        icon: Presentation,
       },
       {
         title: "Store Subscriptions",
