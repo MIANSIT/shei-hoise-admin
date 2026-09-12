@@ -35,6 +35,7 @@ export function PlanPitchPdfButton({ plan }: { plan: SubscriptionPlan }) {
       : 0;
   const halfYearlyPrice = effectiveHalfYearlyPrice(plan);
   const halfYearlySavings = halfYearlySavingsPct(plan.price_monthly, halfYearlyPrice);
+  const today = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 
   const downloadPDF = async () => {
     if (!pdfRef.current) return;
@@ -92,31 +93,81 @@ export function PlanPitchPdfButton({ plan }: { plan: SubscriptionPlan }) {
       {/* Hidden document captured by html2canvas */}
       <div
         ref={pdfRef}
-        style={{ display: "none", width: 794, backgroundColor: "#fff", fontFamily: "Arial, sans-serif" }}
+        style={{
+          display: "none",
+          width: 794,
+          backgroundColor: "#fff",
+          fontFamily: "'Segoe UI', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif",
+        }}
       >
         {/* Header */}
         <div
           style={{
-            background: "linear-gradient(to right, #7c3aed, #9333ea)",
-            padding: "36px 48px",
+            background: "linear-gradient(135deg, #6d28d9 0%, #7c3aed 55%, #9333ea 100%)",
+            padding: "38px 48px 50px",
           }}
         >
-          <div style={{ fontSize: 22, fontWeight: 800, color: "#fff" }}>{pd.company.name}</div>
-          <div style={{ fontSize: 12, color: "#ddd8fe", marginTop: 2 }}>
-            Everything you need to launch and run your online store
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: "#fff" }}>{pd.company.name}</div>
+              <div style={{ fontSize: 12, color: "#ddd8fe", marginTop: 2 }}>
+                Everything you need to launch and run your online store
+              </div>
+            </div>
+            <div style={{ fontSize: 10, color: "#ddd8fe", whiteSpace: "nowrap" }}>{today}</div>
           </div>
           <div style={{ marginTop: 22 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#ddd8fe", letterSpacing: 3, textTransform: "uppercase" }}>
+            <div style={{ fontSize: 10, fontWeight: 800, color: "#ddd8fe", letterSpacing: 2.5, textTransform: "uppercase" }}>
               Pricing Plan
             </div>
-            <div style={{ fontSize: 34, fontWeight: 900, color: "#fff", marginTop: 2 }}>{plan.name}</div>
+            <div style={{ fontSize: 34, fontWeight: 900, color: "#fff", marginTop: 4 }}>{plan.name}</div>
             {plan.description && (
               <div style={{ fontSize: 13, color: "#ede9fe", marginTop: 6, maxWidth: 620 }}>{plan.description}</div>
             )}
           </div>
         </div>
 
-        <div style={{ padding: "32px 48px" }}>
+        <div style={{ padding: "0 48px 32px" }}>
+          {/* Trial banner — overlaps the header bottom edge, mirrors the comparison PDF */}
+          {plan.trial_days > 0 && (
+            <div
+              style={{
+                marginTop: -24,
+                marginBottom: 24,
+                borderRadius: 12,
+                background: "#fff",
+                border: "1px solid #ece7fd",
+                boxShadow: "0 6px 18px rgba(109,40,217,0.12)",
+                padding: "16px 20px",
+                display: "flex",
+                alignItems: "center",
+                gap: 13,
+              }}
+            >
+              <div
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: "50%",
+                  background: "#f5f3ff",
+                  color: "#7c3aed",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 16,
+                  fontWeight: 800,
+                  flexShrink: 0,
+                }}
+              >
+                ✓
+              </div>
+              <div style={{ fontSize: 12.5, color: "#334155", lineHeight: 1.5 }}>
+                <span style={{ fontWeight: 800, color: "#0f172a" }}>Start free, no risk.</span>{" "}
+                Every store gets {plan.trial_days} days of full access before billing begins.
+              </div>
+            </div>
+          )}
+
           {/* Pricing */}
           <div style={{ display: "flex", gap: 14, marginBottom: 16 }}>
             <div style={{ flex: 1, borderRadius: 16, border: "2px solid #ede9fe", padding: "18px 16px", textAlign: "center" }}>
@@ -168,25 +219,28 @@ export function PlanPitchPdfButton({ plan }: { plan: SubscriptionPlan }) {
             </div>
           </div>
 
-          <div style={{ textAlign: "center", fontSize: 11, color: "#94a3b8", marginBottom: 28 }}>
+          <div
+            style={{
+              textAlign: "center",
+              fontSize: 10.5,
+              color: "#7c5cd6",
+              background: "#f8f6fe",
+              border: "1px dashed #ddd4fb",
+              borderRadius: 8,
+              padding: "9px 14px",
+              marginBottom: 28,
+            }}
+          >
             Need a different term — 2, 4, or any custom number of months? Contact us — {pd.company.phone} · {pd.company.email}
           </div>
 
-          {plan.trial_days > 0 && (
-            <div
-              style={{
-                textAlign: "center", backgroundColor: "#fdf4ff", border: "1px solid #f0abfc", borderRadius: 12,
-                padding: "10px 16px", marginBottom: 28, fontSize: 13, fontWeight: 700, color: "#a21caf",
-              }}
-            >
-              🎁 Starts with a {plan.trial_days}-day free trial — no risk to get started
-            </div>
-          )}
-
           {/* Features */}
           <div style={{ marginBottom: 28 }}>
-            <div style={{ fontSize: 13, fontWeight: 800, color: "#0f172a", marginBottom: 12 }}>
-              What&apos;s included
+            <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 12 }}>
+              <span style={{ width: 4, height: 12, borderRadius: 2, background: "#a78bfa", display: "inline-block" }} />
+              <span style={{ fontSize: 10, fontWeight: 800, color: "#7c3aed", textTransform: "uppercase", letterSpacing: 1.2 }}>
+                What&apos;s included
+              </span>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 16px" }}>
               {[
@@ -208,8 +262,11 @@ export function PlanPitchPdfButton({ plan }: { plan: SubscriptionPlan }) {
           {/* Limits */}
           {limitEntries.length > 0 && (
             <div style={{ marginBottom: 28 }}>
-              <div style={{ fontSize: 13, fontWeight: 800, color: "#0f172a", marginBottom: 12 }}>
-                Plan capacity
+              <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 12 }}>
+                <span style={{ width: 4, height: 12, borderRadius: 2, background: "#a78bfa", display: "inline-block" }} />
+                <span style={{ fontSize: 10, fontWeight: 800, color: "#7c3aed", textTransform: "uppercase", letterSpacing: 1.2 }}>
+                  Plan capacity
+                </span>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                 {limitEntries.map(([k, v]) => (
@@ -243,10 +300,11 @@ export function PlanPitchPdfButton({ plan }: { plan: SubscriptionPlan }) {
             </div>
           </div>
 
-          <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: 16, textAlign: "center" }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#334155" }}>{pd.company.name}</div>
-            <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>
-              {pd.company.email} · {pd.company.phone}
+          <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: 18, textAlign: "center" }}>
+            <div style={{ height: 3, width: 56, borderRadius: 2, background: "linear-gradient(90deg, #6d28d9, #a855f7)", margin: "0 auto 14px" }} />
+            <div style={{ fontSize: 12, fontWeight: 800, color: "#334155" }}>{pd.company.name}</div>
+            <div style={{ fontSize: 10.5, color: "#94a3b8", marginTop: 3 }}>
+              {pd.company.phone} · {pd.company.email} · {pd.company.website.replace(/^https?:\/\//, "")}
             </div>
           </div>
         </div>

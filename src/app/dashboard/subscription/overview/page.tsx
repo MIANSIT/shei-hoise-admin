@@ -144,34 +144,44 @@ export default function PlanOverviewPage() {
   const comparable = getComparablePlans(plans);
   const featureKeys = getComparisonFeatureKeys(comparable);
   const limitKeys = getComparisonLimitKeys(comparable);
+  const defaultTrialPlan = plans.find((p) => p.is_default_trial_plan);
+  const trialDays = defaultTrialPlan?.trial_days || Math.max(0, ...comparable.map((p) => p.trial_days));
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300 print:bg-white">
       <div className="max-w-[1000px] mx-auto px-6 py-10 print:px-0 print:py-0 print:max-w-none">
-        {/* Action bar — hidden when printing */}
-        <div className="flex items-center justify-between mb-8 print:hidden">
-          <div>
-            <h1 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
+        {/* Header — one banner for both screen and print, so what you see is what prints */}
+        <div className="rounded-2xl print:rounded-none bg-gradient-to-br from-violet-700 via-violet-600 to-purple-600 px-7 py-7 sm:px-8 sm:py-8 mb-8 print:mb-6 flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="text-[10px] font-extrabold text-violet-200 uppercase tracking-[0.2em] mb-2">
               Merchant Plan Overview
-            </h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            </div>
+            <h1 className="text-2xl font-extrabold text-white tracking-tight">{pd.company.name}</h1>
+            <p className="text-sm text-violet-100 mt-1.5 max-w-sm">
               What a store owner gets on Shei Hoise — always current, share or print this page directly.
             </p>
           </div>
           <button
             onClick={() => window.print()}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold shadow transition"
+            className="print:hidden shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur text-white text-sm font-semibold border border-white/20 transition"
           >
             <Printer className="w-4 h-4" />
             Print / Save as PDF
           </button>
         </div>
 
-        {/* Print-only header */}
-        <div className="hidden print:block mb-8 pb-6 border-b border-slate-300">
-          <div className="text-2xl font-extrabold text-slate-900">{pd.company.name}</div>
-          <div className="text-sm text-slate-500 mt-1">Merchant Plan Overview</div>
-        </div>
+        {/* Trial banner — overlaps the header bottom edge */}
+        {trialDays > 0 && (
+          <div className="relative -mt-4 mb-8 print:-mt-3 print:mb-6 bg-white dark:bg-slate-900 border border-violet-100 dark:border-violet-500/20 rounded-2xl shadow-lg shadow-violet-500/10 print:shadow-none print:border-slate-300 px-6 py-4 flex items-center gap-3.5">
+            <div className="w-9 h-9 rounded-full bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-5 h-5" />
+            </div>
+            <p className="text-sm text-slate-700 dark:text-slate-300">
+              <span className="font-bold text-slate-900 dark:text-slate-100">Every new store starts free.</span>{" "}
+              Get full access for {trialDays} days — no plan required upfront. Pick one below whenever you&apos;re ready.
+            </p>
+          </div>
+        )}
 
         {loading ? (
           <div className="flex items-center justify-center py-24">
@@ -228,16 +238,21 @@ export default function PlanOverviewPage() {
                         {comparable.map((p) => (
                           <th
                             key={p.id}
-                            className={`px-4 py-3 text-center ${p.is_featured ? "bg-violet-50 dark:bg-violet-500/10" : ""}`}
+                            className={`px-4 pt-4 pb-3 text-center align-bottom border-b-2 ${p.is_featured ? "border-violet-500 bg-gradient-to-b from-violet-50 to-transparent dark:from-violet-500/10" : "border-slate-200 dark:border-white/10"}`}
                           >
-                            {p.is_featured && (
-                              <div className="text-[10px] font-bold text-violet-600 uppercase tracking-wider mb-0.5">
-                                Most popular
-                              </div>
-                            )}
+                            <div className="h-5 flex items-center justify-center mb-1">
+                              {p.is_featured && (
+                                <span className="inline-block text-[9px] font-extrabold text-white bg-violet-600 uppercase tracking-wider px-2.5 py-0.5 rounded-full">
+                                  Most Popular
+                                </span>
+                              )}
+                            </div>
                             <div className={`text-base font-bold ${p.is_featured ? "text-violet-700 dark:text-violet-400" : "text-slate-800 dark:text-slate-100"}`}>
                               {p.name}
                             </div>
+                            {p.trial_days > 0 && (
+                              <div className="text-[10px] text-slate-400 mt-0.5">{p.trial_days}-day trial</div>
+                            )}
                           </th>
                         ))}
                       </tr>
@@ -259,7 +274,11 @@ export default function PlanOverviewPage() {
                           return (
                             <td key={p.id} className={`px-4 py-2.5 text-center ${p.is_featured ? "bg-violet-50 dark:bg-violet-500/10" : ""}`}>
                               <div className="font-bold text-slate-800 dark:text-slate-100">{formatMoney(price, p.currency)}</div>
-                              {pct > 0 && <div className="text-[10px] text-amber-600 dark:text-amber-400">save {pct}%</div>}
+                              {pct > 0 && (
+                                <span className="inline-block mt-1 text-[9px] font-bold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-500/15 rounded-full px-2 py-0.5">
+                                  save {pct}%
+                                </span>
+                              )}
                             </td>
                           );
                         })}
@@ -271,32 +290,41 @@ export default function PlanOverviewPage() {
                           return (
                             <td key={p.id} className={`px-4 py-2.5 text-center ${p.is_featured ? "bg-violet-50 dark:bg-violet-500/10" : ""}`}>
                               <div className="font-bold text-slate-800 dark:text-slate-100">{formatMoney(p.price_yearly, p.currency)}</div>
-                              {pct > 0 && <div className="text-[10px] text-amber-600 dark:text-amber-400">save {pct}%</div>}
+                              {pct > 0 && (
+                                <span className="inline-block mt-1 text-[9px] font-bold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-500/15 rounded-full px-2 py-0.5">
+                                  save {pct}%
+                                </span>
+                              )}
                             </td>
                           );
                         })}
                       </tr>
                       <tr className="border-b border-slate-100 dark:border-white/[0.05]">
-                        <td colSpan={comparable.length + 1} className="px-4 py-2.5 text-center text-slate-500 dark:text-slate-400 italic">
-                          Need a custom-length term (2, 4, 5 months...)? Contact us — {pd.company.phone} · {pd.company.email}
+                        <td colSpan={comparable.length + 1} className="px-4 py-3">
+                          <div className="text-center text-xs text-violet-700 dark:text-violet-300 bg-violet-50/70 dark:bg-violet-500/[0.07] border border-dashed border-violet-200 dark:border-violet-500/30 rounded-lg px-4 py-2">
+                            Need a custom-length term (2, 4, 5 months...)? Contact us — {pd.company.phone} · {pd.company.email}
+                          </div>
                         </td>
                       </tr>
 
                       {limitKeys.length > 0 && (
                         <tr>
-                          <td colSpan={comparable.length + 1} className="px-4 pt-3 pb-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 dark:bg-white/[0.02]">
-                            Capacity
+                          <td colSpan={comparable.length + 1} className="px-4 pt-4 pb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="w-1 h-3 rounded-sm bg-violet-400" />
+                              <span className="text-[10px] font-extrabold text-violet-600 dark:text-violet-400 uppercase tracking-wider">Capacity</span>
+                            </div>
                           </td>
                         </tr>
                       )}
-                      {limitKeys.map((k) => (
-                        <tr key={k} className="border-b border-slate-100 dark:border-white/[0.05]">
+                      {limitKeys.map((k, idx) => (
+                        <tr key={k} className={`border-b border-slate-100 dark:border-white/[0.05] ${idx % 2 === 1 ? "bg-slate-50/60 dark:bg-white/[0.015]" : ""}`}>
                           <td className="px-4 py-2 text-slate-500 dark:text-slate-400">{limitLabel(k)}</td>
                           {comparable.map((p) => {
                             const v = p.limits[k];
                             const label = v === undefined ? "—" : Number(v) === -1 ? "Unlimited" : Number(v).toLocaleString();
                             return (
-                              <td key={p.id} className={`px-4 py-2 text-center text-slate-700 dark:text-slate-200 ${p.is_featured ? "bg-violet-50 dark:bg-violet-500/10" : ""}`}>
+                              <td key={p.id} className={`px-4 py-2 text-center font-medium text-slate-700 dark:text-slate-200 ${p.is_featured ? "bg-violet-50 dark:bg-violet-500/10" : ""}`}>
                                 {label}
                               </td>
                             );
@@ -306,20 +334,29 @@ export default function PlanOverviewPage() {
 
                       {featureKeys.length > 0 && (
                         <tr>
-                          <td colSpan={comparable.length + 1} className="px-4 pt-3 pb-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 dark:bg-white/[0.02]">
-                            Features
+                          <td colSpan={comparable.length + 1} className="px-4 pt-4 pb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="w-1 h-3 rounded-sm bg-violet-400" />
+                              <span className="text-[10px] font-extrabold text-violet-600 dark:text-violet-400 uppercase tracking-wider">Features</span>
+                            </div>
                           </td>
                         </tr>
                       )}
-                      {featureKeys.map((k) => (
-                        <tr key={k} className="border-b border-slate-100 dark:border-white/[0.05] last:border-0">
+                      {featureKeys.map((k, idx) => (
+                        <tr key={k} className={`border-b border-slate-100 dark:border-white/[0.05] last:border-0 ${idx % 2 === 1 ? "bg-slate-50/60 dark:bg-white/[0.015]" : ""}`}>
                           <td className="px-4 py-2 text-slate-500 dark:text-slate-400">{featureLabel(k)}</td>
                           {comparable.map((p) => (
                             <td
                               key={p.id}
-                              className={`px-4 py-2 text-center font-bold ${p.features[k] ? "text-emerald-600 dark:text-emerald-400" : "text-slate-300 dark:text-slate-600"} ${p.is_featured ? "bg-violet-50 dark:bg-violet-500/10" : ""}`}
+                              className={`px-4 py-2 text-center ${p.is_featured ? "bg-violet-50 dark:bg-violet-500/10" : ""}`}
                             >
-                              {p.features[k] ? "✓" : "—"}
+                              {p.features[k] ? (
+                                <span className="inline-flex w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 items-center justify-center text-[11px] font-bold">
+                                  ✓
+                                </span>
+                              ) : (
+                                <span className="text-slate-300 dark:text-slate-600">—</span>
+                              )}
                             </td>
                           ))}
                         </tr>
@@ -335,11 +372,12 @@ export default function PlanOverviewPage() {
               </p>
             </section>
 
-            <div className="mt-10 pt-6 border-t border-slate-200 dark:border-white/[0.07] flex justify-between text-xs text-slate-400 dark:text-slate-500">
-              <span>{pd.company.name} — Merchant Plan Overview</span>
-              <span>
-                {pd.company.email} · {pd.company.phone}
-              </span>
+            <div className="mt-10 pt-6 border-t border-slate-200 dark:border-white/[0.07] text-center print:break-inside-avoid">
+              <div className="h-[3px] w-14 rounded-full bg-gradient-to-r from-violet-600 to-purple-500 mx-auto mb-3.5" />
+              <div className="text-xs font-bold text-slate-600 dark:text-slate-300">{pd.company.name} — Merchant Plan Overview</div>
+              <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
+                {pd.company.phone} · {pd.company.email} · {pd.company.website.replace(/^https?:\/\//, "")}
+              </div>
             </div>
           </>
         )}

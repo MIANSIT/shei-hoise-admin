@@ -35,8 +35,10 @@ export function PlanComparisonPdfButton({ plans }: { plans: SubscriptionPlan[] }
   const comparable = getComparablePlans(plans);
   const featureKeys = getComparisonFeatureKeys(comparable);
   const limitKeys = getComparisonLimitKeys(comparable);
-  const anyTrial = comparable.some((p) => p.trial_days > 0);
+  const defaultTrialPlan = plans.find((p) => p.is_default_trial_plan);
+  const trialDays = defaultTrialPlan?.trial_days || Math.max(0, ...comparable.map((p) => p.trial_days));
   const colWidth = comparable.length > 0 ? `${72 / comparable.length}%` : "auto";
+  const today = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 
   const downloadPDF = async () => {
     if (!pdfRef.current || comparable.length === 0) return;
@@ -98,102 +100,195 @@ export function PlanComparisonPdfButton({ plans }: { plans: SubscriptionPlan[] }
       {/* Hidden document captured by html2canvas — rebuilt from live plan data every click */}
       <div
         ref={pdfRef}
-        style={{ display: "none", width: 794, backgroundColor: "#fff", fontFamily: "Arial, sans-serif" }}
+        style={{
+          display: "none",
+          width: 794,
+          backgroundColor: "#fff",
+          fontFamily: "'Segoe UI', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif",
+        }}
       >
-        <div style={{ background: "linear-gradient(to right, #7c3aed, #9333ea)", padding: "30px 40px" }}>
-          <div style={{ fontSize: 20, fontWeight: 800, color: "#fff" }}>{pd.company.name}</div>
-          <div style={{ fontSize: 12, color: "#ddd8fe", marginTop: 2 }}>Plan comparison</div>
-          {anyTrial && (
-            <div style={{ fontSize: 12, color: "#ede9fe", marginTop: 10 }}>
-              Every plan below starts with a free trial before billing begins.
+        {/* Header */}
+        <div style={{ background: "linear-gradient(135deg, #6d28d9 0%, #7c3aed 55%, #9333ea 100%)", padding: "38px 44px 46px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 800, color: "#ddd8fe", textTransform: "uppercase", letterSpacing: 2.5 }}>
+                Pricing &amp; Plans
+              </div>
+              <div style={{ fontSize: 25, fontWeight: 800, color: "#fff", letterSpacing: -0.3, marginTop: 6 }}>
+                {pd.company.name}
+              </div>
+              <div style={{ fontSize: 12.5, color: "#ede9fe", marginTop: 4 }}>Choose the plan that fits your store</div>
             </div>
-          )}
+            <div style={{ fontSize: 10, color: "#ddd8fe", whiteSpace: "nowrap" }}>{today}</div>
+          </div>
         </div>
 
-        <div style={{ padding: "28px 40px" }}>
+        <div style={{ padding: "0 44px 36px" }}>
+          {/* Trial banner — overlaps the header bottom edge */}
+          {trialDays > 0 && (
+            <div
+              style={{
+                marginTop: -22,
+                marginBottom: 26,
+                borderRadius: 12,
+                background: "#fff",
+                border: "1px solid #ece7fd",
+                boxShadow: "0 6px 18px rgba(109,40,217,0.12)",
+                padding: "16px 20px",
+                display: "flex",
+                alignItems: "center",
+                gap: 13,
+              }}
+            >
+              <div
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: "50%",
+                  background: "#f5f3ff",
+                  color: "#7c3aed",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 16,
+                  fontWeight: 800,
+                  flexShrink: 0,
+                }}
+              >
+                ✓
+              </div>
+              <div style={{ fontSize: 12.5, color: "#334155", lineHeight: 1.5 }}>
+                <span style={{ fontWeight: 800, color: "#0f172a" }}>Every new store starts free.</span>{" "}
+                Get full access for {trialDays} days — no plan required upfront. Pick one below whenever you&apos;re ready.
+              </div>
+            </div>
+          )}
+
           {comparable.length === 0 ? (
             <div style={{ fontSize: 13, color: "#64748b" }}>No active, public plans to compare.</div>
           ) : (
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: comparable.length > 4 ? 10.5 : 12 }}>
               <thead>
                 <tr>
-                  <th style={{ width: "28%" }} />
+                  <th style={{ width: "26%" }} />
                   {comparable.map((p) => (
                     <th
                       key={p.id}
                       style={{
                         width: colWidth,
-                        padding: "6px 8px 10px",
+                        padding: "0 8px 14px",
                         textAlign: "center",
-                        borderBottom: "2px solid #e2e8f0",
-                        backgroundColor: p.is_featured ? "#f5f3ff" : "transparent",
+                        verticalAlign: "bottom",
+                        borderBottom: `2px solid ${p.is_featured ? "#7c3aed" : "#e2e8f0"}`,
                       }}
                     >
-                      {p.is_featured && (
-                        <div style={{ fontSize: 9, fontWeight: 700, color: "#7c3aed", textTransform: "uppercase", letterSpacing: 1, marginBottom: 3 }}>
-                          Most Popular
-                        </div>
+                      <div style={{ height: 20, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        {p.is_featured && (
+                          <span
+                            style={{
+                              display: "inline-block",
+                              fontSize: 8.5,
+                              fontWeight: 800,
+                              color: "#fff",
+                              background: "#7c3aed",
+                              textTransform: "uppercase",
+                              letterSpacing: 1,
+                              padding: "3px 10px",
+                              borderRadius: 20,
+                            }}
+                          >
+                            Most Popular
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: 16.5, fontWeight: 800, color: p.is_featured ? "#6d28d9" : "#0f172a", marginTop: 4 }}>
+                        {p.name}
+                      </div>
+                      {p.trial_days > 0 && (
+                        <div style={{ fontSize: 9, color: "#94a3b8", marginTop: 2 }}>{p.trial_days}-day trial</div>
                       )}
-                      <div style={{ fontSize: 15, fontWeight: 700, color: p.is_featured ? "#6d28d9" : "#0f172a" }}>{p.name}</div>
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td style={{ padding: "10px 8px", color: "#64748b", borderBottom: "1px solid #f1f5f9" }}>Monthly</td>
+                  <td style={{ padding: "12px 8px", color: "#64748b", borderBottom: "1px solid #f1f5f9" }}>Monthly</td>
                   {comparable.map((p) => (
-                    <td key={p.id} style={{ textAlign: "center", padding: "10px 8px", fontWeight: 700, borderBottom: "1px solid #f1f5f9", backgroundColor: p.is_featured ? "#f5f3ff" : "transparent" }}>
+                    <td key={p.id} style={{ textAlign: "center", padding: "12px 8px", fontWeight: 800, fontSize: 13, borderBottom: "1px solid #f1f5f9", backgroundColor: p.is_featured ? "#faf9ff" : "transparent" }}>
                       {formatMoney(p.price_monthly, p.currency)}
                     </td>
                   ))}
                 </tr>
                 <tr>
-                  <td style={{ padding: "10px 8px", color: "#64748b", borderBottom: "1px solid #f1f5f9" }}>Half Yearly</td>
+                  <td style={{ padding: "12px 8px", color: "#64748b", borderBottom: "1px solid #f1f5f9" }}>Half Yearly</td>
                   {comparable.map((p) => {
                     const price = effectiveHalfYearlyPrice(p);
                     const pct = halfYearlySavingsPct(p.price_monthly, price);
                     return (
-                      <td key={p.id} style={{ textAlign: "center", padding: "10px 8px", borderBottom: "1px solid #f1f5f9", backgroundColor: p.is_featured ? "#f5f3ff" : "transparent" }}>
-                        <div style={{ fontWeight: 700 }}>{formatMoney(price, p.currency)}</div>
-                        {pct > 0 && <div style={{ fontSize: 9.5, color: "#b8892b" }}>save {pct}%</div>}
+                      <td key={p.id} style={{ textAlign: "center", padding: "12px 8px", borderBottom: "1px solid #f1f5f9", backgroundColor: p.is_featured ? "#faf9ff" : "transparent" }}>
+                        <div style={{ fontWeight: 800, fontSize: 13 }}>{formatMoney(price, p.currency)}</div>
+                        {pct > 0 && (
+                          <span style={{ display: "inline-block", marginTop: 3, fontSize: 9, fontWeight: 700, color: "#92700e", background: "#fef3c7", borderRadius: 8, padding: "1px 7px" }}>
+                            save {pct}%
+                          </span>
+                        )}
                       </td>
                     );
                   })}
                 </tr>
                 <tr>
-                  <td style={{ padding: "10px 8px", color: "#64748b", borderBottom: "1px solid #f1f5f9" }}>Yearly</td>
+                  <td style={{ padding: "12px 8px", color: "#64748b", borderBottom: "1px solid #f1f5f9" }}>Yearly</td>
                   {comparable.map((p) => {
                     const pct = yearlySavingsPct(p.price_monthly, p.price_yearly);
                     return (
-                      <td key={p.id} style={{ textAlign: "center", padding: "10px 8px", borderBottom: "1px solid #f1f5f9", backgroundColor: p.is_featured ? "#f5f3ff" : "transparent" }}>
-                        <div style={{ fontWeight: 700 }}>{formatMoney(p.price_yearly, p.currency)}</div>
-                        {pct > 0 && <div style={{ fontSize: 9.5, color: "#b8892b" }}>save {pct}%</div>}
+                      <td key={p.id} style={{ textAlign: "center", padding: "12px 8px", borderBottom: "1px solid #f1f5f9", backgroundColor: p.is_featured ? "#faf9ff" : "transparent" }}>
+                        <div style={{ fontWeight: 800, fontSize: 13 }}>{formatMoney(p.price_yearly, p.currency)}</div>
+                        {pct > 0 && (
+                          <span style={{ display: "inline-block", marginTop: 3, fontSize: 9, fontWeight: 700, color: "#92700e", background: "#fef3c7", borderRadius: 8, padding: "1px 7px" }}>
+                            save {pct}%
+                          </span>
+                        )}
                       </td>
                     );
                   })}
                 </tr>
                 <tr>
-                  <td colSpan={comparable.length + 1} style={{ textAlign: "center", padding: "10px 8px", fontStyle: "italic", fontSize: 10.5, color: "#94a3b8", borderBottom: "1px solid #f1f5f9" }}>
-                    Need a custom-length term (2, 4, 5 months...)? Contact us — {pd.company.phone} · {pd.company.email}
+                  <td colSpan={comparable.length + 1} style={{ padding: "14px 8px 4px" }}>
+                    <div
+                      style={{
+                        textAlign: "center",
+                        fontSize: 10.5,
+                        color: "#7c5cd6",
+                        background: "#f8f6fe",
+                        border: "1px dashed #ddd4fb",
+                        borderRadius: 8,
+                        padding: "9px 14px",
+                      }}
+                    >
+                      Need a custom-length term (2, 4, 5 months...)? Contact us — {pd.company.phone} · {pd.company.email}
+                    </div>
                   </td>
                 </tr>
 
                 {limitKeys.length > 0 && (
                   <tr>
-                    <td colSpan={comparable.length + 1} style={{ padding: "10px 8px 4px", fontSize: 9.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, backgroundColor: "#f8fafc" }}>
-                      Capacity
+                    <td colSpan={comparable.length + 1} style={{ padding: "18px 8px 6px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                        <span style={{ width: 4, height: 12, borderRadius: 2, background: "#a78bfa", display: "inline-block" }} />
+                        <span style={{ fontSize: 10, fontWeight: 800, color: "#7c3aed", textTransform: "uppercase", letterSpacing: 1.2 }}>Capacity</span>
+                      </div>
                     </td>
                   </tr>
                 )}
-                {limitKeys.map((k) => (
-                  <tr key={k}>
-                    <td style={{ padding: "8px", color: "#64748b", borderBottom: "1px solid #f1f5f9" }}>{limitLabel(k)}</td>
+                {limitKeys.map((k, idx) => (
+                  <tr key={k} style={{ backgroundColor: idx % 2 === 1 ? "#fafafa" : "transparent" }}>
+                    <td style={{ padding: "9px 8px", color: "#64748b", borderBottom: "1px solid #f1f5f9" }}>{limitLabel(k)}</td>
                     {comparable.map((p) => {
                       const v = p.limits[k];
                       const label = v === undefined ? "—" : Number(v) === -1 ? "Unlimited" : Number(v).toLocaleString();
                       return (
-                        <td key={p.id} style={{ textAlign: "center", padding: "8px", borderBottom: "1px solid #f1f5f9", backgroundColor: p.is_featured ? "#f5f3ff" : "transparent" }}>
+                        <td key={p.id} style={{ textAlign: "center", padding: "9px 8px", borderBottom: "1px solid #f1f5f9", fontWeight: 600, backgroundColor: p.is_featured ? "#faf9ff" : "transparent" }}>
                           {label}
                         </td>
                       );
@@ -203,27 +298,47 @@ export function PlanComparisonPdfButton({ plans }: { plans: SubscriptionPlan[] }
 
                 {featureKeys.length > 0 && (
                   <tr>
-                    <td colSpan={comparable.length + 1} style={{ padding: "10px 8px 4px", fontSize: 9.5, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, backgroundColor: "#f8fafc" }}>
-                      Features
+                    <td colSpan={comparable.length + 1} style={{ padding: "18px 8px 6px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                        <span style={{ width: 4, height: 12, borderRadius: 2, background: "#a78bfa", display: "inline-block" }} />
+                        <span style={{ fontSize: 10, fontWeight: 800, color: "#7c3aed", textTransform: "uppercase", letterSpacing: 1.2 }}>Features</span>
+                      </div>
                     </td>
                   </tr>
                 )}
-                {featureKeys.map((k) => (
-                  <tr key={k}>
-                    <td style={{ padding: "8px", color: "#64748b", borderBottom: "1px solid #f1f5f9" }}>{featureLabel(k)}</td>
+                {featureKeys.map((k, idx) => (
+                  <tr key={k} style={{ backgroundColor: idx % 2 === 1 ? "#fafafa" : "transparent" }}>
+                    <td style={{ padding: "9px 8px", color: "#64748b", borderBottom: "1px solid #f1f5f9" }}>{featureLabel(k)}</td>
                     {comparable.map((p) => (
                       <td
                         key={p.id}
                         style={{
                           textAlign: "center",
-                          padding: "8px",
+                          padding: "9px 8px",
                           borderBottom: "1px solid #f1f5f9",
-                          fontWeight: 700,
-                          color: p.features[k] ? "#16a34a" : "#cbd5e1",
-                          backgroundColor: p.is_featured ? "#f5f3ff" : "transparent",
+                          backgroundColor: p.is_featured ? "#faf9ff" : "transparent",
                         }}
                       >
-                        {p.features[k] ? "✓" : "—"}
+                        {p.features[k] ? (
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              width: 18,
+                              height: 18,
+                              borderRadius: "50%",
+                              background: "#dcfce7",
+                              color: "#16a34a",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontSize: 11,
+                              fontWeight: 800,
+                            }}
+                          >
+                            ✓
+                          </span>
+                        ) : (
+                          <span style={{ color: "#cbd5e1" }}>—</span>
+                        )}
                       </td>
                     ))}
                   </tr>
@@ -232,10 +347,12 @@ export function PlanComparisonPdfButton({ plans }: { plans: SubscriptionPlan[] }
             </table>
           )}
 
-          <div style={{ borderTop: "1px solid #f1f5f9", marginTop: 24, paddingTop: 16, textAlign: "center" }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "#334155" }}>{pd.company.name}</div>
-            <div style={{ fontSize: 10.5, color: "#94a3b8", marginTop: 2 }}>
-              {pd.company.email} · {pd.company.phone}
+          {/* Footer */}
+          <div style={{ marginTop: 30, paddingTop: 18, borderTop: "1px solid #f1f5f9" }}>
+            <div style={{ height: 3, width: 56, borderRadius: 2, background: "linear-gradient(90deg, #6d28d9, #a855f7)", margin: "0 auto 14px" }} />
+            <div style={{ textAlign: "center", fontSize: 12, fontWeight: 800, color: "#334155" }}>{pd.company.name}</div>
+            <div style={{ textAlign: "center", fontSize: 10.5, color: "#94a3b8", marginTop: 3 }}>
+              {pd.company.phone} · {pd.company.email} · {pd.company.website.replace(/^https?:\/\//, "")}
             </div>
           </div>
         </div>
