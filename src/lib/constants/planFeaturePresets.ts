@@ -17,6 +17,7 @@ export const PRESET_FEATURES = [
   { key: "courier_tracking", label: "Courier Tracking" },
   { key: "vendor_flow", label: "Vendor Flow" },
   { key: "storefront_design", label: "Storefront Design" },
+  { key: "custom_store_design", label: "Custom Store Design" },
 ];
 
 export const PRESET_LIMITS = [

@@ -116,11 +116,11 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
   };
 
   const inputCls =
-    "w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] text-slate-900 dark:text-slate-100 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/40 transition";
+    "w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/4 text-slate-900 dark:text-slate-100 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/40 transition";
   const labelCls =
     "block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide";
   const sectionCls =
-    "rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.02] p-4";
+    "rounded-xl border border-slate-200 dark:border-white/8 bg-slate-50 dark:bg-white/[0.02] p-4";
 
   return (
     <Modal
@@ -333,7 +333,7 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
                 return (
                   <div
                     key={f.key}
-                    className="flex items-center gap-3 bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2"
+                    className="flex items-center gap-3 bg-white dark:bg-white/4 border border-slate-200 dark:border-white/8 rounded-lg px-3 py-2"
                   >
                     {/* Feature name */}
                     <div className="flex-1 min-w-0">
@@ -434,7 +434,7 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
                 return (
                   <div
                     key={l.key}
-                    className="flex items-center gap-3 bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2"
+                    className="flex items-center gap-3 bg-white dark:bg-white/4 border border-slate-200 dark:border-white/8 rounded-lg px-3 py-2"
                   >
                     {/* Limit name */}
                     <div className="flex-1 min-w-0">
@@ -465,7 +465,7 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
                         <input
                           type="number"
                           min={1}
-                          className="w-20 px-2 py-1 text-sm text-center rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                          className="w-20 px-2 py-1 text-sm text-center rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/4 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500/40"
                           value={l.value}
                           onChange={(e) =>
                             updateLimitValue(l.key, parseInt(e.target.value) || 1)
