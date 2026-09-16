@@ -36,10 +36,10 @@ export function UserRow({ user, index, onStatusChange, onActiveChange, onDeleteS
   const gradient   = AVATAR_GRADIENTS[index % AVATAR_GRADIENTS.length];
 
   return (
-    <div className={`bg-white dark:bg-white/[0.025] border rounded-2xl overflow-hidden transition-all duration-200 ${
+    <div className={`bg-white dark:bg-white/2.5 border rounded-2xl overflow-hidden transition-all duration-200 ${
       expanded
-        ? "border-slate-300 dark:border-white/[0.14] shadow-lg dark:shadow-black/40"
-        : "border-slate-200 dark:border-white/[0.07] hover:border-slate-300 dark:hover:border-white/[0.14]"
+        ? "border-slate-300 dark:border-white/14 shadow-lg dark:shadow-black/40"
+        : "border-slate-200 dark:border-white/7 hover:border-slate-300 dark:hover:border-white/14"
     }`}>
 
       {/* Collapsed row */}
@@ -48,7 +48,7 @@ export function UserRow({ user, index, onStatusChange, onActiveChange, onDeleteS
         onClick={() => setExpanded(!expanded)}
       >
         {/* Avatar */}
-        <div className={`w-11 h-11 rounded-2xl shrink-0 bg-gradient-to-br ${gradient} flex items-center justify-center text-white text-[15px] font-bold tracking-wide shadow-md`}>
+        <div className={`w-11 h-11 rounded-2xl shrink-0 bg-linear-to-br ${gradient} flex items-center justify-center text-white text-[15px] font-bold tracking-wide shadow-md`}>
           {profile?.avatar_url
             // eslint-disable-next-line @next/next/no-img-element
             ? <img src={profile.avatar_url} alt="avatar" className="w-full h-full object-cover rounded-2xl" />
@@ -103,11 +103,11 @@ export function UserRow({ user, index, onStatusChange, onActiveChange, onDeleteS
       {/* Expanded stores */}
       {expanded && (
         <div
-          className="border-t border-slate-100 dark:border-white/[0.06] px-6 py-5 flex flex-col gap-3 bg-slate-50 dark:bg-black/[0.1]"
+          className="border-t border-slate-100 dark:border-white/6 px-6 py-5 flex flex-col gap-3 bg-slate-50 dark:bg-black/10"
           style={{ animation: "slideDown 0.25s ease" }}
         >
           {storeCount === 0 ? (
-            <div className="text-center py-8 text-slate-400 dark:text-slate-500 text-sm bg-white dark:bg-white/[0.02] rounded-xl border border-dashed border-slate-200 dark:border-white/[0.08]">
+            <div className="text-center py-8 text-slate-400 dark:text-slate-500 text-sm bg-white dark:bg-white/2 rounded-xl border border-dashed border-slate-200 dark:border-white/8">
               No stores found
             </div>
           ) : (

@@ -8,7 +8,7 @@ export const PRESET_FEATURES = [
   { key: "priority_support", label: "Priority Support" },
   { key: "api_access", label: "API Access" },
   { key: "bulk_import", label: "Bulk Import" },
-  { key: "export_data", label: "Export Data" },
+  { key: "export_data", label: "Stock Export Data" },
   { key: "seo_tools", label: "SEO Tools" },
   { key: "advanced_reports", label: "Advanced Reports" },
   { key: "conversion_api", label: "Conversions API" },
@@ -18,6 +18,10 @@ export const PRESET_FEATURES = [
   { key: "vendor_flow", label: "Vendor Flow" },
   { key: "storefront_design", label: "Storefront Design" },
   { key: "custom_store_design", label: "Custom Store Design" },
+  { key: "qr", label: "QR Code" },
+  { key: "barcode", label: "Barcode" },
+  { key: "trader_price_export", label: "Trader Price Export" },
+  { key: "product_csv_export", label: "Product CSV Export" },
 ];
 
 export const PRESET_LIMITS = [

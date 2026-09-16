@@ -17,12 +17,10 @@ import { USER_TYPES } from "@/lib/types/enums";
 
 interface LoginFormProps {
   submitText?: string;
-  theme?: "light" | "dark";
 }
 
 export function LoginForm({
   submitText = "Login",
-  theme = "light",
 }: LoginFormProps) {
   const { success, error } = useSheiNotification();
   const router = useRouter();
@@ -84,11 +82,7 @@ export function LoginForm({
           placeholder="Enter your email"
           {...form.register("username")}
           disabled={form.formState.isSubmitting}
-          className={
-            theme === "dark"
-              ? "  border-gray-600 placeholder-gray-400"
-              : "  border-gray-300 placeholder-gray-500"
-          }
+          className="border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-gray-100"
         />
         {form.formState.errors.username && (
           <p className="text-sm text-red-500">{errors?.username?.message}</p>
@@ -105,11 +99,7 @@ export function LoginForm({
             placeholder="Enter your password"
             {...form.register("password")}
             disabled={form.formState.isSubmitting}
-            className={
-              theme === "dark"
-                ? " border-gray-600 placeholder-gray-400 pr-14"
-                : " text-gray-900 border-gray-300 placeholder-gray-500 pr-14"
-            }
+            className="text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 pr-14"
           />
           <div className="absolute inset-y-0 right-2 flex items-center">
             <PasswordToggle
@@ -126,7 +116,7 @@ export function LoginForm({
       {/* Submit Button */}
       <Button
         type="submit"
-        variant={theme === "dark" ? "dark" : "light"}
+        variant="default"
         className="w-full mt-2 relative overflow-hidden"
         disabled={!form.formState.isValid || form.formState.isSubmitting}
       >

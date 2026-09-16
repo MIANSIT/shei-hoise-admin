@@ -246,7 +246,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           <div className="flex flex-1">
             {!isMobile && (
               <div
-                className={`sticky top-0 h-screen shadow-md transition-all duration-300 print:hidden ${isSidebarOpen}`}
+                className="sticky top-0 h-screen shadow-md transition-all duration-300 print:hidden"
                 style={{ background: "var(--sidebar)" }}
               >
                 <Sidebar collapsed={!isSidebarOpen} themeMode={theme} />

@@ -149,7 +149,7 @@ export default function PlanOverviewPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300 print:bg-white">
-      <div className="max-w-[1000px] mx-auto px-6 py-10 print:px-0 print:py-0 print:max-w-none">
+      <div className="max-w-[1000px] mx-auto px-4 sm:px-6 py-10 print:px-0 print:py-0 print:max-w-none">
         {/* Header — one banner for both screen and print, so what you see is what prints */}
         <div className="rounded-2xl print:rounded-none bg-gradient-to-br from-violet-700 via-violet-600 to-purple-600 px-7 py-7 sm:px-8 sm:py-8 mb-8 print:mb-6 flex items-start justify-between gap-4">
           <div className="min-w-0">

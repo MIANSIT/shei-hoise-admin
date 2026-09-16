@@ -175,7 +175,7 @@ export default function InvoicesPage() {
   const totalRevenue = invoices.filter((i) => i.status === "paid").reduce((s, i) => s + i.amount, 0);
 
   const inputCls =
-    "w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] text-slate-900 dark:text-slate-100 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/40 transition";
+    "w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/4 text-slate-900 dark:text-slate-100 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/40 transition";
 
   return (
     <>
@@ -186,10 +186,10 @@ export default function InvoicesPage() {
 
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
         {/* Header band */}
-        <div className="bg-white dark:bg-white/[0.025] border-b border-slate-200 dark:border-white/[0.07]">
-          <div className="max-w-[1100px] mx-auto px-6 py-6">
+        <div className="bg-white dark:bg-white/2.5 border-b border-slate-200 dark:border-white/7">
+          <div className="max-w-275 mx-auto px-4 sm:px-6 py-6">
             <div className="flex items-center gap-4">
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-500/30">
+              <div className="w-11 h-11 rounded-2xl bg-linear-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-500/30">
                 <FileText className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -204,7 +204,7 @@ export default function InvoicesPage() {
           </div>
         </div>
 
-        <div className="max-w-[1100px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <div className="max-w-275 mx-auto px-4 sm:px-6 py-6 sm:py-8">
           {/* Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
             {[
@@ -239,7 +239,7 @@ export default function InvoicesPage() {
             ].map((s) => (
               <div
                 key={s.label}
-                className="bg-white dark:bg-white/[0.025] border border-slate-200 dark:border-white/[0.07] rounded-2xl px-4 sm:px-5 py-4 flex items-center gap-3 sm:gap-4 min-w-0"
+                className="bg-white dark:bg-white/2.5 border border-slate-200 dark:border-white/7 rounded-2xl px-4 sm:px-5 py-4 flex items-center gap-3 sm:gap-4 min-w-0"
               >
                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${s.iconBg}`}>
                   {s.icon}
@@ -255,7 +255,7 @@ export default function InvoicesPage() {
           {/* Search + Filter */}
           <div className="flex flex-col sm:flex-row gap-3 mb-5">
             <input
-              className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/40 transition"
+              className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/4 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/40 transition"
               placeholder="Search by invoice number, store name, plan, or email…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -263,7 +263,7 @@ export default function InvoicesPage() {
             <Select
               value={statusFilter}
               onChange={(v) => setStatusFilter(v as InvoiceStatus | "all")}
-              className="w-full sm:w-[150px]"
+              className="w-full sm:w-37.5"
               size="large"
               options={[
                 { value: "all", label: "All Status" },
@@ -293,14 +293,14 @@ export default function InvoicesPage() {
               {[...Array(5)].map((_, i) => (
                 <div
                   key={i}
-                  className="h-16 rounded-2xl bg-slate-200 dark:bg-white/[0.04]"
+                  className="h-16 rounded-2xl bg-slate-200 dark:bg-white/4"
                   style={{ animation: `pulse 1.5s ease infinite`, animationDelay: `${i * 0.1}s` }}
                 />
               ))}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="text-center py-24 bg-white dark:bg-white/[0.02] rounded-3xl border border-dashed border-slate-200 dark:border-white/[0.08]">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-500/10 dark:to-purple-500/10 flex items-center justify-center mx-auto mb-4">
+            <div className="text-center py-24 bg-white dark:bg-white/2 rounded-3xl border border-dashed border-slate-200 dark:border-white/8">
+              <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-violet-100 to-purple-100 dark:from-violet-500/10 dark:to-purple-500/10 flex items-center justify-center mx-auto mb-4">
                 <FileText className="w-8 h-8 text-violet-400" />
               </div>
               <div className="text-base font-bold text-slate-500 dark:text-slate-400">
@@ -315,10 +315,10 @@ export default function InvoicesPage() {
               {filtered.map((inv) => (
                 <div
                   key={inv.id}
-                  className={`grid grid-cols-2 gap-x-3 gap-y-2 lg:flex lg:flex-wrap lg:items-center lg:gap-x-4 lg:gap-y-2 px-4 sm:px-5 py-4 bg-white dark:bg-white/[0.025] border rounded-2xl hover:shadow-sm transition group ${
+                  className={`grid grid-cols-2 gap-x-3 gap-y-2 lg:flex lg:flex-wrap lg:items-center lg:gap-x-4 lg:gap-y-2 px-4 sm:px-5 py-4 bg-white dark:bg-white/2.5 border rounded-2xl hover:shadow-sm transition group ${
                     inv.status === "submitted"
                       ? "border-blue-200 dark:border-blue-500/30"
-                      : "border-slate-200 dark:border-white/[0.07] hover:border-slate-300 dark:hover:border-white/[0.14]"
+                      : "border-slate-200 dark:border-white/7 hover:border-slate-300 dark:hover:border-white/14"
                   }`}
                 >
                   {/* Invoice # (+ status inline below lg) */}
@@ -395,7 +395,7 @@ export default function InvoicesPage() {
                   ) : null}
 
                   {/* Due / payment info */}
-                  <div className="col-span-2 lg:flex-1 lg:basis-[200px] text-xs text-slate-500 dark:text-slate-400">
+                  <div className="col-span-2 lg:flex-1 lg:basis-50 text-xs text-slate-500 dark:text-slate-400">
                     <span>Due: {formatDate(inv.due_date)}</span>
                     {inv.status === "submitted" && inv.payment_reference && (
                       <div className="mt-0.5 font-mono text-[11px] text-violet-600 dark:text-violet-400 font-semibold">
@@ -411,7 +411,7 @@ export default function InvoicesPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="col-span-2 lg:w-[100px] lg:ml-auto flex items-center gap-1 justify-end shrink-0 border-t lg:border-t-0 border-slate-100 dark:border-white/[0.06] pt-2 lg:pt-0">
+                  <div className="col-span-2 lg:w-25 lg:ml-auto flex items-center gap-1 justify-end shrink-0 border-t lg:border-t-0 border-slate-100 dark:border-white/6 pt-2 lg:pt-0">
                     <button
                       title="View invoice"
                       onClick={() => router.push(`/dashboard/subscription/invoices/${inv.id}`)}
@@ -462,7 +462,7 @@ export default function InvoicesPage() {
             width={460}
             styles={{ body: { padding: 0 } }}
           >
-            <div className="bg-gradient-to-br from-emerald-600 to-teal-600 rounded-t-lg px-5 py-4 flex items-center gap-3">
+            <div className="bg-linear-to-br from-emerald-600 to-teal-600 rounded-t-lg px-5 py-4 flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
                 <CheckCircle className="w-5 h-5 text-white" />
               </div>
@@ -537,14 +537,14 @@ export default function InvoicesPage() {
             <div className="px-5 pb-5 flex justify-end gap-2">
               <button
                 onClick={() => { setMarkPaidId(null); setPayRef(""); setPayMethod("bkash"); }}
-                className="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.10] transition"
+                className="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-white/6 hover:bg-slate-200 dark:hover:bg-white/10 transition"
               >
                 Cancel
               </button>
               <button
                 onClick={handleMarkPaid}
                 disabled={marking}
-                className="px-5 py-2 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-60 shadow-md shadow-emerald-500/20 transition"
+                className="px-5 py-2 rounded-xl text-sm font-bold text-white bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-60 shadow-md shadow-emerald-500/20 transition"
               >
                 {marking ? "Saving…" : "Confirm Payment"}
               </button>

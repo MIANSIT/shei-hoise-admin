@@ -138,7 +138,7 @@ export function RenewSubscriptionModal({
           <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 block">
             Billing Cycle
           </label>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {CYCLE_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
@@ -201,7 +201,7 @@ export function RenewSubscriptionModal({
           </button>
 
           {overrideDates && (
-            <div className="grid grid-cols-2 gap-3 mt-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
                   Period Start

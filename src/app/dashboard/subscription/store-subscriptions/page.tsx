@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Modal, Select } from "antd";
 import {
   Plus, Pencil, Trash2, CreditCard, XCircle, Store,
-  FileText, TrendingUp, Users, AlertCircle, CheckCircle2, Eye, RefreshCw,
+  FileText, Users, AlertCircle, CheckCircle2, Eye, RefreshCw,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSheiNotification } from "@/lib/hooks/useSheiNotification";
@@ -92,10 +92,10 @@ function SubscriptionRow({
 
   return (
     <div
-      className={`bg-white dark:bg-white/[0.025] border rounded-2xl overflow-hidden transition-all duration-200 ${
+      className={`bg-white dark:bg-white/2.5 border rounded-2xl overflow-hidden transition-all duration-200 ${
         expanded
           ? "border-violet-200 dark:border-violet-500/30 shadow-lg shadow-violet-500/5 dark:shadow-black/40"
-          : "border-slate-200 dark:border-white/[0.07] hover:border-slate-300 dark:hover:border-white/[0.14] hover:shadow-sm"
+          : "border-slate-200 dark:border-white/7 hover:border-slate-300 dark:hover:border-white/14 hover:shadow-sm"
       }`}
     >
       {/* Main row */}
@@ -104,7 +104,7 @@ function SubscriptionRow({
         onClick={() => setExpanded(!expanded)}
       >
         {/* Avatar */}
-        <div className="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-xs font-black shadow-md shadow-violet-500/30">
+        <div className="w-10 h-10 shrink-0 rounded-xl bg-linear-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-xs font-black shadow-md shadow-violet-500/30">
           {initials}
         </div>
 
@@ -162,7 +162,7 @@ function SubscriptionRow({
             size="small"
             value={sub.status}
             onChange={(v) => onStatusChange(sub.id, v as SubscriptionStatus)}
-            className="w-[108px]"
+            className="w-27"
             options={Object.values(SubscriptionStatus).map((s) => ({
               value: s,
               label: SUBSCRIPTION_STATUS_LABELS[s],
@@ -202,7 +202,7 @@ function SubscriptionRow({
       {/* Expanded */}
       {expanded && (
         <div
-          className="border-t border-slate-100 dark:border-white/[0.05] px-5 py-4 bg-slate-50/60 dark:bg-black/[0.08] grid grid-cols-2 md:grid-cols-4 gap-4"
+          className="border-t border-slate-100 dark:border-white/5 px-5 py-4 bg-slate-50/60 dark:bg-black/8 grid grid-cols-2 md:grid-cols-4 gap-4"
           style={{ animation: "fadeSlide 0.18s ease" }}
         >
           {[
@@ -453,11 +453,11 @@ export default function StoreSubscriptionsPage() {
 
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
         {/* Page header band */}
-        <div className="bg-white dark:bg-white/[0.025] border-b border-slate-200 dark:border-white/[0.07]">
-          <div className="max-w-[1100px] mx-auto px-6 py-6">
+        <div className="bg-white dark:bg-white/2.5 border-b border-slate-200 dark:border-white/7">
+          <div className="max-w-275 mx-auto px-4 sm:px-6 py-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-500/30">
+                <div className="w-11 h-11 rounded-2xl bg-linear-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-500/30">
                   <CreditCard className="w-5 h-5 text-white" />
                 </div>
                 <div>
@@ -474,21 +474,21 @@ export default function StoreSubscriptionsPage() {
                   onClick={handleApplyDueSwitches}
                   disabled={applyingSwitches}
                   title="Apply any queued plan switches whose effective date has arrived — this also runs automatically every hour"
-                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.10] disabled:opacity-60 text-slate-700 dark:text-slate-300 text-sm font-semibold transition"
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-white/6 hover:bg-slate-200 dark:hover:bg-white/10 disabled:opacity-60 text-slate-700 dark:text-slate-300 text-sm font-semibold transition"
                 >
                   <RefreshCw className={`w-4 h-4 ${applyingSwitches ? "animate-spin" : ""}`} />
                   {applyingSwitches ? "Applying…" : "Apply Due Switches"}
                 </button>
                 <button
                   onClick={() => router.push("/dashboard/subscription/invoices")}
-                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.10] text-slate-700 dark:text-slate-300 text-sm font-semibold transition"
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-white/6 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 text-sm font-semibold transition"
                 >
                   <FileText className="w-4 h-4" />
                   Invoices
                 </button>
                 <button
                   onClick={() => { setEditing(null); setModalOpen(true); }}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white text-sm font-bold shadow-md shadow-violet-500/25 transition"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-linear-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white text-sm font-bold shadow-md shadow-violet-500/25 transition"
                 >
                   <Plus className="w-4 h-4" />
                   Assign Plan
@@ -498,16 +498,16 @@ export default function StoreSubscriptionsPage() {
           </div>
         </div>
 
-        <div className="max-w-[1100px] mx-auto px-6 py-8">
+        <div className="max-w-275 mx-auto px-4 sm:px-6 py-8">
           {/* Stats */}
-          <div className="grid grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             {[
               {
                 label: "Total",
                 value: subs.length,
                 icon: <Users className="w-4 h-4" />,
                 color: "text-slate-700 dark:text-slate-200",
-                iconBg: "bg-slate-100 dark:bg-white/[0.08] text-slate-500",
+                iconBg: "bg-slate-100 dark:bg-white/8 text-slate-500",
               },
               {
                 label: "Active",
@@ -533,7 +533,7 @@ export default function StoreSubscriptionsPage() {
             ].map((s) => (
               <div
                 key={s.label}
-                className="bg-white dark:bg-white/[0.025] border border-slate-200 dark:border-white/[0.07] rounded-2xl px-5 py-4 flex items-center gap-4"
+                className="bg-white dark:bg-white/2.5 border border-slate-200 dark:border-white/7 rounded-2xl px-5 py-4 flex items-center gap-4"
               >
                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${s.iconBg}`}>
                   {s.icon}
@@ -549,7 +549,7 @@ export default function StoreSubscriptionsPage() {
           {/* Search + Filter */}
           <div className="flex gap-3 mb-5">
             <input
-              className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/40 transition"
+              className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/4 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/40 transition"
               placeholder="Search by store name, plan, or owner email…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -557,7 +557,7 @@ export default function StoreSubscriptionsPage() {
             <Select
               value={statusFilter}
               onChange={(v) => setStatusFilter(v as SubscriptionStatus | "all")}
-              className="w-[160px]"
+              className="w-40"
               size="large"
               options={[
                 { value: "all", label: "All Statuses" },
@@ -569,57 +569,64 @@ export default function StoreSubscriptionsPage() {
             />
           </div>
 
-          {/* Column headers */}
-          {!loading && filtered.length > 0 && (
-            <div className="flex items-center gap-4 px-5 py-2 text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest mb-1.5">
-              <div className="w-10 shrink-0" />
-              <div className="flex-[0_0_200px]">Store / Owner</div>
-              <div className="flex-[0_0_170px]">Plan / Amount</div>
-              <div className="flex-[0_0_120px]">Status</div>
-              <div className="flex-1">Period</div>
-              <div className="w-[250px] shrink-0 text-right">Actions</div>
-            </div>
-          )}
+          {/* Column headers + list share one horizontal scroller so fixed-width
+              columns don't get crushed on narrow viewports (this is a custom
+              flex "table", not a real <table>, so it needs its own overflow-x-auto). */}
+          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+            <div className="min-w-250">
+              {/* Column headers */}
+              {!loading && filtered.length > 0 && (
+                <div className="flex items-center gap-4 px-5 py-2 text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest mb-1.5">
+                  <div className="w-10 shrink-0" />
+                  <div className="flex-[0_0_200px]">Store / Owner</div>
+                  <div className="flex-[0_0_170px]">Plan / Amount</div>
+                  <div className="flex-[0_0_120px]">Status</div>
+                  <div className="flex-1">Period</div>
+                  <div className="w-62.5 shrink-0 text-right">Actions</div>
+                </div>
+              )}
 
-          {/* List */}
-          {loading ? (
-            <div className="flex flex-col gap-3">
-              {[...Array(4)].map((_, i) => (
-                <div
-                  key={i}
-                  className="h-16 rounded-2xl bg-slate-200 dark:bg-white/[0.04]"
-                  style={{ animation: `pulse 1.5s ease infinite`, animationDelay: `${i * 0.1}s` }}
-                />
-              ))}
+              {/* List */}
+              {loading ? (
+                <div className="flex flex-col gap-3">
+                  {[...Array(4)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="h-16 rounded-2xl bg-slate-200 dark:bg-white/4"
+                      style={{ animation: `pulse 1.5s ease infinite`, animationDelay: `${i * 0.1}s` }}
+                    />
+                  ))}
+                </div>
+              ) : filtered.length === 0 ? (
+                <div className="text-center py-24 bg-white dark:bg-white/2 rounded-3xl border border-dashed border-slate-200 dark:border-white/8">
+                  <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-violet-100 to-purple-100 dark:from-violet-500/10 dark:to-purple-500/10 flex items-center justify-center mx-auto mb-4">
+                    <Store className="w-8 h-8 text-violet-400" />
+                  </div>
+                  <div className="text-base font-bold text-slate-500 dark:text-slate-400">
+                    {search || statusFilter !== "all" ? "No subscriptions match your filter" : "No store subscriptions yet"}
+                  </div>
+                  <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+                    {!search && statusFilter === "all" && 'Click "Assign Plan" to get started'}
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2" style={{ animation: "fadeSlide 0.2s ease" }}>
+                  {filtered.map((sub) => (
+                    <SubscriptionRow
+                      key={sub.id}
+                      sub={sub}
+                      plans={plans}
+                      onEdit={(s) => { setEditing(s); setModalOpen(true); }}
+                      onDelete={(id) => setDeleteConfirm(id)}
+                      onCancel={(id) => { setCancelConfirm(id); setCancelPeriodEnd(false); }}
+                      onStatusChange={handleStatusChange}
+                      onRenew={openRenew}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
-          ) : filtered.length === 0 ? (
-            <div className="text-center py-24 bg-white dark:bg-white/[0.02] rounded-3xl border border-dashed border-slate-200 dark:border-white/[0.08]">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-500/10 dark:to-purple-500/10 flex items-center justify-center mx-auto mb-4">
-                <Store className="w-8 h-8 text-violet-400" />
-              </div>
-              <div className="text-base font-bold text-slate-500 dark:text-slate-400">
-                {search || statusFilter !== "all" ? "No subscriptions match your filter" : "No store subscriptions yet"}
-              </div>
-              <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
-                {!search && statusFilter === "all" && 'Click "Assign Plan" to get started'}
-              </p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2" style={{ animation: "fadeSlide 0.2s ease" }}>
-              {filtered.map((sub) => (
-                <SubscriptionRow
-                  key={sub.id}
-                  sub={sub}
-                  plans={plans}
-                  onEdit={(s) => { setEditing(s); setModalOpen(true); }}
-                  onDelete={(id) => setDeleteConfirm(id)}
-                  onCancel={(id) => { setCancelConfirm(id); setCancelPeriodEnd(false); }}
-                  onStatusChange={handleStatusChange}
-                  onRenew={openRenew}
-                />
-              ))}
-            </div>
-          )}
+          </div>
         </div>
       </div>
 
@@ -655,7 +662,7 @@ export default function StoreSubscriptionsPage() {
         <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
           How do you want to cancel this subscription?
         </p>
-        <label className="flex items-center gap-2.5 text-sm text-slate-700 dark:text-slate-300 cursor-pointer bg-slate-50 dark:bg-white/[0.04] rounded-xl px-4 py-3 border border-slate-200 dark:border-white/[0.07]">
+        <label className="flex items-center gap-2.5 text-sm text-slate-700 dark:text-slate-300 cursor-pointer bg-slate-50 dark:bg-white/4 rounded-xl px-4 py-3 border border-slate-200 dark:border-white/7">
           <input
             type="checkbox"
             className="w-4 h-4 accent-amber-500"

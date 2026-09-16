@@ -181,9 +181,9 @@ export default function SubscriptionPlansPage() {
       `}</style>
 
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
-        <div className="max-w-[960px] mx-auto px-6 py-10">
+        <div className="max-w-[960px] mx-auto px-4 sm:px-6 py-10">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-8">
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <LayoutList className="w-5 h-5 text-violet-600" />
@@ -208,7 +208,7 @@ export default function SubscriptionPlansPage() {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             {[
               { label: "Total Plans", value: plans.length, color: "text-slate-700 dark:text-slate-200" },
               { label: "Active", value: plans.filter((p) => p.is_active).length, color: "text-emerald-600 dark:text-emerald-400" },

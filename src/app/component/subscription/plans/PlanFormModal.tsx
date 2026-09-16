@@ -142,7 +142,7 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
       <div className="flex flex-col gap-4 py-2 max-h-[75vh] overflow-y-auto pr-1">
 
         {/* Name & Slug */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className={labelCls}>Plan Name *</label>
             <input
@@ -178,7 +178,7 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
         </div>
 
         {/* Pricing */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className={labelCls}>Monthly Price (৳)</label>
             <input
@@ -229,7 +229,7 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
         </p>
 
         {/* Trial & Sort */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className={labelCls}>Trial Days</label>
             <input

@@ -70,7 +70,7 @@ export default function UserRequestsPage() {
         return (
           <a
             href={mailtoLink}
-            className="text-blue-600 hover:underline"
+            className="text-blue-600 dark:text-blue-400 hover:underline"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -140,7 +140,7 @@ export default function UserRequestsPage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6 flex items-center gap-2">
+      <h1 className="text-2xl font-bold mb-6 flex items-center gap-2 text-slate-900 dark:text-slate-100">
         <MessageSquare /> User Requests
       </h1>
 

@@ -269,7 +269,7 @@ export function SubscriptionFormModal({
         {/* Billing Cycle pills */}
         <div>
           <label className={labelCls}>Billing Cycle</label>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {CYCLE_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
@@ -337,7 +337,7 @@ export function SubscriptionFormModal({
 
           {showAdvanced && (
             <div className="mt-4 flex flex-col gap-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className={labelCls}>
                     <Calendar className="w-3 h-3" />
@@ -358,7 +358,7 @@ export function SubscriptionFormModal({
                   <input type="date" className={inputCls} value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className={labelCls}>Period Start</label>
                   <input
@@ -376,7 +376,7 @@ export function SubscriptionFormModal({
                   <input type="date" className={inputCls} value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className={labelCls}>Trial Ends At</label>
                   <input type="date" className={inputCls} value={trialEndsAt} onChange={(e) => setTrialEndsAt(e.target.value)} />

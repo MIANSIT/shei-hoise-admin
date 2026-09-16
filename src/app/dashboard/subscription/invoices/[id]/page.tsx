@@ -64,7 +64,7 @@ function PaymentMethodCard({
     <div className={`rounded-2xl border-2 ${color} p-4`}>
       <div className="flex items-center gap-2 mb-3">
         {icon}
-        <span className="font-bold text-sm">{title}</span>
+        <span className="font-bold text-sm text-slate-800 dark:text-slate-200">{title}</span>
       </div>
       {children}
     </div>
@@ -335,7 +335,7 @@ export default function InvoiceDetailPage() {
 
 
   const inputCls =
-    "w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/40 transition";
+    "w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/4 text-slate-900 dark:text-slate-100 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/40 transition";
 
   const pdfStatus = PDF_STATUS[invoice.status] ?? PDF_STATUS.unpaid;
 
@@ -347,9 +347,9 @@ export default function InvoiceDetailPage() {
         {/* Generating overlay — hides the brief PDF render flash */}
         {generating && (
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[10001]">
-            <div className="bg-white rounded-2xl px-8 py-6 flex items-center gap-3 shadow-2xl">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl px-8 py-6 flex items-center gap-3 shadow-2xl">
               <Loader2 className="w-5 h-5 animate-spin text-violet-600" />
-              <span className="text-sm font-semibold text-slate-700">Generating PDF…</span>
+              <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Generating PDF…</span>
             </div>
           </div>
         )}
@@ -400,7 +400,7 @@ export default function InvoiceDetailPage() {
         </div>
 
         {/* Invoice document (screen view) */}
-        <div className="max-w-[820px] mx-auto bg-white rounded-3xl shadow-2xl shadow-slate-200/60 dark:shadow-none">
+        <div className="max-w-[820px] mx-auto bg-white dark:bg-slate-900 rounded-3xl shadow-2xl shadow-slate-200/60 dark:shadow-none">
 
           {/* Header band */}
           <div className="bg-gradient-to-r from-violet-600 to-purple-600 rounded-t-3xl px-5 sm:px-10 py-6 sm:py-7 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -421,11 +421,11 @@ export default function InvoiceDetailPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 mb-8">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Bill To</p>
-                <p className="font-bold text-slate-900 text-base">{store?.store_name ?? "—"}</p>
+                <p className="font-bold text-slate-900 dark:text-slate-100 text-base">{store?.store_name ?? "—"}</p>
                 {owner && (
                   <>
-                    <p className="text-sm text-slate-600 mt-0.5">{owner.first_name} {owner.last_name}</p>
-                    <p className="text-sm text-slate-500">{owner.email}</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">{owner.first_name} {owner.last_name}</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">{owner.email}</p>
                   </>
                 )}
                 <p className="text-xs text-slate-400 mt-1">Store: {store?.store_slug}</p>
@@ -440,17 +440,17 @@ export default function InvoiceDetailPage() {
                 ].map(([label, value]) => (
                   <div key={label} className="flex sm:justify-end gap-4 text-sm mb-1">
                     <span className="text-slate-400 font-medium">{label}:</span>
-                    <span className="text-slate-700 font-semibold sm:w-36 text-left">{value}</span>
+                    <span className="text-slate-700 dark:text-slate-300 font-semibold sm:w-36 text-left">{value}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Line items */}
-            <div className="rounded-2xl overflow-x-auto border border-slate-200 mb-8">
+            <div className="rounded-2xl overflow-x-auto border border-slate-200 dark:border-white/10 mb-8">
               <table className="w-full text-sm min-w-[520px]">
                 <thead>
-                  <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
+                  <tr className="bg-slate-50 dark:bg-white/4 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">
                     <th className="px-5 py-3 text-left font-semibold">Description</th>
                     <th className="px-5 py-3 text-left font-semibold">Billing</th>
                     <th className="px-5 py-3 text-left font-semibold">Period</th>
@@ -458,23 +458,23 @@ export default function InvoiceDetailPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="border-t border-slate-100">
+                  <tr className="border-t border-slate-100 dark:border-white/5">
                     <td className="px-5 py-4">
-                      <p className="font-semibold text-slate-900">{invoice.plan_name} Plan</p>
+                      <p className="font-semibold text-slate-900 dark:text-slate-100">{invoice.plan_name} Plan</p>
                       <p className="text-xs text-slate-400">Subscription</p>
                     </td>
-                    <td className="px-5 py-4 text-slate-600">{BILLING_CYCLE_LABELS[invoice.billing_cycle]}</td>
-                    <td className="px-5 py-4 text-slate-600">
+                    <td className="px-5 py-4 text-slate-600 dark:text-slate-400">{BILLING_CYCLE_LABELS[invoice.billing_cycle]}</td>
+                    <td className="px-5 py-4 text-slate-600 dark:text-slate-400">
                       {formatDate(invoice.period_start)} – {formatDate(invoice.period_end)}
                     </td>
-                    <td className="px-5 py-4 text-right font-bold text-slate-900">
+                    <td className="px-5 py-4 text-right font-bold text-slate-900 dark:text-slate-100">
                       ৳{invoice.amount.toLocaleString()}
                     </td>
                   </tr>
                 </tbody>
                 <tfoot>
-                  <tr className="border-t-2 border-slate-200 bg-slate-50">
-                    <td colSpan={3} className="px-5 py-4 text-right font-bold text-slate-600 uppercase tracking-wider text-sm">
+                  <tr className="border-t-2 border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/4">
+                    <td colSpan={3} className="px-5 py-4 text-right font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-sm">
                       Total Due
                     </td>
                     <td className="px-5 py-4 text-right">
@@ -488,32 +488,32 @@ export default function InvoiceDetailPage() {
 
             {/* Submitted payment info — for admin to verify */}
             {isSubmitted && (
-              <div className="mb-8 rounded-2xl border-2 border-blue-200 bg-blue-50 p-4 sm:p-5">
+              <div className="mb-8 rounded-2xl border-2 border-blue-200 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-500/10 p-4 sm:p-5">
                 <div className="flex flex-wrap items-center gap-2 mb-4">
-                  <Smartphone className="w-5 h-5 text-blue-600" />
-                  <p className="font-bold text-blue-800 text-sm uppercase tracking-wider">Customer Payment Submission</p>
-                  <span className="sm:ml-auto text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 border border-blue-200">Pending Verification</span>
+                  <Smartphone className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  <p className="font-bold text-blue-800 dark:text-blue-300 text-sm uppercase tracking-wider">Customer Payment Submission</p>
+                  <span className="sm:ml-auto text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30">Pending Verification</span>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                  <div className="bg-white rounded-xl border border-blue-100 px-4 py-3">
-                    <p className="text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-1">Amount Paid</p>
-                    <p className="text-sm font-extrabold text-emerald-700">৳{invoice.amount.toLocaleString()}</p>
+                  <div className="bg-white dark:bg-white/5 rounded-xl border border-blue-100 dark:border-blue-500/20 px-4 py-3">
+                    <p className="text-[10px] font-bold text-blue-400 dark:text-blue-300 uppercase tracking-wider mb-1">Amount Paid</p>
+                    <p className="text-sm font-extrabold text-emerald-700 dark:text-emerald-400">৳{invoice.amount.toLocaleString()}</p>
                     <p className="text-[10px] text-slate-400">{invoice.currency}</p>
                   </div>
-                  <div className="bg-white rounded-xl border border-blue-100 px-4 py-3">
-                    <p className="text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-1">Payment Method</p>
-                    <p className="text-sm font-bold text-slate-800 capitalize">{invoice.payment_method ?? "—"}</p>
+                  <div className="bg-white dark:bg-white/5 rounded-xl border border-blue-100 dark:border-blue-500/20 px-4 py-3">
+                    <p className="text-[10px] font-bold text-blue-400 dark:text-blue-300 uppercase tracking-wider mb-1">Payment Method</p>
+                    <p className="text-sm font-bold text-slate-800 dark:text-slate-200 capitalize">{invoice.payment_method ?? "—"}</p>
                   </div>
-                  <div className="bg-white rounded-xl border border-blue-100 px-4 py-3">
-                    <p className="text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-1">Transaction / Reference ID</p>
-                    <p className="text-sm font-bold font-mono text-violet-700">{invoice.payment_reference ?? "—"}</p>
+                  <div className="bg-white dark:bg-white/5 rounded-xl border border-blue-100 dark:border-blue-500/20 px-4 py-3">
+                    <p className="text-[10px] font-bold text-blue-400 dark:text-blue-300 uppercase tracking-wider mb-1">Transaction / Reference ID</p>
+                    <p className="text-sm font-bold font-mono text-violet-700 dark:text-violet-400">{invoice.payment_reference ?? "—"}</p>
                   </div>
-                  <div className="bg-white rounded-xl border border-blue-100 px-4 py-3">
-                    <p className="text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-1">Sender Number</p>
-                    <p className="text-sm font-bold font-mono text-slate-800">{invoice.sender_number ?? "—"}</p>
+                  <div className="bg-white dark:bg-white/5 rounded-xl border border-blue-100 dark:border-blue-500/20 px-4 py-3">
+                    <p className="text-[10px] font-bold text-blue-400 dark:text-blue-300 uppercase tracking-wider mb-1">Sender Number</p>
+                    <p className="text-sm font-bold font-mono text-slate-800 dark:text-slate-200">{invoice.sender_number ?? "—"}</p>
                   </div>
                 </div>
-                <p className="text-xs text-blue-600 mt-3">Verify the transaction in your payment app, then click <strong>Confirm Payment</strong> above.</p>
+                <p className="text-xs text-blue-600 dark:text-blue-400 mt-3">Verify the transaction in your payment app, then click <strong>Confirm Payment</strong> above.</p>
               </div>
             )}
 
@@ -522,8 +522,8 @@ export default function InvoiceDetailPage() {
               <div className="mb-8">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4">How to Pay</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <PaymentMethodCard icon={<Smartphone className="w-5 h-5 text-pink-600" />} title="bKash" color="border-pink-200 bg-pink-50">
-                    <p className="text-xs text-slate-500 mb-1"><span className="font-semibold text-slate-700">Send to ({pd.bkash.accountType}):</span></p>
+                  <PaymentMethodCard icon={<Smartphone className="w-5 h-5 text-pink-600 dark:text-pink-400" />} title="bKash" color="border-pink-200 dark:border-pink-500/30 bg-pink-50 dark:bg-pink-500/10">
+                    <p className="text-xs text-slate-500 mb-1"><span className="font-semibold text-slate-700 dark:text-slate-300">Send to ({pd.bkash.accountType}):</span></p>
                     <p className="text-base font-mono font-bold text-pink-700 mb-3">{pd.bkash.number}</p>
                     <div className="bg-pink-600 rounded-xl px-3 py-3 mb-3 text-center">
                       <p className="text-[10px] font-bold text-pink-200 uppercase tracking-wider mb-0.5">Send Exactly</p>
@@ -533,8 +533,8 @@ export default function InvoiceDetailPage() {
                     <p className="text-[11px] text-slate-500 leading-relaxed">{pd.bkash.instructions}</p>
                   </PaymentMethodCard>
 
-                  <PaymentMethodCard icon={<Smartphone className="w-5 h-5 text-orange-500" />} title="Nagad" color="border-orange-200 bg-orange-50">
-                    <p className="text-xs text-slate-500 mb-1"><span className="font-semibold text-slate-700">Send to ({pd.nagad.accountType}):</span></p>
+                  <PaymentMethodCard icon={<Smartphone className="w-5 h-5 text-orange-500 dark:text-orange-400" />} title="Nagad" color="border-orange-200 dark:border-orange-500/30 bg-orange-50 dark:bg-orange-500/10">
+                    <p className="text-xs text-slate-500 mb-1"><span className="font-semibold text-slate-700 dark:text-slate-300">Send to ({pd.nagad.accountType}):</span></p>
                     <p className="text-base font-mono font-bold text-orange-600 mb-3">{pd.nagad.number}</p>
                     <div className="bg-orange-500 rounded-xl px-3 py-3 mb-3 text-center">
                       <p className="text-[10px] font-bold text-orange-100 uppercase tracking-wider mb-0.5">Send Exactly</p>
@@ -544,7 +544,7 @@ export default function InvoiceDetailPage() {
                     <p className="text-[11px] text-slate-500 leading-relaxed">{pd.nagad.instructions}</p>
                   </PaymentMethodCard>
 
-                  <PaymentMethodCard icon={<Building2 className="w-5 h-5 text-blue-600" />} title="Bank Transfer" color="border-blue-200 bg-blue-50">
+                  <PaymentMethodCard icon={<Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />} title="Bank Transfer" color="border-blue-200 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-500/10">
                     {[
                       ["Bank", pd.bank.bankName],
                       ["Account", pd.bank.accountName],
@@ -553,16 +553,16 @@ export default function InvoiceDetailPage() {
                       ["Routing", pd.bank.routingNumber],
                     ].map(([label, val]) => (
                       <p key={label} className="text-[11px] text-slate-500 mb-0.5">
-                        <span className="font-semibold text-slate-700">{label}:</span> <span className="font-mono">{val}</span>
+                        <span className="font-semibold text-slate-700 dark:text-slate-300">{label}:</span> <span className="font-mono">{val}</span>
                       </p>
                     ))}
                     <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">{pd.bank.instructions}</p>
                   </PaymentMethodCard>
                 </div>
 
-                <div className="mt-4 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+                <div className="mt-4 flex items-start gap-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-xl px-4 py-3">
                   <span className="text-amber-500 text-base leading-5 mt-0.5 shrink-0">⚠️</span>
-                  <p className="text-sm text-amber-800 leading-5">
+                  <p className="text-sm text-amber-800 dark:text-amber-300 leading-5">
                     Always use <strong className="font-mono">{invoice.invoice_number}</strong> as payment reference.
                   </p>
                 </div>
@@ -571,11 +571,11 @@ export default function InvoiceDetailPage() {
 
             {/* Paid details */}
             {invoice.status === "paid" && (
-              <div className="mb-8 flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-2xl px-5 py-4">
-                <CheckCircle className="w-6 h-6 text-emerald-600 shrink-0" />
+              <div className="mb-8 flex items-center gap-3 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 rounded-2xl px-5 py-4">
+                <CheckCircle className="w-6 h-6 text-emerald-600 dark:text-emerald-400 shrink-0" />
                 <div>
-                  <p className="font-bold text-emerald-700">Payment Received</p>
-                  <p className="text-sm text-emerald-600">
+                  <p className="font-bold text-emerald-700 dark:text-emerald-400">Payment Received</p>
+                  <p className="text-sm text-emerald-600 dark:text-emerald-400">
                     Paid on {formatDate(invoice.paid_at)}
                     {invoice.payment_method && ` via ${invoice.payment_method}`}
                     {invoice.payment_reference && ` · Ref: ${invoice.payment_reference}`}
@@ -586,15 +586,15 @@ export default function InvoiceDetailPage() {
 
             {/* Notes */}
             {invoice.notes && (
-              <div className="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200">
+              <div className="mb-6 p-4 bg-slate-50 dark:bg-white/4 rounded-xl border border-slate-200 dark:border-white/10">
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Notes</p>
-                <p className="text-sm text-slate-600">{invoice.notes}</p>
+                <p className="text-sm text-slate-600 dark:text-slate-400">{invoice.notes}</p>
               </div>
             )}
 
             {/* Footer */}
-            <div className="border-t border-slate-100 pt-6 text-center text-xs text-slate-400">
-              <p className="font-semibold text-slate-600 mb-0.5">{pd.company.name}</p>
+            <div className="border-t border-slate-100 dark:border-white/5 pt-6 text-center text-xs text-slate-400">
+              <p className="font-semibold text-slate-600 dark:text-slate-400 mb-0.5">{pd.company.name}</p>
               <p>
                 <a href={`mailto:${pd.company.email}`} target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "none" }} className="hover:opacity-70 transition">{pd.company.email}</a>
                 {" · "}
@@ -860,17 +860,17 @@ export default function InvoiceDetailPage() {
       >
         <div className="flex flex-col gap-3 py-1">
           {isSubmitted && (
-            <div className="rounded-xl bg-blue-50 border border-blue-200 px-4 py-3">
-              <p className="text-[10px] font-bold text-blue-500 uppercase tracking-wider mb-2">Customer Submitted</p>
+            <div className="rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 px-4 py-3">
+              <p className="text-[10px] font-bold text-blue-500 dark:text-blue-400 uppercase tracking-wider mb-2">Customer Submitted</p>
               <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
                 <span className="text-slate-500">Amount Paid:</span>
-                <span className="font-extrabold text-emerald-700">৳{invoice.amount.toLocaleString()} {invoice.currency}</span>
+                <span className="font-extrabold text-emerald-700 dark:text-emerald-400">৳{invoice.amount.toLocaleString()} {invoice.currency}</span>
                 <span className="text-slate-500">Method:</span>
-                <span className="font-semibold text-slate-800 capitalize">{invoice.payment_method ?? "—"}</span>
+                <span className="font-semibold text-slate-800 dark:text-slate-200 capitalize">{invoice.payment_method ?? "—"}</span>
                 <span className="text-slate-500">Ref / TxID:</span>
-                <span className="font-mono font-bold text-violet-700">{invoice.payment_reference ?? "—"}</span>
+                <span className="font-mono font-bold text-violet-700 dark:text-violet-400">{invoice.payment_reference ?? "—"}</span>
                 <span className="text-slate-500">Sender No:</span>
-                <span className="font-mono font-semibold text-slate-700">{invoice.sender_number ?? "—"}</span>
+                <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">{invoice.sender_number ?? "—"}</span>
               </div>
             </div>
           )}

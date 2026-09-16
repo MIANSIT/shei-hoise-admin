@@ -529,6 +529,29 @@ export default function StoreTable({ stores: initialStores }: StoreTableProps) {
           font-size: 12px;
           color: #333;
         }
+
+        :global(.dark) .modal-content,
+        :global(.dark) .rich-text-preview {
+          color: #d1d5db;
+        }
+
+        :global(.dark) .modal-content h1,
+        :global(.dark) .modal-content h2,
+        :global(.dark) .modal-content h3,
+        :global(.dark) .modal-content h4 {
+          color: #f3f4f6;
+        }
+
+        :global(.dark) .modal-content h1,
+        :global(.dark) .modal-content h2,
+        :global(.dark) .modal-content hr {
+          border-color: #374151;
+        }
+
+        :global(.dark) .modal-content blockquote {
+          border-left-color: #4b5563;
+          color: #9ca3af;
+        }
       `}</style>
     </>
   );
