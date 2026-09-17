@@ -22,6 +22,7 @@ export const PRESET_FEATURES = [
   { key: "barcode", label: "Barcode" },
   { key: "trader_price_export", label: "Trader Price Export" },
   { key: "product_csv_export", label: "Product CSV Export" },
+  { key: "profit_loss", label: "Profit Loss" },
 ];
 
 export const PRESET_LIMITS = [
