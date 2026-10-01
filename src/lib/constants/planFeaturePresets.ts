@@ -23,6 +23,7 @@ export const PRESET_FEATURES = [
   { key: "trader_price_export", label: "Trader Price Export" },
   { key: "product_csv_export", label: "Product CSV Export" },
   { key: "profit_loss", label: "Profit Loss" },
+  { key: "staff_accounts", label: "Staff Accounts" },
 ];
 
 export const PRESET_LIMITS = [
