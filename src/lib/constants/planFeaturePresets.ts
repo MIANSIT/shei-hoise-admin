@@ -24,6 +24,7 @@ export const PRESET_FEATURES = [
   { key: "product_csv_export", label: "Product CSV Export" },
   { key: "profit_loss", label: "Profit Loss" },
   { key: "staff_accounts", label: "Staff Accounts" },
+  { key: "multi_branch", label: "Multiple Branches" },
 ];
 
 export const PRESET_LIMITS = [
@@ -35,6 +36,7 @@ export const PRESET_LIMITS = [
   { key: "max_users", label: "Max Users" },
   { key: "max_categories", label: "Max Categories" },
   { key: "max_coupons", label: "Max Coupons" },
+  { key: "max_branches", label: "Max Branches" },
 ];
 
 const FEATURE_LABEL_MAP: Record<string, string> = Object.fromEntries(

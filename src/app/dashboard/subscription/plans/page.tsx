@@ -287,6 +287,16 @@ export default function SubscriptionPlansPage() {
                         )}
                         <span>Sort: <strong className="text-slate-700 dark:text-slate-300">{plan.sort_order}</strong></span>
                         <span>Currency: <strong className="text-slate-700 dark:text-slate-300">{plan.currency}</strong></span>
+                        {plan.features?.multi_branch === true && (
+                          <span>
+                            Branches:{" "}
+                            <strong className="text-slate-700 dark:text-slate-300">
+                              {plan.limits?.max_branches === -1
+                                ? "Unlimited"
+                                : `up to ${plan.limits?.max_branches ?? "—"}`}
+                            </strong>
+                          </span>
+                        )}
                       </div>
 
                       <div className="space-y-1.5">

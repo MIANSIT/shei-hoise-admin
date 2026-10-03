@@ -16,6 +16,8 @@ interface PlanFormModalProps {
 type FeatureItem = { key: string; enabled: boolean };
 type LimitItem = { key: string; value: number };
 
+const BRANCH_DEFAULT_MAX = 2;
+
 const DEFAULT_FORM: CreatePlanInput = {
   name: "",
   slug: "",
@@ -105,6 +107,28 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
     setLimitItems((prev) =>
       prev.map((l) => (l.key === oldKey ? { ...l, key: newKey } : l))
     );
+
+  /* ── Branches ── */
+  const branchesOn = !!featureItems.find((f) => f.key === "multi_branch")?.enabled;
+  const branchLimit = limitItems.find((l) => l.key === "max_branches");
+  const maxBranches = branchLimit?.value ?? BRANCH_DEFAULT_MAX;
+  const setBranchesOn = (enabled: boolean) => {
+    setFeatureItems((prev) =>
+      prev.some((f) => f.key === "multi_branch")
+        ? prev.map((f) => (f.key === "multi_branch" ? { ...f, enabled } : f))
+        : [...prev, { key: "multi_branch", enabled }]
+    );
+    if (enabled && !branchLimit) {
+      setLimitItems((prev) => [...prev, { key: "max_branches", value: BRANCH_DEFAULT_MAX }]);
+    }
+  };
+  const setMaxBranches = (value: number) => {
+    if (branchLimit) {
+      updateLimitValue("max_branches", value);
+    } else {
+      setLimitItems((prev) => [...prev, { key: "max_branches", value }]);
+    }
+  };
 
   /* ── Submit ── */
   const handleSubmit = async () => {
@@ -286,6 +310,56 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
             />
             Default trial plan (auto-assigned to new stores at signup)
           </label>
+        </div>
+
+        {/* ── BRANCHES ── */}
+        <div className={sectionCls}>
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className={labelCls + " mb-0"}>Multiple branches</p>
+              <p className="text-[11px] text-slate-400">
+                Lets the store run several outlets with separate stock, orders, cash and reports.
+              </p>
+            </div>
+            <Switch
+              size="small"
+              checked={branchesOn}
+              onChange={setBranchesOn}
+              style={branchesOn ? { backgroundColor: "#10b981" } : {}}
+            />
+          </div>
+
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className={labelCls + " mb-0"}>Max branches</span>
+            {maxBranches === -1 ? (
+              <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 w-20 text-center">
+                ∞ Unlimited
+              </span>
+            ) : (
+              <input
+                type="number"
+                min={1}
+                disabled={!branchesOn}
+                className="w-20 px-2 py-1 text-sm text-center rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/4 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500/40 disabled:opacity-50"
+                value={maxBranches}
+                onChange={(e) => setMaxBranches(Math.max(1, parseInt(e.target.value) || 1))}
+              />
+            )}
+            <label className="flex items-center gap-1 text-[11px] text-slate-500 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                disabled={!branchesOn}
+                className="w-3.5 h-3.5 accent-emerald-600"
+                checked={maxBranches === -1}
+                onChange={(e) => setMaxBranches(e.target.checked ? -1 : BRANCH_DEFAULT_MAX)}
+              />
+              Unlimited
+            </label>
+          </div>
+
+          <p className="text-[11px] text-slate-400 mt-3">
+            Recommended with branches: enable Staff Accounts and Max Staff so each branch can have its own manager or cashier.
+          </p>
         </div>
 
         {/* ── FEATURES ── */}
