@@ -297,6 +297,16 @@ export default function SubscriptionPlansPage() {
                             </strong>
                           </span>
                         )}
+                        {plan.features?.brands === true && (
+                          <span>
+                            Brands:{" "}
+                            <strong className="text-slate-700 dark:text-slate-300">
+                              {plan.limits?.max_brands === -1
+                                ? "Unlimited"
+                                : `up to ${plan.limits?.max_brands ?? "—"}`}
+                            </strong>
+                          </span>
+                        )}
                       </div>
 
                       <div className="space-y-1.5">

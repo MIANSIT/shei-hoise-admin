@@ -25,6 +25,7 @@ export const PRESET_FEATURES = [
   { key: "profit_loss", label: "Profit Loss" },
   { key: "staff_accounts", label: "Staff Accounts" },
   { key: "multi_branch", label: "Multiple Branches" },
+  { key: "brands", label: "Brands" },
 ];
 
 export const PRESET_LIMITS = [
@@ -37,6 +38,7 @@ export const PRESET_LIMITS = [
   { key: "max_categories", label: "Max Categories" },
   { key: "max_coupons", label: "Max Coupons" },
   { key: "max_branches", label: "Max Branches" },
+  { key: "max_brands", label: "Max Brands" },
 ];
 
 const FEATURE_LABEL_MAP: Record<string, string> = Object.fromEntries(

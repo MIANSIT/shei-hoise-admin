@@ -17,6 +17,7 @@ type FeatureItem = { key: string; enabled: boolean };
 type LimitItem = { key: string; value: number };
 
 const BRANCH_DEFAULT_MAX = 2;
+const BRAND_DEFAULT_MAX = 10;
 
 const DEFAULT_FORM: CreatePlanInput = {
   name: "",
@@ -127,6 +128,28 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
       updateLimitValue("max_branches", value);
     } else {
       setLimitItems((prev) => [...prev, { key: "max_branches", value }]);
+    }
+  };
+
+  /* ── Brands ── */
+  const brandsOn = !!featureItems.find((f) => f.key === "brands")?.enabled;
+  const brandLimit = limitItems.find((l) => l.key === "max_brands");
+  const maxBrands = brandLimit?.value ?? BRAND_DEFAULT_MAX;
+  const setBrandsOn = (enabled: boolean) => {
+    setFeatureItems((prev) =>
+      prev.some((f) => f.key === "brands")
+        ? prev.map((f) => (f.key === "brands" ? { ...f, enabled } : f))
+        : [...prev, { key: "brands", enabled }]
+    );
+    if (enabled && !brandLimit) {
+      setLimitItems((prev) => [...prev, { key: "max_brands", value: BRAND_DEFAULT_MAX }]);
+    }
+  };
+  const setMaxBrands = (value: number) => {
+    if (brandLimit) {
+      updateLimitValue("max_brands", value);
+    } else {
+      setLimitItems((prev) => [...prev, { key: "max_brands", value }]);
     }
   };
 
@@ -360,6 +383,52 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
           <p className="text-[11px] text-slate-400 mt-3">
             Recommended with branches: enable Staff Accounts and Max Staff so each branch can have its own manager or cashier.
           </p>
+        </div>
+
+        {/* ── BRANDS ── */}
+        <div className={sectionCls}>
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className={labelCls + " mb-0"}>Brands</p>
+              <p className="text-[11px] text-slate-400">
+                Lets the store create brands and assign them to products.
+              </p>
+            </div>
+            <Switch
+              size="small"
+              checked={brandsOn}
+              onChange={setBrandsOn}
+              style={brandsOn ? { backgroundColor: "#10b981" } : {}}
+            />
+          </div>
+
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className={labelCls + " mb-0"}>Max brands</span>
+            {maxBrands === -1 ? (
+              <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 w-20 text-center">
+                ∞ Unlimited
+              </span>
+            ) : (
+              <input
+                type="number"
+                min={1}
+                disabled={!brandsOn}
+                className="w-20 px-2 py-1 text-sm text-center rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/4 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500/40 disabled:opacity-50"
+                value={maxBrands}
+                onChange={(e) => setMaxBrands(Math.max(1, parseInt(e.target.value) || 1))}
+              />
+            )}
+            <label className="flex items-center gap-1 text-[11px] text-slate-500 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                disabled={!brandsOn}
+                className="w-3.5 h-3.5 accent-emerald-600"
+                checked={maxBrands === -1}
+                onChange={(e) => setMaxBrands(e.target.checked ? -1 : BRAND_DEFAULT_MAX)}
+              />
+              Unlimited
+            </label>
+          </div>
         </div>
 
         {/* ── FEATURES ── */}
