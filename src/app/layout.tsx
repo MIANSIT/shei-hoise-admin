@@ -22,10 +22,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Shei Hoise SuperAdmin",
   description: "Super Admin Panel",
-  icons: {
-    icon: "/logo_beta.png",
-    apple: "/logo_beta.png",
-  },
 };
 
 export default function RootLayout({

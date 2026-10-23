@@ -10,16 +10,43 @@ interface BrandLogoProps {
 
 export const BRAND_LOGO_SRC = "/logo_beta.png";
 
+// logo_beta.png is 408x612 but the mark itself only fills the box below; the
+// rest is transparent padding. Crop to the mark so the logo renders at its
+// real size instead of looking tiny.
+const SRC_W = 408;
+const SRC_H = 612;
+const MARK = { x: 58, y: 71, w: 284, h: 446 };
+
 export function BrandLogo({ height = 40, className = "" }: BrandLogoProps) {
+  const k = height / MARK.h;
   return (
-    <img
-      src={BRAND_LOGO_SRC}
-      alt="Shei Hoise"
-      height={height}
-      style={{ height, width: "auto" }}
+    <span
       className={className}
-      draggable={false}
-    />
+      role="img"
+      aria-label="Shei Hoise"
+      style={{
+        display: "inline-block",
+        position: "relative",
+        overflow: "hidden",
+        flexShrink: 0,
+        height,
+        width: MARK.w * k,
+      }}
+    >
+      <img
+        src={BRAND_LOGO_SRC}
+        alt=""
+        draggable={false}
+        style={{
+          position: "absolute",
+          maxWidth: "none",
+          width: SRC_W * k,
+          height: SRC_H * k,
+          left: -MARK.x * k,
+          top: -MARK.y * k,
+        }}
+      />
+    </span>
   );
 }
 

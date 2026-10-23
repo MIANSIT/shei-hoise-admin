@@ -5,6 +5,7 @@ import { Dropdown, MenuProps, Spin } from "antd";
 import { User, LogOut } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import { BrandLogo } from "@/app/component/common/BrandLogo";
 import { useCurrentUser, clearUserCache } from "@/lib/hooks/useCurrentUser";
 
 export default function SidebarProfile() {
@@ -79,8 +80,11 @@ export default function SidebarProfile() {
       }}
     >
       <button className="flex items-center gap-2 p-2 rounded-full hover:bg-accent transition-all duration-200 hover:scale-105 active:scale-95">
-        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-500 text-white font-medium">
-          {user?.first_name ? user.first_name.charAt(0).toUpperCase() : "U"}
+        <div
+          className="flex items-center justify-center w-10 h-10 rounded-full bg-white border border-border shadow-sm"
+          title={user?.first_name ? `${user.first_name} ${user.last_name ?? ""}`.trim() : "Account"}
+        >
+          <BrandLogo height={26} />
         </div>
         {logoutLoading && <Spin size="small" />}
       </button>

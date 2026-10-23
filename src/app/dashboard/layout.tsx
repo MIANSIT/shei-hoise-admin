@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from "react";
 import Sidebar from "@/app/component/sidebar/Sidebar";
 import SidebarProfile from "@/app/component/sidebar/SidebarProfile";
 import Breadcrumb from "@/app/component/common/Breadcrumb";
-import { BrandLogo } from "@/app/component/common/BrandLogo";
 import { useTheme } from "@/lib/context/ThemeContext";
 import { Moon, PanelLeft, Sun, ArrowUp } from "lucide-react";
 import {
@@ -185,8 +184,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             }}
           >
             <div className="flex items-center gap-2 px-2">
-              <BrandLogo height={36} className="dark:bg-white dark:rounded-lg dark:p-1" />
-              <h1 className="text-lg font-bold hidden sm:block">Super Admin</h1>
+              <h1 className="text-lg font-bold">Super Admin</h1>
               <button
                 onClick={handleSidebarToggle}
                 className="p-2 rounded hover:opacity-70 transition-transform duration-300"
