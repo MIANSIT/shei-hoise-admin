@@ -157,7 +157,7 @@ export function SubscriptionFormModal({
   const inputCls =
     "w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] text-slate-900 dark:text-slate-100 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/40 transition";
   const labelCls =
-    "flex items-center gap-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5";
+    "flex items-center gap-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5";
 
   return (
     <Modal
@@ -329,7 +329,7 @@ export function SubscriptionFormModal({
           <button
             type="button"
             onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 dark:text-slate-500 hover:text-violet-600 dark:hover:text-violet-400 transition"
+            className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition"
           >
             {showAdvanced ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
             Advanced Settings
@@ -400,7 +400,7 @@ export function SubscriptionFormModal({
                 />
                 <div>
                   <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Cancel at period end</p>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     Subscription stays active until the end of the billing period
                   </p>
                 </div>
@@ -412,7 +412,7 @@ export function SubscriptionFormModal({
 
       {/* Footer */}
       <div className="px-6 py-4 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between gap-3 bg-slate-50 dark:bg-black/[0.12] rounded-b-lg">
-        <p className="text-xs text-slate-400 dark:text-slate-500">
+        <p className="text-xs text-slate-500 dark:text-slate-400">
           {!isEdit && "An invoice will be generated automatically on assign."}
         </p>
         <div className="flex items-center gap-2">

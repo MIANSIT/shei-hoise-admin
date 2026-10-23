@@ -91,7 +91,7 @@ interface StatCardProps {
 export function StatCard({ icon, label, value }: StatCardProps) {
   return (
     <div className="bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.05] rounded-xl p-3">
-      <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500 text-[11px] uppercase tracking-wider font-semibold mb-1">
+      <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-[11px] uppercase tracking-wider font-semibold mb-1">
         {icon}
         {label}
       </div>

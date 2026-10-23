@@ -1,5 +1,6 @@
 "use client";
 
+import { BrandLogoPdfTile } from "@/app/component/common/BrandLogo";
 import { useRef, useState } from "react";
 import { Loader2, LayoutGrid } from "lucide-react";
 import { useSheiNotification } from "@/lib/hooks/useSheiNotification";
@@ -108,18 +109,21 @@ export function PlanComparisonPdfButton({ plans }: { plans: SubscriptionPlan[] }
         }}
       >
         {/* Header */}
-        <div style={{ background: "linear-gradient(135deg, #6d28d9 0%, #7c3aed 55%, #9333ea 100%)", padding: "38px 44px 46px" }}>
+        <div style={{ background: "linear-gradient(135deg, #0E2438 0%, #13304A 55%, #1E4A74 100%)", padding: "38px 44px 46px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-            <div>
-              <div style={{ fontSize: 10, fontWeight: 800, color: "#ddd8fe", textTransform: "uppercase", letterSpacing: 2.5 }}>
-                Pricing &amp; Plans
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <BrandLogoPdfTile height={64} />
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 800, color: "#B0B7C0", textTransform: "uppercase", letterSpacing: 2.5 }}>
+                  Pricing &amp; Plans
+                </div>
+                <div style={{ fontSize: 25, fontWeight: 800, color: "#fff", letterSpacing: -0.3, marginTop: 6 }}>
+                  {pd.company.name}
+                </div>
+                <div style={{ fontSize: 12.5, color: "#E8EEF4", marginTop: 4 }}>Choose the plan that fits your store</div>
               </div>
-              <div style={{ fontSize: 25, fontWeight: 800, color: "#fff", letterSpacing: -0.3, marginTop: 6 }}>
-                {pd.company.name}
-              </div>
-              <div style={{ fontSize: 12.5, color: "#ede9fe", marginTop: 4 }}>Choose the plan that fits your store</div>
             </div>
-            <div style={{ fontSize: 10, color: "#ddd8fe", whiteSpace: "nowrap" }}>{today}</div>
+            <div style={{ fontSize: 10, color: "#B0B7C0", whiteSpace: "nowrap" }}>{today}</div>
           </div>
         </div>
 
@@ -132,7 +136,7 @@ export function PlanComparisonPdfButton({ plans }: { plans: SubscriptionPlan[] }
                 marginBottom: 26,
                 borderRadius: 12,
                 background: "#fff",
-                border: "1px solid #ece7fd",
+                border: "1px solid #E3EBF3",
                 boxShadow: "0 6px 18px rgba(109,40,217,0.12)",
                 padding: "16px 20px",
                 display: "flex",
@@ -145,8 +149,8 @@ export function PlanComparisonPdfButton({ plans }: { plans: SubscriptionPlan[] }
                   width: 32,
                   height: 32,
                   borderRadius: "50%",
-                  background: "#f5f3ff",
-                  color: "#7c3aed",
+                  background: "#EEF3F8",
+                  color: "#13304A",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -179,7 +183,7 @@ export function PlanComparisonPdfButton({ plans }: { plans: SubscriptionPlan[] }
                         padding: "0 8px 14px",
                         textAlign: "center",
                         verticalAlign: "bottom",
-                        borderBottom: `2px solid ${p.is_featured ? "#7c3aed" : "#e2e8f0"}`,
+                        borderBottom: `2px solid ${p.is_featured ? "#13304A" : "#e2e8f0"}`,
                       }}
                     >
                       <div style={{ height: 20, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -190,7 +194,7 @@ export function PlanComparisonPdfButton({ plans }: { plans: SubscriptionPlan[] }
                               fontSize: 8.5,
                               fontWeight: 800,
                               color: "#fff",
-                              background: "#7c3aed",
+                              background: "#13304A",
                               textTransform: "uppercase",
                               letterSpacing: 1,
                               padding: "3px 10px",
@@ -201,7 +205,7 @@ export function PlanComparisonPdfButton({ plans }: { plans: SubscriptionPlan[] }
                           </span>
                         )}
                       </div>
-                      <div style={{ fontSize: 16.5, fontWeight: 800, color: p.is_featured ? "#6d28d9" : "#0f172a", marginTop: 4 }}>
+                      <div style={{ fontSize: 16.5, fontWeight: 800, color: p.is_featured ? "#0E2438" : "#0f172a", marginTop: 4 }}>
                         {p.name}
                       </div>
                       {p.trial_days > 0 && (
@@ -215,7 +219,7 @@ export function PlanComparisonPdfButton({ plans }: { plans: SubscriptionPlan[] }
                 <tr>
                   <td style={{ padding: "12px 8px", color: "#64748b", borderBottom: "1px solid #f1f5f9" }}>Monthly</td>
                   {comparable.map((p) => (
-                    <td key={p.id} style={{ textAlign: "center", padding: "12px 8px", fontWeight: 800, fontSize: 13, borderBottom: "1px solid #f1f5f9", backgroundColor: p.is_featured ? "#faf9ff" : "transparent" }}>
+                    <td key={p.id} style={{ textAlign: "center", padding: "12px 8px", fontWeight: 800, fontSize: 13, borderBottom: "1px solid #f1f5f9", backgroundColor: p.is_featured ? "#F5F8FB" : "transparent" }}>
                       {formatMoney(p.price_monthly, p.currency)}
                     </td>
                   ))}
@@ -226,7 +230,7 @@ export function PlanComparisonPdfButton({ plans }: { plans: SubscriptionPlan[] }
                     const price = effectiveHalfYearlyPrice(p);
                     const pct = halfYearlySavingsPct(p.price_monthly, price);
                     return (
-                      <td key={p.id} style={{ textAlign: "center", padding: "12px 8px", borderBottom: "1px solid #f1f5f9", backgroundColor: p.is_featured ? "#faf9ff" : "transparent" }}>
+                      <td key={p.id} style={{ textAlign: "center", padding: "12px 8px", borderBottom: "1px solid #f1f5f9", backgroundColor: p.is_featured ? "#F5F8FB" : "transparent" }}>
                         <div style={{ fontWeight: 800, fontSize: 13 }}>{formatMoney(price, p.currency)}</div>
                         {pct > 0 && (
                           <span style={{ display: "inline-block", marginTop: 3, fontSize: 9, fontWeight: 700, color: "#92700e", background: "#fef3c7", borderRadius: 8, padding: "1px 7px" }}>
@@ -242,7 +246,7 @@ export function PlanComparisonPdfButton({ plans }: { plans: SubscriptionPlan[] }
                   {comparable.map((p) => {
                     const pct = yearlySavingsPct(p.price_monthly, p.price_yearly);
                     return (
-                      <td key={p.id} style={{ textAlign: "center", padding: "12px 8px", borderBottom: "1px solid #f1f5f9", backgroundColor: p.is_featured ? "#faf9ff" : "transparent" }}>
+                      <td key={p.id} style={{ textAlign: "center", padding: "12px 8px", borderBottom: "1px solid #f1f5f9", backgroundColor: p.is_featured ? "#F5F8FB" : "transparent" }}>
                         <div style={{ fontWeight: 800, fontSize: 13 }}>{formatMoney(p.price_yearly, p.currency)}</div>
                         {pct > 0 && (
                           <span style={{ display: "inline-block", marginTop: 3, fontSize: 9, fontWeight: 700, color: "#92700e", background: "#fef3c7", borderRadius: 8, padding: "1px 7px" }}>
@@ -259,9 +263,9 @@ export function PlanComparisonPdfButton({ plans }: { plans: SubscriptionPlan[] }
                       style={{
                         textAlign: "center",
                         fontSize: 10.5,
-                        color: "#7c5cd6",
-                        background: "#f8f6fe",
-                        border: "1px dashed #ddd4fb",
+                        color: "#3E6A96",
+                        background: "#F3F6FA",
+                        border: "1px dashed #D3DEEA",
                         borderRadius: 8,
                         padding: "9px 14px",
                       }}
@@ -275,8 +279,8 @@ export function PlanComparisonPdfButton({ plans }: { plans: SubscriptionPlan[] }
                   <tr>
                     <td colSpan={comparable.length + 1} style={{ padding: "18px 8px 6px" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                        <span style={{ width: 4, height: 12, borderRadius: 2, background: "#a78bfa", display: "inline-block" }} />
-                        <span style={{ fontSize: 10, fontWeight: 800, color: "#7c3aed", textTransform: "uppercase", letterSpacing: 1.2 }}>Capacity</span>
+                        <span style={{ width: 4, height: 12, borderRadius: 2, background: "#7FA3C7", display: "inline-block" }} />
+                        <span style={{ fontSize: 10, fontWeight: 800, color: "#13304A", textTransform: "uppercase", letterSpacing: 1.2 }}>Capacity</span>
                       </div>
                     </td>
                   </tr>
@@ -288,7 +292,7 @@ export function PlanComparisonPdfButton({ plans }: { plans: SubscriptionPlan[] }
                       const v = p.limits[k];
                       const label = v === undefined ? "—" : Number(v) === -1 ? "Unlimited" : Number(v).toLocaleString();
                       return (
-                        <td key={p.id} style={{ textAlign: "center", padding: "9px 8px", borderBottom: "1px solid #f1f5f9", fontWeight: 600, backgroundColor: p.is_featured ? "#faf9ff" : "transparent" }}>
+                        <td key={p.id} style={{ textAlign: "center", padding: "9px 8px", borderBottom: "1px solid #f1f5f9", fontWeight: 600, backgroundColor: p.is_featured ? "#F5F8FB" : "transparent" }}>
                           {label}
                         </td>
                       );
@@ -300,8 +304,8 @@ export function PlanComparisonPdfButton({ plans }: { plans: SubscriptionPlan[] }
                   <tr>
                     <td colSpan={comparable.length + 1} style={{ padding: "18px 8px 6px" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                        <span style={{ width: 4, height: 12, borderRadius: 2, background: "#a78bfa", display: "inline-block" }} />
-                        <span style={{ fontSize: 10, fontWeight: 800, color: "#7c3aed", textTransform: "uppercase", letterSpacing: 1.2 }}>Features</span>
+                        <span style={{ width: 4, height: 12, borderRadius: 2, background: "#7FA3C7", display: "inline-block" }} />
+                        <span style={{ fontSize: 10, fontWeight: 800, color: "#13304A", textTransform: "uppercase", letterSpacing: 1.2 }}>Features</span>
                       </div>
                     </td>
                   </tr>
@@ -316,7 +320,7 @@ export function PlanComparisonPdfButton({ plans }: { plans: SubscriptionPlan[] }
                           textAlign: "center",
                           padding: "9px 8px",
                           borderBottom: "1px solid #f1f5f9",
-                          backgroundColor: p.is_featured ? "#faf9ff" : "transparent",
+                          backgroundColor: p.is_featured ? "#F5F8FB" : "transparent",
                         }}
                       >
                         {p.features[k] ? (
@@ -349,7 +353,7 @@ export function PlanComparisonPdfButton({ plans }: { plans: SubscriptionPlan[] }
 
           {/* Footer */}
           <div style={{ marginTop: 30, paddingTop: 18, borderTop: "1px solid #f1f5f9" }}>
-            <div style={{ height: 3, width: 56, borderRadius: 2, background: "linear-gradient(90deg, #6d28d9, #a855f7)", margin: "0 auto 14px" }} />
+            <div style={{ height: 3, width: 56, borderRadius: 2, background: "linear-gradient(90deg, #0E2438, #2F6191)", margin: "0 auto 14px" }} />
             <div style={{ textAlign: "center", fontSize: 12, fontWeight: 800, color: "#334155" }}>{pd.company.name}</div>
             <div style={{ textAlign: "center", fontSize: 10.5, color: "#94a3b8", marginTop: 3 }}>
               {pd.company.phone} · {pd.company.email} · {pd.company.website.replace(/^https?:\/\//, "")}

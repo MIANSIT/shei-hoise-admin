@@ -16,15 +16,17 @@ export async function getStoreSubscriptions() {
           id,
           store_name,
           store_slug,
-          owner:owner_id (id, email, first_name, last_name)
+          owner:owner_id (id, email, first_name, last_name, phone)
         ),
         subscription_plans:plan_id (id, name, slug, price_monthly, price_half_yearly, price_yearly),
-        subscription_invoices (id, invoice_number, status, created_at)
+        subscription_invoices (
+          id, invoice_number, status, amount, currency, plan_name, billing_cycle,
+          period_start, period_end, paid_at, created_at
+        )
       `
       )
       .order("created_at", { ascending: false })
-      .order("created_at", { ascending: false, foreignTable: "subscription_invoices" })
-      .limit(1, { foreignTable: "subscription_invoices" });
+      .order("created_at", { ascending: false, foreignTable: "subscription_invoices" });
 
     if (error) throw error;
     return { success: true, data: data as StoreSubscription[] };

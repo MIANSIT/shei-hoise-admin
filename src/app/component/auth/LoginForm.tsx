@@ -82,7 +82,7 @@ export function LoginForm({
           placeholder="Enter your email"
           {...form.register("username")}
           disabled={form.formState.isSubmitting}
-          className="border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-gray-100"
+          className="text-foreground"
         />
         {form.formState.errors.username && (
           <p className="text-sm text-red-500">{errors?.username?.message}</p>
@@ -99,7 +99,7 @@ export function LoginForm({
             placeholder="Enter your password"
             {...form.register("password")}
             disabled={form.formState.isSubmitting}
-            className="text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 pr-14"
+            className="text-foreground pr-14"
           />
           <div className="absolute inset-y-0 right-2 flex items-center">
             <PasswordToggle
@@ -116,8 +116,8 @@ export function LoginForm({
       {/* Submit Button */}
       <Button
         type="submit"
-        variant="default"
-        className="w-full mt-2 relative overflow-hidden"
+        variant="dark"
+        className="w-full mt-2 relative overflow-hidden h-11 text-base disabled:opacity-100 disabled:bg-muted disabled:text-muted-foreground disabled:border disabled:border-border"
         disabled={!form.formState.isValid || form.formState.isSubmitting}
       >
         {form.formState.isSubmitting ? (

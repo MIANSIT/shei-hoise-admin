@@ -3,25 +3,25 @@
 import { useEffect, useState } from "react";
 import { Modal, Select } from "antd";
 import {
-  Plus, Pencil, Trash2, CreditCard, XCircle, Store,
-  FileText, Users, AlertCircle, CheckCircle2, Eye, RefreshCw,
+  Plus, CreditCard, XCircle, Store,
+  FileText, Users, AlertCircle, CheckCircle2, RefreshCw,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSheiNotification } from "@/lib/hooks/useSheiNotification";
-import { getStoreSubscriptions } from "@/lib/queries/subscription/storeSubscriptions/getStoreSubscriptions";
+import { getStoreSubscriptionsPageData } from "@/lib/queries/subscription/storeSubscriptions/getStoreSubscriptionsPageData";
 import { createStoreSubscription } from "@/lib/queries/subscription/storeSubscriptions/createStoreSubscription";
 import {
   updateStoreSubscription,
   cancelStoreSubscription,
 } from "@/lib/queries/subscription/storeSubscriptions/updateStoreSubscription";
 import { deleteStoreSubscription } from "@/lib/queries/subscription/storeSubscriptions/deleteStoreSubscription";
-import { getSubscriptionPlans } from "@/lib/queries/subscription/plans/getPlans";
-import { getAllStoresForDropdown } from "@/lib/queries/subscription/getAllStores";
 import { createInvoice } from "@/lib/queries/subscription/invoices/createInvoice";
+import { updateInvoice } from "@/lib/queries/subscription/invoices/updateInvoice";
 import { calcCycleAmount, monthsBetween } from "@/lib/utils/billingCycle";
-import { getPendingPlanSwitch } from "@/lib/utils/planSwitch";
 import { promoteDuePlanSwitches } from "@/lib/queries/subscription/storeSubscriptions/promoteDuePlanSwitches";
 import { SubscriptionFormModal } from "@/app/component/subscription/storeSubscriptions/SubscriptionFormModal";
+import { StoreSpendTable } from "@/app/component/subscription/storeSubscriptions/StoreSpendTable";
+import { StoreSubscriptionsTable } from "@/app/component/subscription/storeSubscriptions/StoreSubscriptionsTable";
 import { RenewSubscriptionModal } from "@/app/component/subscription/storeSubscriptions/RenewSubscriptionModal";
 import {
   StoreSubscription,
@@ -30,217 +30,10 @@ import {
   SubscriptionStatus,
   BillingCycle,
   SUBSCRIPTION_STATUS_LABELS,
-  SUBSCRIPTION_STATUS_COLORS,
-  BILLING_CYCLE_LABELS,
   CreateStoreSubscriptionInput,
   UpdateStoreSubscriptionInput,
 } from "@/lib/types/subscription.types";
 import { PAYMENT_DETAILS } from "@/lib/constants/paymentDetails";
-
-function StatusBadge({ status }: { status: SubscriptionStatus }) {
-  const c = SUBSCRIPTION_STATUS_COLORS[status];
-  return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${c.bg} ${c.text}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
-      {SUBSCRIPTION_STATUS_LABELS[status]}
-    </span>
-  );
-}
-
-function formatDate(iso?: string | null) {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-}
-
-function SubscriptionRow({
-  sub,
-  plans,
-  onEdit,
-  onDelete,
-  onCancel,
-  onStatusChange,
-  onRenew,
-}: {
-  sub: StoreSubscription;
-  plans: SubscriptionPlan[];
-  onEdit: (sub: StoreSubscription) => void;
-  onDelete: (id: string) => void;
-  onCancel: (id: string) => void;
-  onStatusChange: (id: string, status: SubscriptionStatus) => void;
-  onRenew: (sub: StoreSubscription) => void;
-}) {
-  const store = sub.stores;
-  const plan = sub.subscription_plans;
-  const owner = store?.owner;
-  const latestInvoice = sub.subscription_invoices?.[0];
-  const [expanded, setExpanded] = useState(false);
-  const router = useRouter();
-  const pendingSwitch = getPendingPlanSwitch(sub.metadata);
-  const pendingPlanName = pendingSwitch ? plans.find((p) => p.id === pendingSwitch.pending_plan_id)?.name : null;
-
-  const customMonths =
-    sub.billing_cycle === BillingCycle.CUSTOM && sub.current_period_end
-      ? monthsBetween(new Date(sub.current_period_start), new Date(sub.current_period_end))
-      : undefined;
-  const planAmount = plan
-    ? calcCycleAmount(plan as SubscriptionPlan, sub.billing_cycle, customMonths)
-    : null;
-
-  const initials = store?.store_name
-    ? store.store_name.slice(0, 2).toUpperCase()
-    : "??";
-
-  return (
-    <div
-      className={`bg-white dark:bg-white/2.5 border rounded-2xl overflow-hidden transition-all duration-200 ${
-        expanded
-          ? "border-violet-200 dark:border-violet-500/30 shadow-lg shadow-violet-500/5 dark:shadow-black/40"
-          : "border-slate-200 dark:border-white/7 hover:border-slate-300 dark:hover:border-white/14 hover:shadow-sm"
-      }`}
-    >
-      {/* Main row */}
-      <div
-        className="flex items-center gap-4 px-5 py-4 cursor-pointer"
-        onClick={() => setExpanded(!expanded)}
-      >
-        {/* Avatar */}
-        <div className="w-10 h-10 shrink-0 rounded-xl bg-linear-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-xs font-black shadow-md shadow-violet-500/30">
-          {initials}
-        </div>
-
-        {/* Store + owner */}
-        <div className="flex-[0_0_200px] min-w-0">
-          <div className="font-bold text-sm text-slate-900 dark:text-slate-100 truncate">
-            {store?.store_name ?? "—"}
-          </div>
-          <div className="text-[11px] text-slate-400 truncate">
-            {owner ? `${owner.first_name} ${owner.last_name} · ${owner.email}` : sub.user_id}
-          </div>
-        </div>
-
-        {/* Plan + amount */}
-        <div className="flex-[0_0_170px] min-w-0">
-          <div className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">
-            {plan?.name ?? "—"}
-          </div>
-          <div className="flex items-center gap-1.5 mt-0.5">
-            {planAmount !== null && (
-              <span className="text-xs font-bold text-violet-600 dark:text-violet-400">
-                ৳{planAmount.toLocaleString()}
-              </span>
-            )}
-            <span className="text-[10px] text-slate-400">
-              / {BILLING_CYCLE_LABELS[sub.billing_cycle]}
-            </span>
-          </div>
-          {pendingSwitch && (
-            <div className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold mt-0.5 truncate" title={`Applies once the current period ends — a manual "Apply due switches" run or the hourly job will pick it up.`}>
-              → {pendingPlanName ?? "plan"} on {formatDate(pendingSwitch.pending_plan_effective_at)}
-            </div>
-          )}
-        </div>
-
-        {/* Status */}
-        <div className="flex-[0_0_120px]">
-          <StatusBadge status={sub.status} />
-        </div>
-
-        {/* Period */}
-        <div className="flex-1 min-w-0">
-          <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-0.5">Period</div>
-          <div className="text-xs text-slate-600 dark:text-slate-300">
-            {formatDate(sub.current_period_start)}
-            {sub.current_period_end && (
-              <span className="text-slate-400"> → {formatDate(sub.current_period_end)}</span>
-            )}
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-          <Select
-            size="small"
-            value={sub.status}
-            onChange={(v) => onStatusChange(sub.id, v as SubscriptionStatus)}
-            className="w-27"
-            options={Object.values(SubscriptionStatus).map((s) => ({
-              value: s,
-              label: SUBSCRIPTION_STATUS_LABELS[s],
-            }))}
-          />
-          <button
-            title="Renew subscription"
-            onClick={() => onRenew(sub)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-          </button>
-          <button
-            title="Edit"
-            onClick={() => onEdit(sub)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition"
-          >
-            <Pencil className="w-3.5 h-3.5" />
-          </button>
-          <button
-            title="Cancel subscription"
-            onClick={() => onCancel(sub.id)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition"
-          >
-            <XCircle className="w-3.5 h-3.5" />
-          </button>
-          <button
-            title="Delete"
-            onClick={() => onDelete(sub.id)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </div>
-
-      {/* Expanded */}
-      {expanded && (
-        <div
-          className="border-t border-slate-100 dark:border-white/5 px-5 py-4 bg-slate-50/60 dark:bg-black/8 grid grid-cols-2 md:grid-cols-4 gap-4"
-          style={{ animation: "fadeSlide 0.18s ease" }}
-        >
-          {[
-            { label: "Started", value: formatDate(sub.started_at) },
-            { label: "Expires", value: formatDate(sub.expires_at) },
-            { label: "Trial Ends", value: formatDate(sub.trial_ends_at) },
-            { label: "Canceled At", value: formatDate(sub.canceled_at) },
-            { label: "Cancel at Period End", value: sub.cancels_at_period_end ? "Yes" : "No" },
-            { label: "Payment Provider", value: sub.payment_provider ?? "—" },
-            { label: "Plan Slug", value: plan?.slug ?? "—" },
-          ].map(({ label, value }) => (
-            <div key={label}>
-              <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">{label}</div>
-              <div className="text-xs text-slate-700 dark:text-slate-300 font-medium">{value}</div>
-            </div>
-          ))}
-          <div>
-            <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Invoice</div>
-            {latestInvoice ? (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  router.push(`/dashboard/subscription/invoices/${latestInvoice.id}`);
-                }}
-                className="flex items-center gap-1 text-xs font-mono font-bold text-violet-700 dark:text-violet-400 hover:underline cursor-pointer"
-              >
-                <Eye className="w-3 h-3" />
-                {latestInvoice.invoice_number}
-              </button>
-            ) : (
-              <div className="text-xs text-slate-700 dark:text-slate-300 font-medium">—</div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
 export default function StoreSubscriptionsPage() {
   const router = useRouter();
@@ -251,6 +44,7 @@ export default function StoreSubscriptionsPage() {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<SubscriptionStatus | "all">("all");
+  const [view, setView] = useState<"subscriptions" | "spend">("subscriptions");
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<StoreSubscription | null>(null);
@@ -267,11 +61,8 @@ export default function StoreSubscriptionsPage() {
 
   const fetchAll = async () => {
     setLoading(true);
-    const [subsRes, plansRes, storesRes] = await Promise.all([
-      getStoreSubscriptions(),
-      getSubscriptionPlans(),
-      getAllStoresForDropdown(),
-    ]);
+    const { subs: subsRes, plans: plansRes, stores: storesRes } =
+      await getStoreSubscriptionsPageData();
     if (subsRes.success) setSubs(subsRes.data);
     if (plansRes.success) setPlans(plansRes.data);
     if (storesRes.success) setStores(storesRes.data);
@@ -315,8 +106,50 @@ export default function StoreSubscriptionsPage() {
   const handleUpdate = async (id: string, input: UpdateStoreSubscriptionInput) => {
     const res = await updateStoreSubscription(id, input);
     if (res.success) {
-      success("Subscription updated");
-      setSubs((prev) => prev.map((s) => (s.id === id ? { ...s, ...input } : s)));
+      // The invoice for the current period must follow the subscription's
+      // period, otherwise the two drift apart (and the billed amount no longer
+      // matches the period length). Amount is deliberately left alone - money
+      // already collected is corrected explicitly from the Invoices page.
+      const sub = subs.find((s) => s.id === id);
+      const live = (sub?.subscription_invoices ?? []).filter(
+        (inv) => inv.status !== "cancelled" && inv.status !== "canceled" && inv.status !== "refunded",
+      );
+      // Newest paid invoice covers the current period; a lone unpaid invoice
+      // (fresh subscription) does too. A pending renewal must be left alone.
+      const billed = live.find((inv) => inv.status === "paid") ?? (live.length === 1 ? live[0] : undefined);
+      const newStart = input.current_period_start;
+      const newEnd = input.current_period_end;
+      const startChanged = !!newStart && newStart !== sub?.current_period_start;
+      const endChanged = newEnd !== undefined && newEnd !== (sub?.current_period_end ?? null);
+
+      let invoiceSynced = false;
+      let invoicePatch: { period_start?: string; period_end?: string } = {};
+      if (billed && (startChanged || endChanged)) {
+        invoicePatch = {
+          ...(newStart ? { period_start: newStart } : {}),
+          ...(newEnd ? { period_end: newEnd } : {}),
+        };
+        const invRes = await updateInvoice(billed.id, invoicePatch);
+        invoiceSynced = invRes.success;
+        if (!invRes.success) {
+          notifyError(`Subscription saved, but invoice ${billed.invoice_number} could not be updated`);
+        }
+      }
+
+      success(invoiceSynced ? `Subscription updated — invoice ${billed?.invoice_number} period synced` : "Subscription updated");
+      setSubs((prev) =>
+        prev.map((s) =>
+          s.id !== id
+            ? s
+            : {
+                ...s,
+                ...input,
+                subscription_invoices: invoiceSynced
+                  ? s.subscription_invoices?.map((inv) => (inv.id === billed?.id ? { ...inv, ...invoicePatch } : inv))
+                  : s.subscription_invoices,
+              },
+        ),
+      );
       setModalOpen(false);
       setEditing(null);
     } else {
@@ -375,6 +208,31 @@ export default function StoreSubscriptionsPage() {
     setApplyingSwitches(false);
   };
 
+  const handleSyncInvoiceDates = async (sub: StoreSubscription, invoiceId: string) => {
+    const patch = {
+      period_start: sub.current_period_start,
+      ...(sub.current_period_end ? { period_end: sub.current_period_end } : {}),
+    };
+    const res = await updateInvoice(invoiceId, patch);
+    if (res.success) {
+      success("Invoice dates now match the subscription period");
+      setSubs((prev) =>
+        prev.map((s) =>
+          s.id !== sub.id
+            ? s
+            : {
+                ...s,
+                subscription_invoices: s.subscription_invoices?.map((inv) =>
+                  inv.id === invoiceId ? { ...inv, ...patch } : inv,
+                ),
+              },
+        ),
+      );
+    } else {
+      notifyError("Failed to sync invoice dates");
+    }
+  };
+
   const openRenew = (sub: StoreSubscription) => {
     const pending = sub.subscription_invoices?.[0];
     if (pending && (pending.status === "unpaid" || pending.status === "submitted")) {
@@ -430,15 +288,16 @@ export default function StoreSubscriptionsPage() {
     }
   };
 
-  const filtered = subs.filter((s) => {
+  const searched = subs.filter((s) => {
     const q = search.toLowerCase();
-    const match =
+    return (
       !q ||
       (s.stores?.store_name?.toLowerCase() ?? "").includes(q) ||
       (s.subscription_plans?.name?.toLowerCase() ?? "").includes(q) ||
-      (s.stores?.owner?.email?.toLowerCase() ?? "").includes(q);
-    return match && (statusFilter === "all" || s.status === statusFilter);
+      (s.stores?.owner?.email?.toLowerCase() ?? "").includes(q)
+    );
   });
+  const filtered = searched.filter((s) => statusFilter === "all" || s.status === statusFilter);
 
   const totalActive = subs.filter((s) => s.status === SubscriptionStatus.ACTIVE).length;
   const totalIncomplete = subs.filter((s) => s.status === SubscriptionStatus.INCOMPLETE).length;
@@ -540,9 +399,29 @@ export default function StoreSubscriptionsPage() {
                 </div>
                 <div>
                   <div className={`text-2xl font-extrabold ${s.color}`}>{s.value}</div>
-                  <div className="text-xs text-slate-400 mt-0.5">{s.label}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{s.label}</div>
                 </div>
               </div>
+            ))}
+          </div>
+
+          {/* View toggle */}
+          <div className="inline-flex p-1 mb-4 rounded-xl bg-muted border border-border">
+            {([
+              { key: "subscriptions", label: "Subscriptions" },
+              { key: "spend", label: "Spend by store" },
+            ] as const).map((v) => (
+              <button
+                key={v.key}
+                onClick={() => setView(v.key)}
+                className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition ${
+                  view === v.key
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {v.label}
+              </button>
             ))}
           </div>
 
@@ -554,7 +433,7 @@ export default function StoreSubscriptionsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            <Select
+            {view === "subscriptions" && <Select
               value={statusFilter}
               onChange={(v) => setStatusFilter(v as SubscriptionStatus | "all")}
               className="w-40"
@@ -566,67 +445,53 @@ export default function StoreSubscriptionsPage() {
                   label: SUBSCRIPTION_STATUS_LABELS[s],
                 })),
               ]}
-            />
+            />}
           </div>
 
-          {/* Column headers + list share one horizontal scroller so fixed-width
-              columns don't get crushed on narrow viewports (this is a custom
-              flex "table", not a real <table>, so it needs its own overflow-x-auto). */}
-          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-            <div className="min-w-250">
-              {/* Column headers */}
-              {!loading && filtered.length > 0 && (
-                <div className="flex items-center gap-4 px-5 py-2 text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest mb-1.5">
-                  <div className="w-10 shrink-0" />
-                  <div className="flex-[0_0_200px]">Store / Owner</div>
-                  <div className="flex-[0_0_170px]">Plan / Amount</div>
-                  <div className="flex-[0_0_120px]">Status</div>
-                  <div className="flex-1">Period</div>
-                  <div className="w-62.5 shrink-0 text-right">Actions</div>
-                </div>
-              )}
-
-              {/* List */}
-              {loading ? (
-                <div className="flex flex-col gap-3">
-                  {[...Array(4)].map((_, i) => (
-                    <div
-                      key={i}
-                      className="h-16 rounded-2xl bg-slate-200 dark:bg-white/4"
-                      style={{ animation: `pulse 1.5s ease infinite`, animationDelay: `${i * 0.1}s` }}
-                    />
-                  ))}
-                </div>
-              ) : filtered.length === 0 ? (
-                <div className="text-center py-24 bg-white dark:bg-white/2 rounded-3xl border border-dashed border-slate-200 dark:border-white/8">
-                  <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-violet-100 to-purple-100 dark:from-violet-500/10 dark:to-purple-500/10 flex items-center justify-center mx-auto mb-4">
-                    <Store className="w-8 h-8 text-violet-400" />
-                  </div>
-                  <div className="text-base font-bold text-slate-500 dark:text-slate-400">
-                    {search || statusFilter !== "all" ? "No subscriptions match your filter" : "No store subscriptions yet"}
-                  </div>
-                  <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
-                    {!search && statusFilter === "all" && 'Click "Assign Plan" to get started'}
-                  </p>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-2" style={{ animation: "fadeSlide 0.2s ease" }}>
-                  {filtered.map((sub) => (
-                    <SubscriptionRow
-                      key={sub.id}
-                      sub={sub}
-                      plans={plans}
-                      onEdit={(s) => { setEditing(s); setModalOpen(true); }}
-                      onDelete={(id) => setDeleteConfirm(id)}
-                      onCancel={(id) => { setCancelConfirm(id); setCancelPeriodEnd(false); }}
-                      onStatusChange={handleStatusChange}
-                      onRenew={openRenew}
-                    />
-                  ))}
-                </div>
-              )}
+          {!loading && view === "spend" ? (
+            searched.length === 0 ? (
+              <div className="text-center py-16 text-sm text-muted-foreground bg-card rounded-3xl border border-dashed border-border">
+                No stores match your search
+              </div>
+            ) : (
+              <StoreSpendTable subs={searched} />
+            )
+          ) : loading ? (
+            <div className="flex flex-col gap-3">
+              {[...Array(4)].map((_, i) => (
+                <div
+                  key={i}
+                  className="h-16 rounded-2xl bg-slate-200 dark:bg-white/4"
+                  style={{ animation: `pulse 1.5s ease infinite`, animationDelay: `${i * 0.1}s` }}
+                />
+              ))}
             </div>
-          </div>
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-24 bg-white dark:bg-white/2 rounded-3xl border border-dashed border-slate-200 dark:border-white/8">
+              <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-violet-100 to-purple-100 dark:from-violet-500/10 dark:to-purple-500/10 flex items-center justify-center mx-auto mb-4">
+                <Store className="w-8 h-8 text-violet-400" />
+              </div>
+              <div className="text-base font-bold text-slate-500 dark:text-slate-400">
+                {search || statusFilter !== "all" ? "No subscriptions match your filter" : "No store subscriptions yet"}
+              </div>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                {!search && statusFilter === "all" && 'Click "Assign Plan" to get started'}
+              </p>
+            </div>
+          ) : (
+            <div style={{ animation: "fadeSlide 0.2s ease" }}>
+              <StoreSubscriptionsTable
+                subs={filtered}
+                plans={plans}
+                onEdit={(s) => { setEditing(s); setModalOpen(true); }}
+                onDelete={(id) => setDeleteConfirm(id)}
+                onCancel={(id) => { setCancelConfirm(id); setCancelPeriodEnd(false); }}
+                onStatusChange={handleStatusChange}
+                onRenew={openRenew}
+                onSyncInvoiceDates={handleSyncInvoiceDates}
+              />
+            </div>
+          )}
         </div>
       </div>
 

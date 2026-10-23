@@ -1,5 +1,7 @@
 "use client";
 
+import { BrandLogoPdfTile } from "@/app/component/common/BrandLogo";
+import { BrandLogoTile } from "@/app/component/common/BrandLogo";
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Modal, Select } from "antd";
@@ -14,6 +16,7 @@ import {
 } from "lucide-react";
 import { useSheiNotification } from "@/lib/hooks/useSheiNotification";
 import { getInvoiceById } from "@/lib/queries/subscription/invoices/getInvoices";
+import { sendPaymentConfirmationEmail } from "@/lib/queries/subscription/invoices/sendPaymentConfirmationEmail";
 import {
   markInvoicePaid,
   updateInvoice,
@@ -79,6 +82,25 @@ const PDF_STATUS: Record<string, { bg: string; text: string }> = {
   refunded: { bg: "#E0E7FF", text: "#3730A3" },
 };
 
+const toDateInput = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+const fmtLong = (d: Date) =>
+  d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+
+// Where a paid period starts when the admin doesn't override it: right now, or
+// the end of the current period for an early renewal (so paid days stack
+// instead of being discarded).
+function defaultPeriodStart(inv: {
+  store_subscriptions?: { current_period_end: string | null } | null;
+}): Date {
+  const now = new Date();
+  const end = inv.store_subscriptions?.current_period_end
+    ? new Date(inv.store_subscriptions.current_period_end)
+    : null;
+  return end && end > now ? end : now;
+}
+
 export default function InvoiceDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -92,6 +114,7 @@ export default function InvoiceDetailPage() {
   const [payMethod, setPayMethod] = useState("bkash");
   const [payRef, setPayRef] = useState("");
   const [marking, setMarking] = useState(false);
+  const [startDate, setStartDate] = useState("");
 
   const [cancelOpen, setCancelOpen] = useState(false);
   const [canceling, setCanceling] = useState(false);
@@ -120,10 +143,13 @@ export default function InvoiceDetailPage() {
       // existing current_period_end instead, so early renewals don't discard
       // days the store already paid for.
       const now = new Date();
-      const existingPeriodEnd = invoice.store_subscriptions?.current_period_end
-        ? new Date(invoice.store_subscriptions.current_period_end)
-        : null;
-      const periodStart = existingPeriodEnd && existingPeriodEnd > now ? existingPeriodEnd : now;
+      // The admin picks the start date in the modal (defaults to the rule
+      // above). Picking the default's own calendar day keeps its exact time.
+      const defaultStart = defaultPeriodStart(invoice);
+      const periodStart =
+        !startDate || startDate === toDateInput(defaultStart)
+          ? defaultStart
+          : new Date(`${startDate}T00:00:00`);
       const customMonths =
         invoice.billing_cycle === BillingCycle.CUSTOM
           ? monthsBetween(new Date(invoice.period_start), new Date(invoice.period_end))
@@ -133,7 +159,8 @@ export default function InvoiceDetailPage() {
       // instead of applied now — otherwise the store gets the new plan's
       // features/limits for days it already paid for under the old plan.
       const currentPlanId = invoice.store_subscriptions?.plan_id;
-      const isEarlyRenewal = !!existingPeriodEnd && existingPeriodEnd > now;
+      // Only a period that starts in the future is an "early renewal".
+      const isEarlyRenewal = periodStart > now;
       const isPlanSwitch = !!currentPlanId && currentPlanId !== invoice.plan_id;
       const existingMetadata = (invoice.store_subscriptions?.metadata as Record<string, unknown>) ?? {};
       const subscriptionUpdate =
@@ -165,6 +192,10 @@ export default function InvoiceDetailPage() {
         }),
       ]);
       success("Invoice marked as paid — subscription activated");
+      // Receipt to the store owner. A mail failure must not undo the payment.
+      const mail = await sendPaymentConfirmationEmail(invoice.id);
+      if (mail.success) success(`Receipt emailed to ${mail.to}`);
+      else notifyError(`Payment saved, but the receipt email was not sent: ${mail.error}`);
       setInvoice((prev) =>
         prev
           ? {
@@ -371,6 +402,7 @@ export default function InvoiceDetailPage() {
                     if (invoice.payment_method) setPayMethod(invoice.payment_method);
                     if (invoice.payment_reference) setPayRef(invoice.payment_reference);
                   }
+                  setStartDate(toDateInput(defaultPeriodStart(invoice)));
                   setMarkPaidOpen(true);
                 }}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition"
@@ -403,15 +435,18 @@ export default function InvoiceDetailPage() {
         <div className="max-w-[820px] mx-auto bg-white dark:bg-slate-900 rounded-3xl shadow-2xl shadow-slate-200/60 dark:shadow-none">
 
           {/* Header band */}
-          <div className="bg-gradient-to-r from-violet-600 to-purple-600 rounded-t-3xl px-5 sm:px-10 py-6 sm:py-7 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">{pd.company.name}</h1>
-              <p className="text-violet-200 text-sm mt-0.5">{pd.company.email}</p>
-              <p className="text-violet-200 text-sm">{pd.company.address}</p>
+          <div className="bg-gradient-to-r from-[#0E2438] to-[#1E4A74] rounded-t-3xl px-5 sm:px-10 py-6 sm:py-7 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <BrandLogoTile height={60} />
+              <div>
+                <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">{pd.company.name}</h1>
+                <p className="text-slate-300 text-sm mt-0.5">{pd.company.email}</p>
+                <p className="text-slate-300 text-sm">{pd.company.address}</p>
+              </div>
             </div>
             <div className="text-left sm:text-right">
               <div className="text-2xl sm:text-3xl font-black text-white tracking-widest">INVOICE</div>
-              <div className="text-violet-200 font-mono text-sm mt-1">#{invoice.invoice_number}</div>
+              <div className="text-slate-300 font-mono text-sm mt-1">#{invoice.invoice_number}</div>
               <div className="mt-2"><StatusBadge status={invoice.status} /></div>
             </div>
           </div>
@@ -420,7 +455,7 @@ export default function InvoiceDetailPage() {
             {/* Bill To + Invoice Meta */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 mb-8">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Bill To</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">Bill To</p>
                 <p className="font-bold text-slate-900 dark:text-slate-100 text-base">{store?.store_name ?? "—"}</p>
                 {owner && (
                   <>
@@ -428,10 +463,10 @@ export default function InvoiceDetailPage() {
                     <p className="text-sm text-slate-500 dark:text-slate-400">{owner.email}</p>
                   </>
                 )}
-                <p className="text-xs text-slate-400 mt-1">Store: {store?.store_slug}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Store: {store?.store_slug}</p>
               </div>
               <div className="text-left sm:text-right">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Invoice Details</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">Invoice Details</p>
                 {[
                   ["Invoice #", invoice.invoice_number],
                   ["Invoice Date", formatDate(invoice.created_at)],
@@ -439,7 +474,7 @@ export default function InvoiceDetailPage() {
                   ...(invoice.status === "paid" && invoice.paid_at ? [["Paid On", formatDate(invoice.paid_at)]] : []),
                 ].map(([label, value]) => (
                   <div key={label} className="flex sm:justify-end gap-4 text-sm mb-1">
-                    <span className="text-slate-400 font-medium">{label}:</span>
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">{label}:</span>
                     <span className="text-slate-700 dark:text-slate-300 font-semibold sm:w-36 text-left">{value}</span>
                   </div>
                 ))}
@@ -461,7 +496,7 @@ export default function InvoiceDetailPage() {
                   <tr className="border-t border-slate-100 dark:border-white/5">
                     <td className="px-5 py-4">
                       <p className="font-semibold text-slate-900 dark:text-slate-100">{invoice.plan_name} Plan</p>
-                      <p className="text-xs text-slate-400">Subscription</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Subscription</p>
                     </td>
                     <td className="px-5 py-4 text-slate-600 dark:text-slate-400">{BILLING_CYCLE_LABELS[invoice.billing_cycle]}</td>
                     <td className="px-5 py-4 text-slate-600 dark:text-slate-400">
@@ -479,7 +514,7 @@ export default function InvoiceDetailPage() {
                     </td>
                     <td className="px-5 py-4 text-right">
                       <span className="text-2xl font-extrabold text-violet-700">৳{invoice.amount.toLocaleString()}</span>
-                      <span className="text-xs text-slate-400 ml-1">{invoice.currency}</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400 ml-1">{invoice.currency}</span>
                     </td>
                   </tr>
                 </tfoot>
@@ -498,7 +533,7 @@ export default function InvoiceDetailPage() {
                   <div className="bg-white dark:bg-white/5 rounded-xl border border-blue-100 dark:border-blue-500/20 px-4 py-3">
                     <p className="text-[10px] font-bold text-blue-400 dark:text-blue-300 uppercase tracking-wider mb-1">Amount Paid</p>
                     <p className="text-sm font-extrabold text-emerald-700 dark:text-emerald-400">৳{invoice.amount.toLocaleString()}</p>
-                    <p className="text-[10px] text-slate-400">{invoice.currency}</p>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400">{invoice.currency}</p>
                   </div>
                   <div className="bg-white dark:bg-white/5 rounded-xl border border-blue-100 dark:border-blue-500/20 px-4 py-3">
                     <p className="text-[10px] font-bold text-blue-400 dark:text-blue-300 uppercase tracking-wider mb-1">Payment Method</p>
@@ -520,7 +555,7 @@ export default function InvoiceDetailPage() {
             {/* Payment methods (screen only) */}
             {isUnpaid && (
               <div className="mb-8">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4">How to Pay</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-4">How to Pay</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <PaymentMethodCard icon={<Smartphone className="w-5 h-5 text-pink-600 dark:text-pink-400" />} title="bKash" color="border-pink-200 dark:border-pink-500/30 bg-pink-50 dark:bg-pink-500/10">
                     <p className="text-xs text-slate-500 mb-1"><span className="font-semibold text-slate-700 dark:text-slate-300">Send to ({pd.bkash.accountType}):</span></p>
@@ -587,13 +622,13 @@ export default function InvoiceDetailPage() {
             {/* Notes */}
             {invoice.notes && (
               <div className="mb-6 p-4 bg-slate-50 dark:bg-white/4 rounded-xl border border-slate-200 dark:border-white/10">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Notes</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Notes</p>
                 <p className="text-sm text-slate-600 dark:text-slate-400">{invoice.notes}</p>
               </div>
             )}
 
             {/* Footer */}
-            <div className="border-t border-slate-100 dark:border-white/5 pt-6 text-center text-xs text-slate-400">
+            <div className="border-t border-slate-100 dark:border-white/5 pt-6 text-center text-xs text-slate-500 dark:text-slate-400">
               <p className="font-semibold text-slate-600 dark:text-slate-400 mb-0.5">{pd.company.name}</p>
               <p>
                 <a href={`mailto:${pd.company.email}`} target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "none" }} className="hover:opacity-70 transition">{pd.company.email}</a>
@@ -614,15 +649,18 @@ export default function InvoiceDetailPage() {
         style={{ display: "none", width: 794, backgroundColor: "#fff", fontFamily: "Arial, sans-serif" }}
       >
         {/* Gradient header */}
-        <div style={{ background: "linear-gradient(to right, #7c3aed, #9333ea)", padding: "28px 40px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-          <div>
-            <div style={{ fontSize: 22, fontWeight: 800, color: "#fff" }}>{pd.company.name}</div>
-            <div style={{ fontSize: 12, color: "#ddd8fe", marginTop: 4 }}>{pd.company.email}</div>
-            <div style={{ fontSize: 12, color: "#ddd8fe" }}>{pd.company.address}</div>
+        <div style={{ background: "linear-gradient(to right, #13304A, #1E4A74)", padding: "28px 40px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <BrandLogoPdfTile height={64} />
+            <div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#fff" }}>{pd.company.name}</div>
+              <div style={{ fontSize: 12, color: "#B0B7C0", marginTop: 4 }}>{pd.company.email}</div>
+              <div style={{ fontSize: 12, color: "#B0B7C0" }}>{pd.company.address}</div>
+            </div>
           </div>
           <div style={{ textAlign: "right" }}>
             <div style={{ fontSize: 28, fontWeight: 900, color: "#fff", letterSpacing: 4 }}>INVOICE</div>
-            <div style={{ fontSize: 12, color: "#ddd8fe", fontFamily: "monospace", marginTop: 4 }}>#{invoice.invoice_number}</div>
+            <div style={{ fontSize: 12, color: "#B0B7C0", fontFamily: "monospace", marginTop: 4 }}>#{invoice.invoice_number}</div>
             <div style={{ marginTop: 8, display: "inline-block", padding: "3px 14px", borderRadius: 20, backgroundColor: pdfStatus.bg, color: pdfStatus.text, fontSize: 11, fontWeight: 700 }}>
               {(INVOICE_STATUS_LABELS[invoice.status] ?? invoice.status ?? "").toUpperCase()}
             </div>
@@ -683,7 +721,7 @@ export default function InvoiceDetailPage() {
               <tr style={{ backgroundColor: "#f8fafc", borderTop: "2px solid #e2e8f0" }}>
                 <td colSpan={3} style={{ padding: "14px 16px", textAlign: "right", fontSize: 12, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 1 }}>Total Due</td>
                 <td style={{ padding: "14px 16px", textAlign: "right" }}>
-                  <span style={{ fontSize: 24, fontWeight: 900, color: "#7c3aed" }}>৳{invoice.amount.toLocaleString()}</span>
+                  <span style={{ fontSize: 24, fontWeight: 900, color: "#13304A" }}>৳{invoice.amount.toLocaleString()}</span>
                   <span style={{ fontSize: 11, color: "#94a3b8", marginLeft: 4 }}>{invoice.currency}</span>
                 </td>
               </tr>
@@ -734,14 +772,14 @@ export default function InvoiceDetailPage() {
         style={{ display: "none", width: 794, backgroundColor: "#fff", fontFamily: "Arial, sans-serif" }}
       >
         {/* Header band */}
-        <div style={{ background: "linear-gradient(to right, #7c3aed, #9333ea)", padding: "20px 40px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ background: "linear-gradient(to right, #13304A, #1E4A74)", padding: "20px 40px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
             <div style={{ fontSize: 18, fontWeight: 900, color: "#fff", letterSpacing: 2, textTransform: "uppercase" }}>Payment Guide</div>
-            <div style={{ fontSize: 12, color: "#ddd8fe", marginTop: 2 }}>Invoice #{invoice.invoice_number}</div>
+            <div style={{ fontSize: 12, color: "#B0B7C0", marginTop: 2 }}>Invoice #{invoice.invoice_number}</div>
           </div>
           <div style={{ textAlign: "right" }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: "#fff" }}>{pd.company.name}</div>
-            <div style={{ fontSize: 11, color: "#ddd8fe" }}>{pd.company.email}</div>
+            <div style={{ fontSize: 11, color: "#B0B7C0" }}>{pd.company.email}</div>
           </div>
         </div>
 
@@ -761,7 +799,7 @@ export default function InvoiceDetailPage() {
           {/* Amount summary */}
           <div style={{ textAlign: "center", marginBottom: 24, padding: "16px", backgroundColor: "#f8fafc", borderRadius: 10, border: "1px solid #e2e8f0" }}>
             <div style={{ fontSize: 11, color: "#64748b", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>Invoice Amount</div>
-            <div style={{ fontSize: 34, fontWeight: 900, color: "#7c3aed" }}>
+            <div style={{ fontSize: 34, fontWeight: 900, color: "#13304A" }}>
               ৳{invoice.amount.toLocaleString()}{" "}
               <span style={{ fontSize: 13, color: "#94a3b8", fontWeight: 400 }}>{invoice.currency}</span>
             </div>
@@ -889,6 +927,69 @@ export default function InvoiceDetailPage() {
               ]}
             />
           </div>
+          {(() => {
+            const sub = invoice.store_subscriptions;
+            const defaultStart = defaultPeriodStart(invoice);
+            const chosen = startDate ? new Date(`${startDate}T00:00:00`) : defaultStart;
+            const months =
+              invoice.billing_cycle === BillingCycle.CUSTOM
+                ? monthsBetween(new Date(invoice.period_start), new Date(invoice.period_end))
+                : undefined;
+            const end = addBillingCycle(chosen, invoice.billing_cycle, months);
+            const isDefault = startDate === toDateInput(defaultStart);
+            const lastStart = sub?.current_period_start ? new Date(sub.current_period_start) : null;
+            const lastEnd = sub?.current_period_end ? new Date(sub.current_period_end) : null;
+            const daysSinceEnd = lastEnd ? Math.floor((Date.now() - lastEnd.getTime()) / 86400000) : null;
+            const endedLabel =
+              daysSinceEnd === null
+                ? ""
+                : daysSinceEnd > 0
+                  ? `ended ${daysSinceEnd} day${daysSinceEnd > 1 ? "s" : ""} ago`
+                  : daysSinceEnd === 0
+                    ? "ends today"
+                    : `${-daysSinceEnd} day${daysSinceEnd < -1 ? "s" : ""} left`;
+            const chip =
+              "px-2.5 py-1 rounded-lg text-xs font-semibold bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:border-violet-400 transition";
+            return (
+              <div>
+                <div className="mb-3 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/4 px-4 py-3">
+                  <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">
+                    Last subscription period
+                  </p>
+                  {lastEnd ? (
+                    <>
+                      <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                        {lastStart ? `${fmtLong(lastStart)} → ` : "Until "}{fmtLong(lastEnd)}
+                      </p>
+                      <p className={`text-xs mt-0.5 font-medium ${daysSinceEnd !== null && daysSinceEnd > 0 ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"}`}>
+                        {endedLabel}
+                      </p>
+                      <div className="flex flex-wrap gap-2 mt-2.5">
+                        <button type="button" className={chip} onClick={() => setStartDate(toDateInput(lastEnd))}>
+                          From when it ended ({fmtLong(lastEnd)})
+                        </button>
+                        <button type="button" className={chip} onClick={() => setStartDate(toDateInput(new Date()))}>
+                          From today
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-sm text-slate-600 dark:text-slate-300">No previous period — this is a first subscription.</p>
+                  )}
+                </div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Subscription starts on</label>
+                <input type="date" className={inputCls} value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-300">
+                  New period: <strong>{fmtLong(chosen)} → {fmtLong(end)}</strong>
+                </p>
+                <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                  {isDefault
+                    ? "Default: from today, or from the end of the current period if it hasn't ended yet."
+                    : "Custom start date. Set it to the day the old period ended to avoid a gap."}
+                </p>
+              </div>
+            );
+          })()}
           <div>
             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Transaction / Reference ID (optional)</label>
             <input className={inputCls} placeholder="e.g. TX123456" value={payRef} onChange={(e) => setPayRef(e.target.value)} />
@@ -908,7 +1009,7 @@ export default function InvoiceDetailPage() {
         width={400}
         destroyOnHidden
       >
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-slate-600 dark:text-slate-300">
           {isSubmitted
             ? "Reject this submitted payment? The invoice will be marked as cancelled and the store's subscription will be cancelled immediately, locking the store. The customer will need to resubmit."
             : "Mark this invoice as cancelled? The store's subscription will be cancelled immediately, locking the store."}
