@@ -147,7 +147,7 @@ export default function StoreOwnersPage() {
           <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
             <div className="min-w-215">
               {/* Column headers */}
-              <div className="flex items-center gap-4 px-6 py-2 text-[11px] font-semibold text-slate-400 dark:text-slate-600 uppercase tracking-widest mb-2">
+              <div className="flex items-center gap-4 px-6 py-2 text-[11px] font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-widest mb-2">
                 <div className="w-11 shrink-0" />
                 <div className="flex-[0_0_220px]">Owner</div>
                 <div className="flex-[0_0_150px]">Phone</div>
@@ -179,7 +179,7 @@ export default function StoreOwnersPage() {
                   >
                     No store owners found
                   </div>
-                  <div className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+                  <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                     Try adjusting your search or filter
                   </div>
                 </div>

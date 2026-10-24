@@ -1,5 +1,6 @@
 "use client";
 
+import { BrandLogoPdfTile } from "@/app/component/common/BrandLogo";
 import { useRef, useState } from "react";
 import { Download, Loader2 } from "lucide-react";
 import { useSheiNotification } from "@/lib/hooks/useSheiNotification";
@@ -103,26 +104,29 @@ export function PlanPitchPdfButton({ plan }: { plan: SubscriptionPlan }) {
         {/* Header */}
         <div
           style={{
-            background: "linear-gradient(135deg, #6d28d9 0%, #7c3aed 55%, #9333ea 100%)",
+            background: "linear-gradient(135deg, #0E2438 0%, #13304A 55%, #1E4A74 100%)",
             padding: "38px 48px 50px",
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-            <div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: "#fff" }}>{pd.company.name}</div>
-              <div style={{ fontSize: 12, color: "#ddd8fe", marginTop: 2 }}>
-                Everything you need to launch and run your online store
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <BrandLogoPdfTile height={56} />
+              <div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: "#fff" }}>{pd.company.name}</div>
+                <div style={{ fontSize: 12, color: "#B0B7C0", marginTop: 2 }}>
+                  Everything you need to launch and run your online store
+                </div>
               </div>
             </div>
-            <div style={{ fontSize: 10, color: "#ddd8fe", whiteSpace: "nowrap" }}>{today}</div>
+            <div style={{ fontSize: 10, color: "#B0B7C0", whiteSpace: "nowrap" }}>{today}</div>
           </div>
           <div style={{ marginTop: 22 }}>
-            <div style={{ fontSize: 10, fontWeight: 800, color: "#ddd8fe", letterSpacing: 2.5, textTransform: "uppercase" }}>
+            <div style={{ fontSize: 10, fontWeight: 800, color: "#B0B7C0", letterSpacing: 2.5, textTransform: "uppercase" }}>
               Pricing Plan
             </div>
             <div style={{ fontSize: 34, fontWeight: 900, color: "#fff", marginTop: 4 }}>{plan.name}</div>
             {plan.description && (
-              <div style={{ fontSize: 13, color: "#ede9fe", marginTop: 6, maxWidth: 620 }}>{plan.description}</div>
+              <div style={{ fontSize: 13, color: "#E8EEF4", marginTop: 6, maxWidth: 620 }}>{plan.description}</div>
             )}
           </div>
         </div>
@@ -136,7 +140,7 @@ export function PlanPitchPdfButton({ plan }: { plan: SubscriptionPlan }) {
                 marginBottom: 24,
                 borderRadius: 12,
                 background: "#fff",
-                border: "1px solid #ece7fd",
+                border: "1px solid #E3EBF3",
                 boxShadow: "0 6px 18px rgba(109,40,217,0.12)",
                 padding: "16px 20px",
                 display: "flex",
@@ -149,8 +153,8 @@ export function PlanPitchPdfButton({ plan }: { plan: SubscriptionPlan }) {
                   width: 32,
                   height: 32,
                   borderRadius: "50%",
-                  background: "#f5f3ff",
-                  color: "#7c3aed",
+                  background: "#EEF3F8",
+                  color: "#13304A",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -170,7 +174,7 @@ export function PlanPitchPdfButton({ plan }: { plan: SubscriptionPlan }) {
 
           {/* Pricing */}
           <div style={{ display: "flex", gap: 14, marginBottom: 16 }}>
-            <div style={{ flex: 1, borderRadius: 16, border: "2px solid #ede9fe", padding: "18px 16px", textAlign: "center" }}>
+            <div style={{ flex: 1, borderRadius: 16, border: "2px solid #E8EEF4", padding: "18px 16px", textAlign: "center" }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1 }}>
                 Monthly
               </div>
@@ -179,7 +183,7 @@ export function PlanPitchPdfButton({ plan }: { plan: SubscriptionPlan }) {
               </div>
               <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>billed every month</div>
             </div>
-            <div style={{ flex: 1, borderRadius: 16, border: "2px solid #ede9fe", padding: "18px 16px", textAlign: "center", position: "relative" }}>
+            <div style={{ flex: 1, borderRadius: 16, border: "2px solid #E8EEF4", padding: "18px 16px", textAlign: "center", position: "relative" }}>
               {halfYearlySavings > 0 && (
                 <div
                   style={{
@@ -198,7 +202,7 @@ export function PlanPitchPdfButton({ plan }: { plan: SubscriptionPlan }) {
               </div>
               <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>billed every 6 months</div>
             </div>
-            <div style={{ flex: 1, borderRadius: 16, border: "2px solid #7c3aed", padding: "18px 16px", textAlign: "center", position: "relative" }}>
+            <div style={{ flex: 1, borderRadius: 16, border: "2px solid #13304A", padding: "18px 16px", textAlign: "center", position: "relative" }}>
               {yearlySavingsPct > 0 && (
                 <div
                   style={{
@@ -209,7 +213,7 @@ export function PlanPitchPdfButton({ plan }: { plan: SubscriptionPlan }) {
                   Save {yearlySavingsPct}%
                 </div>
               )}
-              <div style={{ fontSize: 10, fontWeight: 700, color: "#7c3aed", textTransform: "uppercase", letterSpacing: 1 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "#13304A", textTransform: "uppercase", letterSpacing: 1 }}>
                 Yearly
               </div>
               <div style={{ fontSize: 26, fontWeight: 900, color: "#0f172a", marginTop: 6 }}>
@@ -223,9 +227,9 @@ export function PlanPitchPdfButton({ plan }: { plan: SubscriptionPlan }) {
             style={{
               textAlign: "center",
               fontSize: 10.5,
-              color: "#7c5cd6",
-              background: "#f8f6fe",
-              border: "1px dashed #ddd4fb",
+              color: "#3E6A96",
+              background: "#F3F6FA",
+              border: "1px dashed #D3DEEA",
               borderRadius: 8,
               padding: "9px 14px",
               marginBottom: 28,
@@ -237,8 +241,8 @@ export function PlanPitchPdfButton({ plan }: { plan: SubscriptionPlan }) {
           {/* Features */}
           <div style={{ marginBottom: 28 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 12 }}>
-              <span style={{ width: 4, height: 12, borderRadius: 2, background: "#a78bfa", display: "inline-block" }} />
-              <span style={{ fontSize: 10, fontWeight: 800, color: "#7c3aed", textTransform: "uppercase", letterSpacing: 1.2 }}>
+              <span style={{ width: 4, height: 12, borderRadius: 2, background: "#7FA3C7", display: "inline-block" }} />
+              <span style={{ fontSize: 10, fontWeight: 800, color: "#13304A", textTransform: "uppercase", letterSpacing: 1.2 }}>
                 What&apos;s included
               </span>
             </div>
@@ -263,8 +267,8 @@ export function PlanPitchPdfButton({ plan }: { plan: SubscriptionPlan }) {
           {limitEntries.length > 0 && (
             <div style={{ marginBottom: 28 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 12 }}>
-                <span style={{ width: 4, height: 12, borderRadius: 2, background: "#a78bfa", display: "inline-block" }} />
-                <span style={{ fontSize: 10, fontWeight: 800, color: "#7c3aed", textTransform: "uppercase", letterSpacing: 1.2 }}>
+                <span style={{ width: 4, height: 12, borderRadius: 2, background: "#7FA3C7", display: "inline-block" }} />
+                <span style={{ fontSize: 10, fontWeight: 800, color: "#13304A", textTransform: "uppercase", letterSpacing: 1.2 }}>
                   Plan capacity
                 </span>
               </div>
@@ -290,18 +294,18 @@ export function PlanPitchPdfButton({ plan }: { plan: SubscriptionPlan }) {
           {/* CTA / Footer */}
           <div
             style={{
-              textAlign: "center", background: "linear-gradient(to right, #7c3aed, #9333ea)",
+              textAlign: "center", background: "linear-gradient(to right, #13304A, #1E4A74)",
               borderRadius: 14, padding: "18px 24px", marginBottom: 20,
             }}
           >
             <div style={{ fontSize: 14, fontWeight: 800, color: "#fff" }}>Ready to launch your store?</div>
-            <div style={{ fontSize: 12, color: "#ede9fe", marginTop: 4 }}>
+            <div style={{ fontSize: 12, color: "#E8EEF4", marginTop: 4 }}>
               Contact us today and we&apos;ll get your store live on this plan.
             </div>
           </div>
 
           <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: 18, textAlign: "center" }}>
-            <div style={{ height: 3, width: 56, borderRadius: 2, background: "linear-gradient(90deg, #6d28d9, #a855f7)", margin: "0 auto 14px" }} />
+            <div style={{ height: 3, width: 56, borderRadius: 2, background: "linear-gradient(90deg, #0E2438, #2F6191)", margin: "0 auto 14px" }} />
             <div style={{ fontSize: 12, fontWeight: 800, color: "#334155" }}>{pd.company.name}</div>
             <div style={{ fontSize: 10.5, color: "#94a3b8", marginTop: 3 }}>
               {pd.company.phone} · {pd.company.email} · {pd.company.website.replace(/^https?:\/\//, "")}

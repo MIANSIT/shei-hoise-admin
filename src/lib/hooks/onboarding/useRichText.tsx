@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import dynamic from "next/dynamic";
+import "jodit/es2021/jodit.min.css";
 
 const JoditEditor = dynamic(() => import("jodit-react"), {
   ssr: false,

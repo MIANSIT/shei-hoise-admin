@@ -2,33 +2,32 @@
 
 import React, { useState } from "react";
 import { Dropdown, MenuProps, Spin } from "antd";
-import { User, LogOut, Store } from "lucide-react";
+import { User, LogOut } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
-import { useSheiNotification } from "@/lib/hooks/useSheiNotification";
-import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
+import { BrandLogo } from "@/app/component/common/BrandLogo";
+import { useCurrentUser, clearUserCache } from "@/lib/hooks/useCurrentUser";
 
 export default function SidebarProfile() {
   const { user } = useCurrentUser();
   const router = useRouter();
-  const notify = useSheiNotification();
   const [logoutLoading, setLogoutLoading] = useState(false);
 
   const handleLogout = async () => {
+    if (logoutLoading) return;
+    setLogoutLoading(true);
     try {
-      setLogoutLoading(true);
-      await supabase.auth.signOut();
-      notify.success("Logout successful!");
-      router.push("/");
+      // "local" clears this browser's session without waiting on a global
+      // revoke; a failure there must not leave the user stuck logged in.
+      const { error } = await supabase.auth.signOut({ scope: "local" });
+      if (error) console.error("Logout error:", error);
     } catch (err: unknown) {
       console.error("Logout error:", err);
-      if (err instanceof Error) {
-        notify.error(`Logout failed: ${err.message}`);
-      } else {
-        notify.error("Logout failed. Please try again.");
-      }
     } finally {
-      setLogoutLoading(false);
+      clearUserCache();
+      // Hard navigation drops the Next.js router cache and any in-memory
+      // state, so the middleware sees the cleared cookies on the next request.
+      window.location.replace("/");
     }
   };
 
@@ -37,11 +36,11 @@ export default function SidebarProfile() {
       {
         key: "user-info",
         label: (
-          <div className="px-2 py-2 border-b border-gray-200 dark:border-gray-700">
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+          <div className="px-2 py-2 border-b border-border">
+            <p className="text-sm font-semibold text-foreground">
               {user?.first_name} {user?.last_name}
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+            <p className="text-xs text-muted-foreground truncate">
               {user?.email}
             </p>
           </div>
@@ -54,13 +53,6 @@ export default function SidebarProfile() {
         icon: <User className="w-4 h-4" />,
         label: <span className="text-sm font-medium">Profile</span>,
         onClick: () => router.push("/dashboard/admin-profile"),
-        className: "!py-2",
-      },
-      {
-        key: "store-management",
-        icon: <Store className="w-4 h-4" />,
-        label: <span className="text-sm font-medium">Store Management</span>,
-        onClick: () => router.push("/dashboard/store-management"),
         className: "!py-2",
       },
       { type: "divider" },
@@ -87,9 +79,12 @@ export default function SidebarProfile() {
         borderRadius: "12px",
       }}
     >
-      <button className="flex items-center gap-2 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200 hover:scale-105 active:scale-95">
-        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-500 text-white font-medium">
-          {user?.first_name ? user.first_name.charAt(0).toUpperCase() : "U"}
+      <button className="flex items-center gap-2 p-2 rounded-full hover:bg-accent transition-all duration-200 hover:scale-105 active:scale-95">
+        <div
+          className="flex items-center justify-center w-10 h-10 rounded-full bg-white border border-border shadow-sm"
+          title={user?.first_name ? `${user.first_name} ${user.last_name ?? ""}`.trim() : "Account"}
+        >
+          <BrandLogo height={26} />
         </div>
         {logoutLoading && <Spin size="small" />}
       </button>

@@ -270,7 +270,7 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
             />
           </div>
         </div>
-        <p className="text-[11px] text-slate-400 -mt-2">
+        <p className="text-[11px] text-slate-500 dark:text-slate-400 -mt-2">
           Leave Half Yearly Price blank to default to Monthly × 6. A custom-length subscription
           (e.g. 2 or 4 months) is priced per-store when assigning it — it isn&apos;t listed here.
         </p>
@@ -340,7 +340,7 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
           <div className="flex items-center justify-between mb-3">
             <div>
               <p className={labelCls + " mb-0"}>Multiple branches</p>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 Lets the store run several outlets with separate stock, orders, cash and reports.
               </p>
             </div>
@@ -380,7 +380,7 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
             </label>
           </div>
 
-          <p className="text-[11px] text-slate-400 mt-3">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-3">
             Recommended with branches: enable Staff Accounts and Max Staff so each branch can have its own manager or cashier.
           </p>
         </div>
@@ -390,7 +390,7 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
           <div className="flex items-center justify-between mb-3">
             <div>
               <p className={labelCls + " mb-0"}>Brands</p>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 Lets the store create brands and assign them to products.
               </p>
             </div>
@@ -436,7 +436,7 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
           <div className="flex items-center justify-between mb-3">
             <div>
               <p className={labelCls + " mb-0"}>Features</p>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 Toggle each feature on or off for this plan
               </p>
             </div>
@@ -466,7 +466,7 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
           </div>
 
           {featureItems.length === 0 ? (
-            <p className="text-xs text-slate-400 text-center py-3">
+            <p className="text-xs text-slate-500 dark:text-slate-400 text-center py-3">
               No features added yet. Use the chips above or click Add.
             </p>
           ) : (
@@ -483,7 +483,7 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
                       {preset ? (
                         <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
                           {preset.label}
-                          <span className="ml-1.5 text-[10px] font-mono text-slate-400">
+                          <span className="ml-1.5 text-[10px] font-mono text-slate-500 dark:text-slate-400">
                             ({f.key})
                           </span>
                         </span>
@@ -503,7 +503,7 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
                         className={`text-xs font-semibold ${
                           f.enabled
                             ? "text-emerald-600 dark:text-emerald-400"
-                            : "text-slate-400"
+                            : "text-slate-500 dark:text-slate-400"
                         }`}
                       >
                         {f.enabled ? "Enabled" : "Disabled"}
@@ -536,7 +536,7 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
           <div className="flex items-center justify-between mb-3">
             <div>
               <p className={labelCls + " mb-0"}>Limits</p>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 Set numeric limits. Check &quot;Unlimited&quot; to remove a cap.
               </p>
             </div>
@@ -566,7 +566,7 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
           </div>
 
           {limitItems.length === 0 ? (
-            <p className="text-xs text-slate-400 text-center py-3">
+            <p className="text-xs text-slate-500 dark:text-slate-400 text-center py-3">
               No limits added yet. Use the chips above or click Add.
             </p>
           ) : (
@@ -584,7 +584,7 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
                       {preset ? (
                         <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
                           {preset.label}
-                          <span className="ml-1.5 text-[10px] font-mono text-slate-400">
+                          <span className="ml-1.5 text-[10px] font-mono text-slate-500 dark:text-slate-400">
                             ({l.key})
                           </span>
                         </span>

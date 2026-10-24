@@ -60,7 +60,7 @@ export function UserRow({ user, index, onStatusChange, onActiveChange, onDeleteS
           <div className="font-bold text-[15px] text-slate-900 dark:text-slate-100 tracking-tight truncate">
             {fullName}
           </div>
-          <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500 text-xs mt-0.5">
+          <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-xs mt-0.5">
             <IconMail />{user.email}
           </div>
         </div>
@@ -88,14 +88,14 @@ export function UserRow({ user, index, onStatusChange, onActiveChange, onDeleteS
         </div>
 
         {/* Store count */}
-        <div className="flex-1 flex items-center gap-1.5 text-slate-400 dark:text-slate-500 text-sm">
+        <div className="flex-1 flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-sm">
           <IconStore />
           <span className="text-slate-700 dark:text-slate-300 font-semibold">{storeCount}</span>
           <span>{storeCount === 1 ? "store" : "stores"}</span>
         </div>
 
         {/* Chevron */}
-        <div className="text-slate-400 dark:text-slate-500">
+        <div className="text-slate-500 dark:text-slate-400">
           <IconChevron open={expanded} />
         </div>
       </div>
@@ -107,7 +107,7 @@ export function UserRow({ user, index, onStatusChange, onActiveChange, onDeleteS
           style={{ animation: "slideDown 0.25s ease" }}
         >
           {storeCount === 0 ? (
-            <div className="text-center py-8 text-slate-400 dark:text-slate-500 text-sm bg-white dark:bg-white/2 rounded-xl border border-dashed border-slate-200 dark:border-white/8">
+            <div className="text-center py-8 text-slate-500 dark:text-slate-400 text-sm bg-white dark:bg-white/2 rounded-xl border border-dashed border-slate-200 dark:border-white/8">
               No stores found
             </div>
           ) : (

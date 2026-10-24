@@ -4,13 +4,12 @@ import React, { useState, useEffect, useRef } from "react";
 import Sidebar from "@/app/component/sidebar/Sidebar";
 import SidebarProfile from "@/app/component/sidebar/SidebarProfile";
 import Breadcrumb from "@/app/component/common/Breadcrumb";
-import { Toaster } from "@/app/component/ui/sheiSonner/sonner";
+import { useTheme } from "@/lib/context/ThemeContext";
 import { Moon, PanelLeft, Sun, ArrowUp } from "lucide-react";
 import {
   ConfigProvider,
   theme as antdTheme,
   App as AntdApp,
-  Spin,
   Drawer,
 } from "antd";
 import { useSupabaseAuth } from "../../lib/hooks/userCheckAuth";
@@ -24,7 +23,7 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const { theme, toggleTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const mainContentRef = useRef<HTMLDivElement>(null);
@@ -67,17 +66,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
-  }, [mounted]);
-
-  // Load saved theme
-  useEffect(() => {
-    if (!mounted) return;
-
-    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
-    if (savedTheme) {
-      setTheme(savedTheme);
-      document.documentElement.classList.toggle("dark", savedTheme === "dark");
-    }
   }, [mounted]);
 
   // Handle scroll to show/hide back to top button
@@ -141,17 +129,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const isLoading = authLoading || userLoading;
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen flex-col gap-4">
-        <Spin size="large" />
-        <div className="text-primary">Loading...</div>
-      </div>
-    );
-  }
-
   const handleSidebarToggle = () => {
     if (isMobile) {
       setMobileDrawerOpen(true);
@@ -174,10 +151,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         components: {
           Menu: {
             itemColor: theme === "dark" ? "#d1d5db" : "#374151",
-            itemHoverBg: theme === "dark" ? "#1f2937" : "#000000",
-            itemHoverColor: theme === "dark" ? "#e5e7eb" : "#e5e7eb",
-            itemSelectedBg: theme === "dark" ? "#374151" : "#000000",
+            itemHoverBg: theme === "dark" ? "#1f2937" : "#f3f4f6",
+            itemHoverColor: theme === "dark" ? "#f9fafb" : "#111827",
+            itemSelectedBg: theme === "dark" ? "#374151" : "#111827",
             itemSelectedColor: "#ffffff",
+            subMenuItemBg: "transparent",
             groupTitleColor: theme === "dark" ? "#d1d5db" : "#374151",
           },
           Drawer: {
@@ -206,7 +184,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             }}
           >
             <div className="flex items-center gap-2 px-2">
-              <h1 className="text-lg font-bold">Dashboard</h1>
+              <h1 className="text-lg font-bold">Super Admin</h1>
               <button
                 onClick={handleSidebarToggle}
                 className="p-2 rounded hover:opacity-70 transition-transform duration-300"
@@ -222,16 +200,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
             <div className="flex items-center gap-4">
               <button
-                onClick={() => {
-                  const newTheme = theme === "light" ? "dark" : "light";
-                  setTheme(newTheme);
-                  localStorage.setItem("theme", newTheme);
-                  document.documentElement.classList.toggle(
-                    "dark",
-                    newTheme === "dark",
-                  );
-                }}
-                className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                onClick={toggleTheme}
+                aria-label={
+                  theme === "light"
+                    ? "Switch to dark mode"
+                    : "Switch to light mode"
+                }
+                className="p-2 rounded-full hover:bg-accent transition"
               >
                 {theme === "light" ? (
                   <Moon className="w-5 h-5" />
@@ -279,9 +254,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </Drawer>
 
             <main className="flex-1 flex flex-col overflow-auto min-h-[calc(100vh-73px)] relative print:overflow-visible print:min-h-0 print:h-auto">
-              <Toaster position="top-right" />
-
-              <div className="flex justify-between items-center p-2 bg-white dark:bg-gray-950 shadow-sm border-b border-gray-200 dark:border-gray-800 print:hidden">
+              <div className="flex justify-between items-center p-2 bg-card text-card-foreground shadow-sm border-b border-border print:hidden">
                 <Breadcrumb />
               </div>
 

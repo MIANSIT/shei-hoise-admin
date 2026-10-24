@@ -118,7 +118,7 @@ export function RenewSubscriptionModal({
 
       <div className="px-6 pt-5 pb-2 flex flex-col gap-5">
         <div>
-          <label className="flex items-center gap-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">
+          <label className="flex items-center gap-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5">
             <BadgeCheck className="w-3 h-3" />
             Plan
           </label>
@@ -135,7 +135,7 @@ export function RenewSubscriptionModal({
         </div>
 
         <div>
-          <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 block">
+          <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">
             Billing Cycle
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -182,7 +182,7 @@ export function RenewSubscriptionModal({
             </span>
           </div>
           {!overrideDates && (
-            <p className="text-[11px] text-slate-400 mt-2">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2">
               {isEarlyRenewal
                 ? `Renewing early — the new period starts after the current one ends on ${formatDate(existingEnd!)}, so no paid days are lost.`
                 : "Starts immediately once this invoice is paid."}
@@ -194,7 +194,7 @@ export function RenewSubscriptionModal({
           <button
             type="button"
             onClick={() => setOverrideDates(!overrideDates)}
-            className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 dark:text-slate-500 hover:text-violet-600 dark:hover:text-violet-400 transition"
+            className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition"
           >
             <CalendarClock className="w-3.5 h-3.5" />
             {overrideDates ? "Using custom dates" : "Backdate / set custom period"}
@@ -203,7 +203,7 @@ export function RenewSubscriptionModal({
           {overrideDates && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+                <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5">
                   Period Start
                 </label>
                 <input
@@ -214,7 +214,7 @@ export function RenewSubscriptionModal({
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+                <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5">
                   Period End
                 </label>
                 <input
@@ -228,7 +228,7 @@ export function RenewSubscriptionModal({
           )}
         </div>
 
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-slate-500 dark:text-slate-400">
           This creates a new unpaid invoice for {BILLING_CYCLE_LABELS[billingCycle].toLowerCase()} billing. The
           subscription itself won&apos;t change until the invoice is marked as paid.
         </p>

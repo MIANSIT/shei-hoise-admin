@@ -23,7 +23,7 @@ function PriceBadge({ amount, label }: { amount: number; label: string }) {
       <div className="text-lg font-bold text-slate-900 dark:text-slate-100">
         ৳{amount.toLocaleString()}
       </div>
-      <div className="text-[10px] text-slate-400 uppercase tracking-wider">{label}</div>
+      <div className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">{label}</div>
     </div>
   );
 }
@@ -40,7 +40,7 @@ function FlagBadge({ active, label }: { active: boolean; label: string }) {
 function FeaturesList({ data }: { data: Record<string, unknown> }) {
   const entries = Object.entries(data);
   if (entries.length === 0)
-    return <span className="text-slate-400 text-xs">None</span>;
+    return <span className="text-slate-500 dark:text-slate-400 text-xs">None</span>;
   return (
     <div className="flex flex-wrap gap-1">
       {entries.map(([k, v]) => (
@@ -49,7 +49,7 @@ function FeaturesList({ data }: { data: Record<string, unknown> }) {
           className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
             v
               ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-              : "bg-slate-100 dark:bg-slate-700 text-slate-400 line-through"
+              : "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 line-through"
           }`}
         >
           {k.replace(/_/g, " ")}
@@ -62,7 +62,7 @@ function FeaturesList({ data }: { data: Record<string, unknown> }) {
 function LimitsList({ data }: { data: Record<string, unknown> }) {
   const entries = Object.entries(data);
   if (entries.length === 0)
-    return <span className="text-slate-400 text-xs">None</span>;
+    return <span className="text-slate-500 dark:text-slate-400 text-xs">None</span>;
   return (
     <div className="flex flex-wrap gap-1">
       {entries.map(([k, v]) => (
@@ -219,7 +219,7 @@ export default function SubscriptionPlansPage() {
                 className="bg-white dark:bg-white/[0.025] border border-slate-200 dark:border-white/[0.07] rounded-2xl px-5 py-4"
               >
                 <div className={`text-2xl font-extrabold ${s.color}`}>{s.value}</div>
-                <div className="text-xs text-slate-400 mt-0.5">{s.label}</div>
+                <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{s.label}</div>
               </div>
             ))}
           </div>
@@ -249,7 +249,7 @@ export default function SubscriptionPlansPage() {
               <div className="text-lg font-bold text-slate-500 dark:text-slate-400">
                 {search ? "No plans match your search" : "No subscription plans yet"}
               </div>
-              <div className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+              <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                 {!search && 'Click “New Plan” to create one'}
               </div>
             </div>
@@ -267,7 +267,7 @@ export default function SubscriptionPlansPage() {
                         <span className="text-base font-bold text-slate-900 dark:text-slate-100">
                           {plan.name}
                         </span>
-                        <span className="text-xs text-slate-400 font-mono bg-slate-100 dark:bg-white/[0.06] px-2 py-0.5 rounded">
+                        <span className="text-xs text-slate-500 dark:text-slate-400 font-mono bg-slate-100 dark:bg-white/[0.06] px-2 py-0.5 rounded">
                           {plan.slug}
                         </span>
                         <FlagBadge active={plan.is_featured} label="⭐ Featured" />
@@ -311,11 +311,11 @@ export default function SubscriptionPlansPage() {
 
                       <div className="space-y-1.5">
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 w-14 shrink-0">Features</span>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 w-14 shrink-0">Features</span>
                           <FeaturesList data={plan.features} />
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 w-14 shrink-0">Limits</span>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 w-14 shrink-0">Limits</span>
                           <LimitsList data={plan.limits} />
                         </div>
                       </div>

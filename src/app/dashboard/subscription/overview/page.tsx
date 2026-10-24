@@ -1,5 +1,6 @@
 "use client";
 
+import { BrandLogoTile } from "@/app/component/common/BrandLogo";
 import { useEffect, useState } from "react";
 import { Printer, CheckCircle2, Loader2 } from "lucide-react";
 import { getSubscriptionPlans } from "@/lib/queries/subscription/plans/getPlans";
@@ -151,15 +152,18 @@ export default function PlanOverviewPage() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300 print:bg-white">
       <div className="max-w-[1000px] mx-auto px-4 sm:px-6 py-10 print:px-0 print:py-0 print:max-w-none">
         {/* Header — one banner for both screen and print, so what you see is what prints */}
-        <div className="rounded-2xl print:rounded-none bg-gradient-to-br from-violet-700 via-violet-600 to-purple-600 px-7 py-7 sm:px-8 sm:py-8 mb-8 print:mb-6 flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <div className="text-[10px] font-extrabold text-violet-200 uppercase tracking-[0.2em] mb-2">
-              Merchant Plan Overview
+        <div className="rounded-2xl print:rounded-none bg-gradient-to-br from-[#0E2438] via-[#13304A] to-[#1E4A74] px-7 py-7 sm:px-8 sm:py-8 mb-8 print:mb-6 flex items-start justify-between gap-4">
+          <div className="flex items-center gap-5 min-w-0">
+            <BrandLogoTile height={72} />
+            <div className="min-w-0">
+              <div className="text-[10px] font-extrabold text-slate-300 uppercase tracking-[0.2em] mb-2">
+                Merchant Plan Overview
+              </div>
+              <h1 className="text-2xl font-extrabold text-white tracking-tight">{pd.company.name}</h1>
+              <p className="text-sm text-slate-200 mt-1.5 max-w-sm">
+                What a store owner gets on Shei Hoise — always current, share or print this page directly.
+              </p>
             </div>
-            <h1 className="text-2xl font-extrabold text-white tracking-tight">{pd.company.name}</h1>
-            <p className="text-sm text-violet-100 mt-1.5 max-w-sm">
-              What a store owner gets on Shei Hoise — always current, share or print this page directly.
-            </p>
           </div>
           <button
             onClick={() => window.print()}
@@ -213,7 +217,7 @@ export default function PlanOverviewPage() {
                   <GroupCard key={g.title} {...g} />
                 ))}
               </div>
-              <p className="text-xs text-slate-400 dark:text-slate-500 mt-4">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-4">
                 Vendor & supplier management (purchase orders, ledgers, settlements) is available by custom arrangement.
               </p>
             </section>
@@ -226,7 +230,7 @@ export default function PlanOverviewPage() {
               </p>
 
               {comparable.length === 0 ? (
-                <div className="text-center py-16 bg-white dark:bg-white/[0.02] rounded-2xl border border-dashed border-slate-200 dark:border-white/[0.08] text-sm text-slate-400">
+                <div className="text-center py-16 bg-white dark:bg-white/[0.02] rounded-2xl border border-dashed border-slate-200 dark:border-white/[0.08] text-sm text-slate-500 dark:text-slate-400">
                   No active, public plans to compare yet.
                 </div>
               ) : (
@@ -251,7 +255,7 @@ export default function PlanOverviewPage() {
                               {p.name}
                             </div>
                             {p.trial_days > 0 && (
-                              <div className="text-[10px] text-slate-400 mt-0.5">{p.trial_days}-day trial</div>
+                              <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{p.trial_days}-day trial</div>
                             )}
                           </th>
                         ))}
@@ -366,7 +370,7 @@ export default function PlanOverviewPage() {
                 </div>
               )}
 
-              <p className="text-xs text-slate-400 dark:text-slate-500 mt-4">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-4">
                 Pay by bKash, Nagad or bank transfer. Need something between these plans, or a custom limit? Tailor a plan
                 for that business in Subscription → Plans.
               </p>
@@ -375,7 +379,7 @@ export default function PlanOverviewPage() {
             <div className="mt-10 pt-6 border-t border-slate-200 dark:border-white/[0.07] text-center print:break-inside-avoid">
               <div className="h-[3px] w-14 rounded-full bg-gradient-to-r from-violet-600 to-purple-500 mx-auto mb-3.5" />
               <div className="text-xs font-bold text-slate-600 dark:text-slate-300">{pd.company.name} — Merchant Plan Overview</div>
-              <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
                 {pd.company.phone} · {pd.company.email} · {pd.company.website.replace(/^https?:\/\//, "")}
               </div>
             </div>

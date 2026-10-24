@@ -123,6 +123,7 @@ export interface StoreSubscription {
       email: string;
       first_name: string;
       last_name: string;
+      phone?: string | null;
     } | null;
   } | null;
   subscription_plans?: {
@@ -133,10 +134,18 @@ export interface StoreSubscription {
     price_half_yearly?: number | null;
     price_yearly: number;
   } | null;
+  // Newest first. Every renewal creates one invoice, so this is the billing history.
   subscription_invoices?: {
     id: string;
     invoice_number: string;
     status: string;
+    amount: number;
+    currency: string;
+    plan_name: string;
+    billing_cycle: BillingCycle;
+    period_start: string;
+    period_end: string;
+    paid_at?: string | null;
     created_at: string;
   }[];
 }
