@@ -202,8 +202,8 @@ export default function StoreCreateForm({
               currentStep === idx
                 ? "bg-blue-500 text-white"
                 : idx < currentStep
-                  ? "bg-blue-200 text-blue-600"
-                  : "bg-gray-200 text-gray-500"
+                  ? "bg-blue-200 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400"
+                  : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
             }
           `}
             >
@@ -216,8 +216,8 @@ export default function StoreCreateForm({
             currentStep === idx
               ? "text-blue-500"
               : idx < currentStep
-                ? "text-blue-600"
-                : "text-gray-500"
+                ? "text-blue-600 dark:text-blue-400"
+                : "text-gray-500 dark:text-gray-400"
           }
         `}
             >
@@ -228,7 +228,7 @@ export default function StoreCreateForm({
             {idx < steps.length - 1 && (
               <div
                 className={`flex-1 h-1 mx-2
-            ${idx < currentStep ? "bg-blue-500" : "bg-gray-200"}
+            ${idx < currentStep ? "bg-blue-500" : "bg-gray-200 dark:bg-gray-700"}
           `}
               ></div>
             )}
@@ -250,8 +250,8 @@ export default function StoreCreateForm({
                 currentStep === idx
                   ? "bg-blue-500 text-white"
                   : idx < currentStep
-                    ? "bg-blue-200 text-blue-600"
-                    : "bg-gray-200 text-gray-500"
+                    ? "bg-blue-200 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400"
+                    : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
               }
             `}
               >
@@ -262,7 +262,7 @@ export default function StoreCreateForm({
               {idx < steps.length - 1 && (
                 <div
                   className={`w-1 h-8
-              ${idx < currentStep ? "bg-blue-500" : "bg-gray-200"}
+              ${idx < currentStep ? "bg-blue-500" : "bg-gray-200 dark:bg-gray-700"}
             `}
                 ></div>
               )}

@@ -1,6 +1,7 @@
 "use server";
 
-import { supabaseAdmin } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { requireSuperAdmin } from "@/lib/auth/requireSuperAdmin";
 import {
   SubscriptionStatus,
   UpdateStoreSubscriptionInput,
@@ -11,6 +12,7 @@ export async function updateStoreSubscription(
   input: UpdateStoreSubscriptionInput
 ) {
   try {
+    await requireSuperAdmin();
     const { data, error } = await supabaseAdmin
       .from("store_subscriptions")
       .update(input)

@@ -6,20 +6,14 @@ export const PAYMENT_DETAILS = {
   bkash: {
     number: "01761867763",
     accountType: "Personal",
-    cashoutCharge: "1.85%",
-    chargeRate: 0.0185, // regular Send Money charge
-    priyoCharge: "1.49%",
-    priyoChargeRate: 0.0149, // reduced charge if saved as Priyo
     instructions:
-      'Open bKash app → tap "Send Money" → enter number → enter the total amount shown → use invoice number as reference.',
+      'Open bKash app → tap "Send Money" → enter number → enter the exact amount → use invoice number as reference.',
   },
   nagad: {
     number: "01833228622",
     accountType: "Personal",
-    cashoutCharge: "1.3%",
-    chargeRate: 0.013, // no Priyo facility on Nagad
     instructions:
-      'Open Nagad app → tap "Send Money" → enter number → enter the total amount shown → use invoice number as reference.',
+      'Open Nagad app → tap "Send Money" → enter number → enter the exact amount → use invoice number as reference.',
   },
   bank: {
     bankName: "Non-Resident Bangladeshis Commercial Bank (NRBC)", // e.g. Dutch-Bangla Bank Limited

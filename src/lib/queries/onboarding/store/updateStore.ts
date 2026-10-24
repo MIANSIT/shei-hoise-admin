@@ -1,7 +1,8 @@
 // lib/actions/stores/updateStore.ts
 "use server";
 
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { requireSuperAdmin } from "@/lib/auth/requireSuperAdmin";
 import { StoreStatus } from "@/lib/types/enums";
 
 type UpdateStoreArgs = {
@@ -16,6 +17,8 @@ export async function updateStore({
   isActive,
 }: UpdateStoreArgs) {
   try {
+    await requireSuperAdmin();
+
     // Only include the fields that are being updated
     const updates: Partial<{ status: StoreStatus; is_active: boolean }> = {};
     if (status !== undefined) updates.status = status;
@@ -25,7 +28,7 @@ export async function updateStore({
       return { success: false, message: "Nothing to update" };
     }
 
-    const { error, data } = await supabase
+    const { error, data } = await supabaseAdmin
       .from("stores")
       .update(updates)
       .eq("id", storeId)

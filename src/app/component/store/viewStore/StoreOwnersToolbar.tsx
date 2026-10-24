@@ -24,7 +24,7 @@ const STATUS_FILTERS: { value: FilterType; label: string; activeClass: string }[
   { value: "rejected", label: "❌ Rejected", activeClass: "bg-red-50    dark:bg-red-500/15    text-red-600    dark:text-red-400"    },
 ];
 
-const TAB_INACTIVE = "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300";
+const TAB_INACTIVE = "text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300";
 const TAB_ACTIVE_DEFAULT = "bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400";
 
 export function StoreOwnersToolbar({ search, filter, resultCount, onSearchChange, onFilterChange }: StoreOwnersToolbarProps) {
@@ -34,7 +34,7 @@ export function StoreOwnersToolbar({ search, filter, resultCount, onSearchChange
       {/* Search + count */}
       <div className="flex items-center gap-3">
         <div className="flex-1 flex items-center gap-2.5 bg-white dark:bg-white/[0.05] border border-slate-200 dark:border-white/[0.1] rounded-xl px-3.5 h-11">
-          <span className="text-slate-400 dark:text-slate-500 shrink-0"><IconSearch /></span>
+          <span className="text-slate-500 dark:text-slate-400 shrink-0"><IconSearch /></span>
           <input
             placeholder="Search by name, email, or store..."
             value={search}
@@ -42,7 +42,7 @@ export function StoreOwnersToolbar({ search, filter, resultCount, onSearchChange
             className="flex-1 bg-transparent border-none outline-none text-slate-800 dark:text-slate-200 text-sm placeholder:text-slate-400 dark:placeholder:text-slate-600"
           />
         </div>
-        <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500 text-sm shrink-0">
+        <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-sm shrink-0">
           <IconFilter /><span>{resultCount} results</span>
         </div>
       </div>

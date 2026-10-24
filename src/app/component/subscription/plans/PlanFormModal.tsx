@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Modal, Switch } from "antd";
 import { Plus, X } from "lucide-react";
 import { SubscriptionPlan, CreatePlanInput } from "@/lib/types/subscription.types";
+import { PRESET_FEATURES, PRESET_LIMITS } from "@/lib/constants/planFeaturePresets";
 
 interface PlanFormModalProps {
   open: boolean;
@@ -15,38 +16,22 @@ interface PlanFormModalProps {
 type FeatureItem = { key: string; enabled: boolean };
 type LimitItem = { key: string; value: number };
 
-const PRESET_FEATURES = [
-  { key: "pos", label: "POS" },
-  { key: "analytics", label: "Analytics" },
-  { key: "custom_domain", label: "Custom Domain" },
-  { key: "priority_support", label: "Priority Support" },
-  { key: "api_access", label: "API Access" },
-  { key: "bulk_import", label: "Bulk Import" },
-  { key: "export_data", label: "Export Data" },
-  { key: "seo_tools", label: "SEO Tools" },
-  { key: "advanced_reports", label: "Advanced Reports" },
-];
-
-const PRESET_LIMITS = [
-  { key: "max_products", label: "Max Products" },
-  { key: "max_orders_per_month", label: "Max Orders/Month" },
-  { key: "max_images_per_product", label: "Max Images/Product" },
-  { key: "max_staff", label: "Max Staff" },
-  { key: "max_categories", label: "Max Categories" },
-  { key: "max_coupons", label: "Max Coupons" },
-];
+const BRANCH_DEFAULT_MAX = 2;
+const BRAND_DEFAULT_MAX = 10;
 
 const DEFAULT_FORM: CreatePlanInput = {
   name: "",
   slug: "",
   description: "",
   price_monthly: 0,
+  price_half_yearly: null,
   price_yearly: 0,
   currency: "BDT",
   trial_days: 0,
   is_active: true,
   is_featured: false,
   is_public: true,
+  is_default_trial_plan: false,
   sort_order: 0,
   features: {},
   limits: {},
@@ -72,12 +57,14 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
         slug: plan.slug,
         description: plan.description ?? "",
         price_monthly: plan.price_monthly,
+        price_half_yearly: plan.price_half_yearly ?? null,
         price_yearly: plan.price_yearly,
         currency: plan.currency,
         trial_days: plan.trial_days,
         is_active: plan.is_active,
         is_featured: plan.is_featured,
         is_public: plan.is_public,
+        is_default_trial_plan: plan.is_default_trial_plan,
         sort_order: plan.sort_order,
         features: plan.features,
         limits: plan.limits,
@@ -122,6 +109,50 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
       prev.map((l) => (l.key === oldKey ? { ...l, key: newKey } : l))
     );
 
+  /* ── Branches ── */
+  const branchesOn = !!featureItems.find((f) => f.key === "multi_branch")?.enabled;
+  const branchLimit = limitItems.find((l) => l.key === "max_branches");
+  const maxBranches = branchLimit?.value ?? BRANCH_DEFAULT_MAX;
+  const setBranchesOn = (enabled: boolean) => {
+    setFeatureItems((prev) =>
+      prev.some((f) => f.key === "multi_branch")
+        ? prev.map((f) => (f.key === "multi_branch" ? { ...f, enabled } : f))
+        : [...prev, { key: "multi_branch", enabled }]
+    );
+    if (enabled && !branchLimit) {
+      setLimitItems((prev) => [...prev, { key: "max_branches", value: BRANCH_DEFAULT_MAX }]);
+    }
+  };
+  const setMaxBranches = (value: number) => {
+    if (branchLimit) {
+      updateLimitValue("max_branches", value);
+    } else {
+      setLimitItems((prev) => [...prev, { key: "max_branches", value }]);
+    }
+  };
+
+  /* ── Brands ── */
+  const brandsOn = !!featureItems.find((f) => f.key === "brands")?.enabled;
+  const brandLimit = limitItems.find((l) => l.key === "max_brands");
+  const maxBrands = brandLimit?.value ?? BRAND_DEFAULT_MAX;
+  const setBrandsOn = (enabled: boolean) => {
+    setFeatureItems((prev) =>
+      prev.some((f) => f.key === "brands")
+        ? prev.map((f) => (f.key === "brands" ? { ...f, enabled } : f))
+        : [...prev, { key: "brands", enabled }]
+    );
+    if (enabled && !brandLimit) {
+      setLimitItems((prev) => [...prev, { key: "max_brands", value: BRAND_DEFAULT_MAX }]);
+    }
+  };
+  const setMaxBrands = (value: number) => {
+    if (brandLimit) {
+      updateLimitValue("max_brands", value);
+    } else {
+      setLimitItems((prev) => [...prev, { key: "max_brands", value }]);
+    }
+  };
+
   /* ── Submit ── */
   const handleSubmit = async () => {
     const featuresObj = Object.fromEntries(featureItems.map((f) => [f.key, f.enabled]));
@@ -132,11 +163,11 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
   };
 
   const inputCls =
-    "w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] text-slate-900 dark:text-slate-100 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/40 transition";
+    "w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/4 text-slate-900 dark:text-slate-100 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/40 transition";
   const labelCls =
     "block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide";
   const sectionCls =
-    "rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.02] p-4";
+    "rounded-xl border border-slate-200 dark:border-white/8 bg-slate-50 dark:bg-white/[0.02] p-4";
 
   return (
     <Modal
@@ -158,7 +189,7 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
       <div className="flex flex-col gap-4 py-2 max-h-[75vh] overflow-y-auto pr-1">
 
         {/* Name & Slug */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className={labelCls}>Plan Name *</label>
             <input
@@ -194,7 +225,7 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
         </div>
 
         {/* Pricing */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className={labelCls}>Monthly Price (৳)</label>
             <input
@@ -203,6 +234,19 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
               className={inputCls}
               value={form.price_monthly}
               onChange={(e) => set("price_monthly", parseFloat(e.target.value) || 0)}
+            />
+          </div>
+          <div>
+            <label className={labelCls}>Half Yearly Price (৳)</label>
+            <input
+              type="number"
+              min={0}
+              placeholder={`Default: ${(form.price_monthly * 6).toLocaleString()}`}
+              className={inputCls}
+              value={form.price_half_yearly ?? ""}
+              onChange={(e) =>
+                set("price_half_yearly", e.target.value === "" ? null : parseFloat(e.target.value) || 0)
+              }
             />
           </div>
           <div>
@@ -226,9 +270,13 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
             />
           </div>
         </div>
+        <p className="text-[11px] text-slate-500 dark:text-slate-400 -mt-2">
+          Leave Half Yearly Price blank to default to Monthly × 6. A custom-length subscription
+          (e.g. 2 or 4 months) is priced per-store when assigning it — it isn&apos;t listed here.
+        </p>
 
         {/* Trial & Sort */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className={labelCls}>Trial Days</label>
             <input
@@ -273,6 +321,114 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
               {label}
             </label>
           ))}
+          <label
+            className="flex items-center gap-2 cursor-pointer select-none text-sm text-slate-700 dark:text-slate-300"
+            title="Only one plan can be the default trial plan at a time. Enabling this will disable it on every other plan."
+          >
+            <input
+              type="checkbox"
+              className="w-4 h-4 rounded accent-violet-600"
+              checked={!!form.is_default_trial_plan}
+              onChange={(e) => set("is_default_trial_plan", e.target.checked)}
+            />
+            Default trial plan (auto-assigned to new stores at signup)
+          </label>
+        </div>
+
+        {/* ── BRANCHES ── */}
+        <div className={sectionCls}>
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className={labelCls + " mb-0"}>Multiple branches</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Lets the store run several outlets with separate stock, orders, cash and reports.
+              </p>
+            </div>
+            <Switch
+              size="small"
+              checked={branchesOn}
+              onChange={setBranchesOn}
+              style={branchesOn ? { backgroundColor: "#10b981" } : {}}
+            />
+          </div>
+
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className={labelCls + " mb-0"}>Max branches</span>
+            {maxBranches === -1 ? (
+              <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 w-20 text-center">
+                ∞ Unlimited
+              </span>
+            ) : (
+              <input
+                type="number"
+                min={1}
+                disabled={!branchesOn}
+                className="w-20 px-2 py-1 text-sm text-center rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/4 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500/40 disabled:opacity-50"
+                value={maxBranches}
+                onChange={(e) => setMaxBranches(Math.max(1, parseInt(e.target.value) || 1))}
+              />
+            )}
+            <label className="flex items-center gap-1 text-[11px] text-slate-500 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                disabled={!branchesOn}
+                className="w-3.5 h-3.5 accent-emerald-600"
+                checked={maxBranches === -1}
+                onChange={(e) => setMaxBranches(e.target.checked ? -1 : BRANCH_DEFAULT_MAX)}
+              />
+              Unlimited
+            </label>
+          </div>
+
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-3">
+            Recommended with branches: enable Staff Accounts and Max Staff so each branch can have its own manager or cashier.
+          </p>
+        </div>
+
+        {/* ── BRANDS ── */}
+        <div className={sectionCls}>
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className={labelCls + " mb-0"}>Brands</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Lets the store create brands and assign them to products.
+              </p>
+            </div>
+            <Switch
+              size="small"
+              checked={brandsOn}
+              onChange={setBrandsOn}
+              style={brandsOn ? { backgroundColor: "#10b981" } : {}}
+            />
+          </div>
+
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className={labelCls + " mb-0"}>Max brands</span>
+            {maxBrands === -1 ? (
+              <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 w-20 text-center">
+                ∞ Unlimited
+              </span>
+            ) : (
+              <input
+                type="number"
+                min={1}
+                disabled={!brandsOn}
+                className="w-20 px-2 py-1 text-sm text-center rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/4 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500/40 disabled:opacity-50"
+                value={maxBrands}
+                onChange={(e) => setMaxBrands(Math.max(1, parseInt(e.target.value) || 1))}
+              />
+            )}
+            <label className="flex items-center gap-1 text-[11px] text-slate-500 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                disabled={!brandsOn}
+                className="w-3.5 h-3.5 accent-emerald-600"
+                checked={maxBrands === -1}
+                onChange={(e) => setMaxBrands(e.target.checked ? -1 : BRAND_DEFAULT_MAX)}
+              />
+              Unlimited
+            </label>
+          </div>
         </div>
 
         {/* ── FEATURES ── */}
@@ -280,7 +436,7 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
           <div className="flex items-center justify-between mb-3">
             <div>
               <p className={labelCls + " mb-0"}>Features</p>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 Toggle each feature on or off for this plan
               </p>
             </div>
@@ -310,7 +466,7 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
           </div>
 
           {featureItems.length === 0 ? (
-            <p className="text-xs text-slate-400 text-center py-3">
+            <p className="text-xs text-slate-500 dark:text-slate-400 text-center py-3">
               No features added yet. Use the chips above or click Add.
             </p>
           ) : (
@@ -320,14 +476,14 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
                 return (
                   <div
                     key={f.key}
-                    className="flex items-center gap-3 bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2"
+                    className="flex items-center gap-3 bg-white dark:bg-white/4 border border-slate-200 dark:border-white/8 rounded-lg px-3 py-2"
                   >
                     {/* Feature name */}
                     <div className="flex-1 min-w-0">
                       {preset ? (
                         <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
                           {preset.label}
-                          <span className="ml-1.5 text-[10px] font-mono text-slate-400">
+                          <span className="ml-1.5 text-[10px] font-mono text-slate-500 dark:text-slate-400">
                             ({f.key})
                           </span>
                         </span>
@@ -347,7 +503,7 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
                         className={`text-xs font-semibold ${
                           f.enabled
                             ? "text-emerald-600 dark:text-emerald-400"
-                            : "text-slate-400"
+                            : "text-slate-500 dark:text-slate-400"
                         }`}
                       >
                         {f.enabled ? "Enabled" : "Disabled"}
@@ -380,8 +536,8 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
           <div className="flex items-center justify-between mb-3">
             <div>
               <p className={labelCls + " mb-0"}>Limits</p>
-              <p className="text-[11px] text-slate-400">
-                Set numeric limits. Check "Unlimited" to remove a cap.
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Set numeric limits. Check &quot;Unlimited&quot; to remove a cap.
               </p>
             </div>
             <button
@@ -410,7 +566,7 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
           </div>
 
           {limitItems.length === 0 ? (
-            <p className="text-xs text-slate-400 text-center py-3">
+            <p className="text-xs text-slate-500 dark:text-slate-400 text-center py-3">
               No limits added yet. Use the chips above or click Add.
             </p>
           ) : (
@@ -421,14 +577,14 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
                 return (
                   <div
                     key={l.key}
-                    className="flex items-center gap-3 bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-lg px-3 py-2"
+                    className="flex items-center gap-3 bg-white dark:bg-white/4 border border-slate-200 dark:border-white/8 rounded-lg px-3 py-2"
                   >
                     {/* Limit name */}
                     <div className="flex-1 min-w-0">
                       {preset ? (
                         <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
                           {preset.label}
-                          <span className="ml-1.5 text-[10px] font-mono text-slate-400">
+                          <span className="ml-1.5 text-[10px] font-mono text-slate-500 dark:text-slate-400">
                             ({l.key})
                           </span>
                         </span>
@@ -452,7 +608,7 @@ export function PlanFormModal({ open, plan, onClose, onSave }: PlanFormModalProp
                         <input
                           type="number"
                           min={1}
-                          className="w-20 px-2 py-1 text-sm text-center rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                          className="w-20 px-2 py-1 text-sm text-center rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/4 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500/40"
                           value={l.value}
                           onChange={(e) =>
                             updateLimitValue(l.key, parseInt(e.target.value) || 1)

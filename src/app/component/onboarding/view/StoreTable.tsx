@@ -445,7 +445,7 @@ export default function StoreTable({ stores: initialStores }: StoreTableProps) {
             sans-serif;
           font-size: 14px;
           line-height: 1.6;
-          color: #333;
+          color: var(--foreground);
         }
 
         .modal-content ul {
@@ -471,19 +471,19 @@ export default function StoreTable({ stores: initialStores }: StoreTableProps) {
         .modal-content h4 {
           font-weight: 600;
           margin: 24px 0 16px 0;
-          color: #1f2937;
+          color: var(--foreground);
           line-height: 1.3;
         }
 
         .modal-content h1 {
           font-size: 24px;
-          border-bottom: 2px solid #e5e7eb;
+          border-bottom: 2px solid var(--border);
           padding-bottom: 8px;
         }
 
         .modal-content h2 {
           font-size: 20px;
-          border-bottom: 1px solid #e5e7eb;
+          border-bottom: 1px solid var(--border);
           padding-bottom: 6px;
         }
 
@@ -502,7 +502,7 @@ export default function StoreTable({ stores: initialStores }: StoreTableProps) {
         .modal-content hr {
           margin: 24px 0;
           border: none;
-          border-top: 2px solid #e5e7eb;
+          border-top: 2px solid var(--border);
         }
 
         .modal-content strong {
@@ -518,16 +518,16 @@ export default function StoreTable({ stores: initialStores }: StoreTableProps) {
         }
 
         .modal-content blockquote {
-          border-left: 4px solid #d1d5db;
+          border-left: 4px solid var(--border);
           padding-left: 16px;
           margin: 16px 0;
-          color: #6b7280;
+          color: var(--muted-foreground);
           font-style: italic;
         }
 
         .rich-text-preview {
           font-size: 12px;
-          color: #333;
+          color: var(--foreground);
         }
       `}</style>
     </>

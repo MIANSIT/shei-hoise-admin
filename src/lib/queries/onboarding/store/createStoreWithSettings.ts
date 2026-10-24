@@ -1,7 +1,8 @@
 // lib/queries/onboarding/store/createStoreWithSettings.ts
 "use server";
 
-import { supabase, supabaseAdmin } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { requireSuperAdmin } from "@/lib/auth/requireSuperAdmin";
 import {
   StoreType,
   StoreSettingsType,
@@ -23,12 +24,15 @@ export async function createStoreWithSettings({
   store,
   settings,
 }: CreateStoreArgs) {
+  // "use server" makes this independently callable, not just via createUser.
+  await requireSuperAdmin();
+
   let storeId: string | null = null;
   const uploadedFiles: { bucket: string; path: string }[] = [];
 
   try {
     // 1️⃣ Insert store
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("stores")
       .insert({
         owner_id: ownerId,
@@ -72,20 +76,20 @@ export async function createStoreWithSettings({
 
     // 4️⃣ Update store with uploaded file URLs
     if (Object.keys(uploads).length > 0) {
-      await supabase.from("stores").update(uploads).eq("id", storeId);
+      await supabaseAdmin.from("stores").update(uploads).eq("id", storeId);
     }
 
     // 5️⃣ Insert store settings
     if (settings) {
       const { store_social_media, ...restSettings } = settings;
 
-      const { error: settingsError } = await supabase
+      const { error: settingsError } = await supabaseAdmin
         .from("store_settings")
         .insert({ store_id: storeId, ...restSettings });
       if (settingsError) throw settingsError;
 
       if (store_social_media) {
-        const { error: socialError } = await supabase
+        const { error: socialError } = await supabaseAdmin
           .from("store_social_media")
           .insert({ store_id: storeId, ...store_social_media });
         if (socialError) throw socialError;

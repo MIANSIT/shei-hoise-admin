@@ -102,8 +102,7 @@ export default function Breadcrumb() {
             {shouldCollapse && (
               <button
                 onClick={handleToggle}
-                className="ml-2 text-xs hover:opacity-70"
-                style={{ color: "#3b82f6" }}
+                className="ml-2 text-xs text-blue-600 dark:text-blue-400 hover:opacity-70"
               >
                 ▲
               </button>

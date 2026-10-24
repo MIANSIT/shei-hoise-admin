@@ -13,26 +13,40 @@ import { SheiLoader } from "../ui/SheiLoader/loader";
 import { useSheiNotification } from "@/lib/hooks/useSheiNotification";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { USER_TYPES } from "@/lib/types/enums";
 
 interface LoginFormProps {
   submitText?: string;
-  theme?: "light" | "dark";
 }
 
 export function LoginForm({
   submitText = "Login",
-  theme = "light",
 }: LoginFormProps) {
   const { success, error } = useSheiNotification();
   const router = useRouter();
   const handleAdminLogin = async (values: LoginFormType) => {
-    const { error: loginError } = await supabase.auth.signInWithPassword({
+    const { data, error: loginError } = await supabase.auth.signInWithPassword({
       email: values.username, // we renamed username → email in schema
       password: values.password,
     });
 
     if (loginError) {
       error(loginError.message || "Login failed. Please try again.");
+      return;
+    }
+
+    // This panel is super-admin only. Credentials being valid isn't enough —
+    // store owners and customers share the same auth pool, so drop the session
+    // again unless the account is actually a super admin.
+    const { data: profile, error: profileError } = await supabase
+      .from("users")
+      .select("user_type")
+      .eq("id", data.user.id)
+      .maybeSingle();
+
+    if (profileError || profile?.user_type !== USER_TYPES.SUPER_ADMIN) {
+      await supabase.auth.signOut();
+      error("This account doesn't have admin access.");
       return;
     }
 
@@ -68,11 +82,7 @@ export function LoginForm({
           placeholder="Enter your email"
           {...form.register("username")}
           disabled={form.formState.isSubmitting}
-          className={
-            theme === "dark"
-              ? "  border-gray-600 placeholder-gray-400"
-              : "  border-gray-300 placeholder-gray-500"
-          }
+          className="text-foreground"
         />
         {form.formState.errors.username && (
           <p className="text-sm text-red-500">{errors?.username?.message}</p>
@@ -89,11 +99,7 @@ export function LoginForm({
             placeholder="Enter your password"
             {...form.register("password")}
             disabled={form.formState.isSubmitting}
-            className={
-              theme === "dark"
-                ? " border-gray-600 placeholder-gray-400 pr-14"
-                : " text-gray-900 border-gray-300 placeholder-gray-500 pr-14"
-            }
+            className="text-foreground pr-14"
           />
           <div className="absolute inset-y-0 right-2 flex items-center">
             <PasswordToggle
@@ -110,8 +116,8 @@ export function LoginForm({
       {/* Submit Button */}
       <Button
         type="submit"
-        variant={theme === "dark" ? "dark" : "light"}
-        className="w-full mt-2 relative overflow-hidden"
+        variant="dark"
+        className="w-full mt-2 relative overflow-hidden h-11 text-base disabled:opacity-100 disabled:bg-muted disabled:text-muted-foreground disabled:border disabled:border-border"
         disabled={!form.formState.isValid || form.formState.isSubmitting}
       >
         {form.formState.isSubmitting ? (

@@ -2,9 +2,14 @@
 "use server";
 
 import { CreateUserType } from "@/lib/schema/onboarding/user.schema";
-import { supabase, supabaseAdmin } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { requireSuperAdmin } from "@/lib/auth/requireSuperAdmin";
 
 export async function createUserCore(payload: CreateUserType) {
+  // "use server" makes this independently callable, and it mints Supabase Auth
+  // accounts with an arbitrary user_type — the highest-value action here.
+  await requireSuperAdmin();
+
   // 1️⃣ Auth user
   const { data, error: authError } = await supabaseAdmin.auth.admin.createUser({
     email: payload.email,
@@ -22,7 +27,7 @@ export async function createUserCore(payload: CreateUserType) {
   const userId = data.user.id;
 
   // 2️⃣ Users table
-  const { error: userError } = await supabase.from("users").insert({
+  const { error: userError } = await supabaseAdmin.from("users").insert({
     id: userId,
     email: payload.email,
     password_hash: "AUTH_MANAGED",
@@ -38,7 +43,7 @@ export async function createUserCore(payload: CreateUserType) {
 
   // 3️⃣ Profile
   if (payload.profile) {
-    const { error } = await supabase.from("user_profiles").insert({
+    const { error } = await supabaseAdmin.from("user_profiles").insert({
       user_id: userId,
       ...payload.profile,
     });

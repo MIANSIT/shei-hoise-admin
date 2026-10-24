@@ -14,6 +14,7 @@ import {
   IconChevron,
   IconDollar,
   IconTruck,
+  IconTrash,
 } from "./StoreOwnerIcons";
 
 function formatCurrency(amount?: number | string, currency = "BDT") {
@@ -25,12 +26,14 @@ interface StoreCardProps {
   store: StoreWithTrial;
   onStatusChange: (storeId: string, status: StoreStatus) => void;
   onActiveChange: (storeId: string, isActive: boolean) => void;
+  onDelete: (store: StoreWithTrial) => void;
 }
 
 export function StoreCard({
   store,
   onStatusChange,
   onActiveChange,
+  onDelete,
 }: StoreCardProps) {
   const [open, setOpen] = useState(false);
   const settings = store.store_settings?.[0];
@@ -40,7 +43,7 @@ export function StoreCard({
       {/* Store header row */}
       <div className="flex items-center gap-3 px-5 py-4">
         {/* Logo */}
-        <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 flex items-center justify-center bg-slate-200 dark:bg-white/[0.08] border border-slate-300 dark:border-white/[0.1] text-slate-400 dark:text-slate-500">
+        <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 flex items-center justify-center bg-slate-200 dark:bg-white/[0.08] border border-slate-300 dark:border-white/[0.1] text-slate-500 dark:text-slate-400">
           {store.logo_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -61,7 +64,7 @@ export function StoreCard({
             <span className="font-bold text-[15px] text-slate-900 dark:text-slate-100 tracking-tight">
               {store.store_name}
             </span>
-            <span className="text-[11px] text-slate-400 dark:text-slate-500 bg-slate-200 dark:bg-white/[0.06] px-2 py-0.5 rounded font-mono">
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 bg-slate-200 dark:bg-white/[0.06] px-2 py-0.5 rounded font-mono">
               /{store.store_slug}
             </span>
           </div>
@@ -92,9 +95,19 @@ export function StoreCard({
           </select>
           <button
             onClick={() => setOpen(!open)}
-            className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.1] text-slate-400 dark:text-slate-500 cursor-pointer hover:bg-slate-200 dark:hover:bg-white/[0.1] transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.1] text-slate-500 dark:text-slate-400 cursor-pointer hover:bg-slate-200 dark:hover:bg-white/[0.1] transition-colors"
           >
             <IconChevron open={open} />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(store);
+            }}
+            title="Delete store"
+            className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.1] text-slate-500 dark:text-slate-400 cursor-pointer hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-500/20 transition-colors"
+          >
+            <IconTrash />
           </button>
         </div>
       </div>
@@ -155,7 +168,7 @@ export function StoreCard({
           {Array.isArray(settings.shipping_fees) &&
             settings.shipping_fees.length > 0 && (
               <div className="col-span-full bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.06] rounded-xl p-3">
-                <div className="text-[11px] text-slate-400 dark:text-slate-500 uppercase tracking-wider font-semibold mb-2">
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold mb-2">
                   Shipping Methods
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -177,7 +190,7 @@ export function StoreCard({
                         {fee.price} {settings.currency}
                       </span>
                       {fee.estimated_days && (
-                        <span className="text-slate-400 dark:text-slate-500 ml-1.5 text-[11px]">
+                        <span className="text-slate-500 dark:text-slate-400 ml-1.5 text-[11px]">
                           · {fee.estimated_days}d
                         </span>
                       )}

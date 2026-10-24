@@ -1,10 +1,12 @@
 "use server";
 
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { requireSuperAdmin } from "@/lib/auth/requireSuperAdmin";
 
 export async function viewStoreOwners() {
   try {
-    const { data, error } = await supabase
+    await requireSuperAdmin();
+    const { data, error } = await supabaseAdmin
       .from("users")
       .select(
         `

@@ -20,7 +20,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (loading || !session) {
     return (
-      <div className="flex items-center justify-center min-h-screen text-white">
+      <div className="flex items-center justify-center min-h-screen text-slate-900 dark:text-white">
         Checking authentication...
       </div>
     );

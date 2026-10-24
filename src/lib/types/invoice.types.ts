@@ -1,11 +1,12 @@
 import { BillingCycle } from "./subscription.types";
 
-export type InvoiceStatus = "unpaid" | "paid" | "canceled" | "refunded";
+export type InvoiceStatus = "unpaid" | "submitted" | "paid" | "cancelled" | "refunded";
 
 export const INVOICE_STATUS_LABELS: Record<InvoiceStatus, string> = {
   unpaid: "Unpaid",
+  submitted: "Submitted",
   paid: "Paid",
-  canceled: "Canceled",
+  cancelled: "Cancelled",
   refunded: "Refunded",
 };
 
@@ -18,12 +19,17 @@ export const INVOICE_STATUS_COLORS: Record<
     text: "text-orange-700 dark:text-orange-400",
     dot: "bg-orange-500",
   },
+  submitted: {
+    bg: "bg-blue-50 dark:bg-blue-500/10",
+    text: "text-blue-700 dark:text-blue-400",
+    dot: "bg-blue-500",
+  },
   paid: {
     bg: "bg-emerald-50 dark:bg-emerald-500/10",
     text: "text-emerald-700 dark:text-emerald-400",
     dot: "bg-emerald-500",
   },
-  canceled: {
+  cancelled: {
     bg: "bg-slate-100 dark:bg-slate-500/10",
     text: "text-slate-600 dark:text-slate-400",
     dot: "bg-slate-400",
@@ -53,6 +59,7 @@ export interface SubscriptionInvoice {
   paid_at?: string | null;
   payment_method?: string | null;
   payment_reference?: string | null;
+  sender_number?: string | null;
   notes?: string | null;
   created_at: string;
   updated_at: string;
@@ -72,6 +79,12 @@ export interface SubscriptionInvoice {
     id: string;
     name: string;
     slug: string;
+  } | null;
+  store_subscriptions?: {
+    plan_id: string;
+    current_period_start?: string | null;
+    current_period_end: string | null;
+    metadata: Record<string, unknown>;
   } | null;
 }
 
@@ -98,4 +111,6 @@ export interface UpdateInvoiceInput {
   notes?: string | null;
   amount?: number;
   due_date?: string;
+  period_start?: string;
+  period_end?: string;
 }

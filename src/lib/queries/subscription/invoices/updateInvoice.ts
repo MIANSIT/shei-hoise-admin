@@ -1,10 +1,12 @@
 "use server";
 
-import { supabaseAdmin } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { requireSuperAdmin } from "@/lib/auth/requireSuperAdmin";
 import { UpdateInvoiceInput } from "@/lib/types/invoice.types";
 
 export async function updateInvoice(id: string, input: UpdateInvoiceInput) {
   try {
+    await requireSuperAdmin();
     const { data, error } = await supabaseAdmin
       .from("subscription_invoices")
       .update(input)

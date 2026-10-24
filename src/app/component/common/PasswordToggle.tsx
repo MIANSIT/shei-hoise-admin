@@ -38,7 +38,7 @@ export function PasswordToggle({
             exit={{ opacity: 0, scale: 0.7 }}
             transition={{ duration: 0.2 }}
           >
-            <EyeOff size={size} className="text-gray-400" />
+            <EyeOff size={size} className="text-gray-400 dark:text-gray-500" />
           </motion.div>
         ) : (
           <motion.div
@@ -48,7 +48,7 @@ export function PasswordToggle({
             exit={{ opacity: 0, scale: 0.7 }}
             transition={{ duration: 0.2 }}
           >
-            <Eye size={size} className="text-gray-400" />
+            <Eye size={size} className="text-gray-400 dark:text-gray-500" />
           </motion.div>
         )}
       </AnimatePresence>

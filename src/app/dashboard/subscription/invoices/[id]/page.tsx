@@ -1,5 +1,7 @@
 "use client";
 
+import { BrandLogoPdfTile } from "@/app/component/common/BrandLogo";
+import { BrandLogoTile } from "@/app/component/common/BrandLogo";
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Modal, Select } from "antd";
@@ -14,6 +16,7 @@ import {
 } from "lucide-react";
 import { useSheiNotification } from "@/lib/hooks/useSheiNotification";
 import { getInvoiceById } from "@/lib/queries/subscription/invoices/getInvoices";
+import { sendPaymentConfirmationEmail } from "@/lib/queries/subscription/invoices/sendPaymentConfirmationEmail";
 import {
   markInvoicePaid,
   updateInvoice,
@@ -24,8 +27,11 @@ import {
   INVOICE_STATUS_LABELS,
   INVOICE_STATUS_COLORS,
 } from "@/lib/types/invoice.types";
-import { BILLING_CYCLE_LABELS } from "@/lib/types/subscription.types";
+import { BILLING_CYCLE_LABELS, BillingCycle, SubscriptionStatus } from "@/lib/types/subscription.types";
 import { PAYMENT_DETAILS } from "@/lib/constants/paymentDetails";
+import { updateStoreSubscription } from "@/lib/queries/subscription/storeSubscriptions/updateStoreSubscription";
+import { addBillingCycle, monthsBetween } from "@/lib/utils/billingCycle";
+import { withPendingPlanSwitch, withoutPendingPlanSwitch } from "@/lib/utils/planSwitch";
 
 function formatDate(iso?: string | null) {
   if (!iso) return "—";
@@ -61,7 +67,7 @@ function PaymentMethodCard({
     <div className={`rounded-2xl border-2 ${color} p-4`}>
       <div className="flex items-center gap-2 mb-3">
         {icon}
-        <span className="font-bold text-sm">{title}</span>
+        <span className="font-bold text-sm text-slate-800 dark:text-slate-200">{title}</span>
       </div>
       {children}
     </div>
@@ -72,9 +78,28 @@ function PaymentMethodCard({
 const PDF_STATUS: Record<string, { bg: string; text: string }> = {
   unpaid:   { bg: "#FEF9C3", text: "#854D0E" },
   paid:     { bg: "#D1FAE5", text: "#065F46" },
-  canceled: { bg: "#FEE2E2", text: "#991B1B" },
+  cancelled: { bg: "#FEE2E2", text: "#991B1B" },
   refunded: { bg: "#E0E7FF", text: "#3730A3" },
 };
+
+const toDateInput = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+const fmtLong = (d: Date) =>
+  d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+
+// Where a paid period starts when the admin doesn't override it: right now, or
+// the end of the current period for an early renewal (so paid days stack
+// instead of being discarded).
+function defaultPeriodStart(inv: {
+  store_subscriptions?: { current_period_end: string | null } | null;
+}): Date {
+  const now = new Date();
+  const end = inv.store_subscriptions?.current_period_end
+    ? new Date(inv.store_subscriptions.current_period_end)
+    : null;
+  return end && end > now ? end : now;
+}
 
 export default function InvoiceDetailPage() {
   const params = useParams();
@@ -89,6 +114,7 @@ export default function InvoiceDetailPage() {
   const [payMethod, setPayMethod] = useState("bkash");
   const [payRef, setPayRef] = useState("");
   const [marking, setMarking] = useState(false);
+  const [startDate, setStartDate] = useState("");
 
   const [cancelOpen, setCancelOpen] = useState(false);
   const [canceling, setCanceling] = useState(false);
@@ -111,10 +137,76 @@ export default function InvoiceDetailPage() {
     setMarking(true);
     const res = await markInvoicePaid(invoice.id, payMethod, payRef || undefined);
     if (res.success) {
-      success("Invoice marked as paid");
+      // Service period starts from confirmation, not from when it was requested —
+      // otherwise a delayed approval silently eats days off the customer's paid period.
+      // For a renewal confirmed before the current period ends, stack onto the
+      // existing current_period_end instead, so early renewals don't discard
+      // days the store already paid for.
+      const now = new Date();
+      // The admin picks the start date in the modal (defaults to the rule
+      // above). Picking the default's own calendar day keeps its exact time.
+      const defaultStart = defaultPeriodStart(invoice);
+      const periodStart =
+        !startDate || startDate === toDateInput(defaultStart)
+          ? defaultStart
+          : new Date(`${startDate}T00:00:00`);
+      const customMonths =
+        invoice.billing_cycle === BillingCycle.CUSTOM
+          ? monthsBetween(new Date(invoice.period_start), new Date(invoice.period_end))
+          : undefined;
+      const periodEnd = addBillingCycle(periodStart, invoice.billing_cycle, customMonths);
+      // A plan switch that lands before the current period ends is queued
+      // instead of applied now — otherwise the store gets the new plan's
+      // features/limits for days it already paid for under the old plan.
+      const currentPlanId = invoice.store_subscriptions?.plan_id;
+      // Only a period that starts in the future is an "early renewal".
+      const isEarlyRenewal = periodStart > now;
+      const isPlanSwitch = !!currentPlanId && currentPlanId !== invoice.plan_id;
+      const existingMetadata = (invoice.store_subscriptions?.metadata as Record<string, unknown>) ?? {};
+      const subscriptionUpdate =
+        isPlanSwitch && isEarlyRenewal
+          ? {
+              status: SubscriptionStatus.ACTIVE,
+              current_period_start: periodStart.toISOString(),
+              current_period_end: periodEnd.toISOString(),
+              expires_at: periodEnd.toISOString(),
+              payment_provider: payMethod,
+              canceled_at: null,
+              metadata: withPendingPlanSwitch(existingMetadata, invoice.plan_id, periodStart.toISOString()),
+            }
+          : {
+              plan_id: invoice.plan_id,
+              status: SubscriptionStatus.ACTIVE,
+              current_period_start: periodStart.toISOString(),
+              current_period_end: periodEnd.toISOString(),
+              expires_at: periodEnd.toISOString(),
+              payment_provider: payMethod,
+              canceled_at: null,
+              metadata: withoutPendingPlanSwitch(existingMetadata),
+            };
+      await Promise.all([
+        updateStoreSubscription(invoice.subscription_id, subscriptionUpdate),
+        updateInvoice(invoice.id, {
+          period_start: periodStart.toISOString(),
+          period_end: periodEnd.toISOString(),
+        }),
+      ]);
+      success("Invoice marked as paid — subscription activated");
+      // Receipt to the store owner. A mail failure must not undo the payment.
+      const mail = await sendPaymentConfirmationEmail(invoice.id);
+      if (mail.success) success(`Receipt emailed to ${mail.to}`);
+      else notifyError(`Payment saved, but the receipt email was not sent: ${mail.error}`);
       setInvoice((prev) =>
         prev
-          ? { ...prev, status: "paid", paid_at: new Date().toISOString(), payment_method: payMethod, payment_reference: payRef || null }
+          ? {
+              ...prev,
+              status: "paid",
+              paid_at: now.toISOString(),
+              payment_method: payMethod,
+              payment_reference: payRef || null,
+              period_start: periodStart.toISOString(),
+              period_end: periodEnd.toISOString(),
+            }
           : prev
       );
       setMarkPaidOpen(false);
@@ -128,10 +220,23 @@ export default function InvoiceDetailPage() {
   const handleCancel = async () => {
     if (!invoice) return;
     setCanceling(true);
-    const res = await updateInvoice(invoice.id, { status: "canceled" });
-    if (res.success) {
-      success("Invoice canceled");
-      setInvoice((prev) => (prev ? { ...prev, status: "canceled" } : prev));
+    // Rejecting a payment also immediately cancels the linked subscription —
+    // otherwise the store stays "incomplete"/"active" and keeps open access
+    // (subscriptionAccess.ts only locks on a "cancelled" subscription status).
+    const [invoiceRes, subRes] = await Promise.all([
+      updateInvoice(invoice.id, { status: "cancelled" }),
+      updateStoreSubscription(invoice.subscription_id, {
+        status: SubscriptionStatus.CANCELED,
+        canceled_at: new Date().toISOString(),
+      }),
+    ]);
+    if (invoiceRes.success) {
+      success(
+        subRes.success
+          ? "Invoice cancelled — subscription locked"
+          : "Invoice cancelled, but failed to lock the subscription — cancel it manually"
+      );
+      setInvoice((prev) => (prev ? { ...prev, status: "cancelled" } : prev));
       setCancelOpen(false);
     } else {
       notifyError("Failed to cancel invoice");
@@ -256,36 +361,32 @@ export default function InvoiceDetailPage() {
   const owner = store?.owner;
   const pd = PAYMENT_DETAILS;
   const isUnpaid = invoice.status === "unpaid";
+  const isSubmitted = invoice.status === "submitted";
+  const canAction = isUnpaid || isSubmitted;
 
-  const bkashSendAmount      = Math.ceil(invoice.amount * (1 + pd.bkash.chargeRate));
-  const bkashCharge          = bkashSendAmount - invoice.amount;
-  const bkashPriyoSendAmount = Math.ceil(invoice.amount * (1 + pd.bkash.priyoChargeRate));
-  const bkashPriyoCharge     = bkashPriyoSendAmount - invoice.amount;
-  const nagadSendAmount      = Math.ceil(invoice.amount * (1 + pd.nagad.chargeRate));
-  const nagadCharge          = nagadSendAmount - invoice.amount;
 
   const inputCls =
-    "w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/40 transition";
+    "w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/4 text-slate-900 dark:text-slate-100 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/40 transition";
 
   const pdfStatus = PDF_STATUS[invoice.status] ?? PDF_STATUS.unpaid;
 
   return (
     <>
       {/* ─── SCREEN UI ──────────────────────────────────────────────── */}
-      <div className="min-h-screen bg-slate-100 dark:bg-slate-950 py-8 px-4">
+      <div className="min-h-screen bg-slate-100 dark:bg-slate-950 py-6 sm:py-8 px-3 sm:px-4">
 
         {/* Generating overlay — hides the brief PDF render flash */}
         {generating && (
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[10001]">
-            <div className="bg-white rounded-2xl px-8 py-6 flex items-center gap-3 shadow-2xl">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl px-8 py-6 flex items-center gap-3 shadow-2xl">
               <Loader2 className="w-5 h-5 animate-spin text-violet-600" />
-              <span className="text-sm font-semibold text-slate-700">Generating PDF…</span>
+              <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Generating PDF…</span>
             </div>
           </div>
         )}
 
         {/* Action bar */}
-        <div className="max-w-[820px] mx-auto flex items-center justify-between mb-5">
+        <div className="max-w-[820px] mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
           <button
             onClick={() => router.back()}
             className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-violet-600 transition"
@@ -293,23 +394,30 @@ export default function InvoiceDetailPage() {
             <ArrowLeft className="w-4 h-4" />
             Back to Invoices
           </button>
-          <div className="flex items-center gap-2">
-            {isUnpaid && (
+          <div className="flex items-center gap-2 flex-wrap">
+            {canAction && (
               <button
-                onClick={() => setMarkPaidOpen(true)}
+                onClick={() => {
+                  if (isSubmitted) {
+                    if (invoice.payment_method) setPayMethod(invoice.payment_method);
+                    if (invoice.payment_reference) setPayRef(invoice.payment_reference);
+                  }
+                  setStartDate(toDateInput(defaultPeriodStart(invoice)));
+                  setMarkPaidOpen(true);
+                }}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition"
               >
                 <CheckCircle className="w-4 h-4" />
-                Mark as Paid
+                {isSubmitted ? "Confirm Payment" : "Mark as Paid"}
               </button>
             )}
-            {isUnpaid && (
+            {canAction && (
               <button
                 onClick={() => setCancelOpen(true)}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-200 dark:bg-white/[0.08] hover:bg-red-50 dark:hover:bg-red-500/10 text-slate-600 dark:text-slate-300 hover:text-red-600 text-sm font-semibold transition"
               >
                 <XCircle className="w-4 h-4" />
-                Cancel Invoice
+                {isSubmitted ? "Reject Payment" : "Cancel Invoice"}
               </button>
             )}
             <button
@@ -324,57 +432,60 @@ export default function InvoiceDetailPage() {
         </div>
 
         {/* Invoice document (screen view) */}
-        <div className="max-w-[820px] mx-auto bg-white rounded-3xl shadow-2xl shadow-slate-200/60 dark:shadow-none">
+        <div className="max-w-[820px] mx-auto bg-white dark:bg-slate-900 rounded-3xl shadow-2xl shadow-slate-200/60 dark:shadow-none">
 
           {/* Header band */}
-          <div className="bg-gradient-to-r from-violet-600 to-purple-600 rounded-t-3xl px-10 py-7 flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-extrabold text-white tracking-tight">{pd.company.name}</h1>
-              <p className="text-violet-200 text-sm mt-0.5">{pd.company.email}</p>
-              <p className="text-violet-200 text-sm">{pd.company.address}</p>
+          <div className="bg-gradient-to-r from-[#0E2438] to-[#1E4A74] rounded-t-3xl px-5 sm:px-10 py-6 sm:py-7 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <BrandLogoTile height={60} />
+              <div>
+                <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">{pd.company.name}</h1>
+                <p className="text-slate-300 text-sm mt-0.5">{pd.company.email}</p>
+                <p className="text-slate-300 text-sm">{pd.company.address}</p>
+              </div>
             </div>
-            <div className="text-right">
-              <div className="text-3xl font-black text-white tracking-widest">INVOICE</div>
-              <div className="text-violet-200 font-mono text-sm mt-1">#{invoice.invoice_number}</div>
+            <div className="text-left sm:text-right">
+              <div className="text-2xl sm:text-3xl font-black text-white tracking-widest">INVOICE</div>
+              <div className="text-slate-300 font-mono text-sm mt-1">#{invoice.invoice_number}</div>
               <div className="mt-2"><StatusBadge status={invoice.status} /></div>
             </div>
           </div>
 
-          <div className="px-10 py-8">
+          <div className="px-5 sm:px-10 py-6 sm:py-8">
             {/* Bill To + Invoice Meta */}
-            <div className="grid grid-cols-2 gap-8 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 mb-8">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Bill To</p>
-                <p className="font-bold text-slate-900 text-base">{store?.store_name ?? "—"}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">Bill To</p>
+                <p className="font-bold text-slate-900 dark:text-slate-100 text-base">{store?.store_name ?? "—"}</p>
                 {owner && (
                   <>
-                    <p className="text-sm text-slate-600 mt-0.5">{owner.first_name} {owner.last_name}</p>
-                    <p className="text-sm text-slate-500">{owner.email}</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">{owner.first_name} {owner.last_name}</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">{owner.email}</p>
                   </>
                 )}
-                <p className="text-xs text-slate-400 mt-1">Store: {store?.store_slug}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Store: {store?.store_slug}</p>
               </div>
-              <div className="text-right">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Invoice Details</p>
+              <div className="text-left sm:text-right">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">Invoice Details</p>
                 {[
                   ["Invoice #", invoice.invoice_number],
                   ["Invoice Date", formatDate(invoice.created_at)],
                   ["Due Date", formatDate(invoice.due_date)],
                   ...(invoice.status === "paid" && invoice.paid_at ? [["Paid On", formatDate(invoice.paid_at)]] : []),
                 ].map(([label, value]) => (
-                  <div key={label} className="flex justify-end gap-4 text-sm mb-1">
-                    <span className="text-slate-400 font-medium">{label}:</span>
-                    <span className="text-slate-700 font-semibold w-36 text-left">{value}</span>
+                  <div key={label} className="flex sm:justify-end gap-4 text-sm mb-1">
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">{label}:</span>
+                    <span className="text-slate-700 dark:text-slate-300 font-semibold sm:w-36 text-left">{value}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Line items */}
-            <div className="rounded-2xl overflow-hidden border border-slate-200 mb-8">
-              <table className="w-full text-sm">
+            <div className="rounded-2xl overflow-x-auto border border-slate-200 dark:border-white/10 mb-8">
+              <table className="w-full text-sm min-w-[520px]">
                 <thead>
-                  <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
+                  <tr className="bg-slate-50 dark:bg-white/4 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">
                     <th className="px-5 py-3 text-left font-semibold">Description</th>
                     <th className="px-5 py-3 text-left font-semibold">Billing</th>
                     <th className="px-5 py-3 text-left font-semibold">Period</th>
@@ -382,67 +493,93 @@ export default function InvoiceDetailPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="border-t border-slate-100">
+                  <tr className="border-t border-slate-100 dark:border-white/5">
                     <td className="px-5 py-4">
-                      <p className="font-semibold text-slate-900">{invoice.plan_name} Plan</p>
-                      <p className="text-xs text-slate-400">Subscription</p>
+                      <p className="font-semibold text-slate-900 dark:text-slate-100">{invoice.plan_name} Plan</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Subscription</p>
                     </td>
-                    <td className="px-5 py-4 text-slate-600">{BILLING_CYCLE_LABELS[invoice.billing_cycle]}</td>
-                    <td className="px-5 py-4 text-slate-600">
+                    <td className="px-5 py-4 text-slate-600 dark:text-slate-400">{BILLING_CYCLE_LABELS[invoice.billing_cycle]}</td>
+                    <td className="px-5 py-4 text-slate-600 dark:text-slate-400">
                       {formatDate(invoice.period_start)} – {formatDate(invoice.period_end)}
                     </td>
-                    <td className="px-5 py-4 text-right font-bold text-slate-900">
+                    <td className="px-5 py-4 text-right font-bold text-slate-900 dark:text-slate-100">
                       ৳{invoice.amount.toLocaleString()}
                     </td>
                   </tr>
                 </tbody>
                 <tfoot>
-                  <tr className="border-t-2 border-slate-200 bg-slate-50">
-                    <td colSpan={3} className="px-5 py-4 text-right font-bold text-slate-600 uppercase tracking-wider text-sm">
+                  <tr className="border-t-2 border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/4">
+                    <td colSpan={3} className="px-5 py-4 text-right font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-sm">
                       Total Due
                     </td>
                     <td className="px-5 py-4 text-right">
                       <span className="text-2xl font-extrabold text-violet-700">৳{invoice.amount.toLocaleString()}</span>
-                      <span className="text-xs text-slate-400 ml-1">{invoice.currency}</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400 ml-1">{invoice.currency}</span>
                     </td>
                   </tr>
                 </tfoot>
               </table>
             </div>
 
+            {/* Submitted payment info — for admin to verify */}
+            {isSubmitted && (
+              <div className="mb-8 rounded-2xl border-2 border-blue-200 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-500/10 p-4 sm:p-5">
+                <div className="flex flex-wrap items-center gap-2 mb-4">
+                  <Smartphone className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  <p className="font-bold text-blue-800 dark:text-blue-300 text-sm uppercase tracking-wider">Customer Payment Submission</p>
+                  <span className="sm:ml-auto text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30">Pending Verification</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                  <div className="bg-white dark:bg-white/5 rounded-xl border border-blue-100 dark:border-blue-500/20 px-4 py-3">
+                    <p className="text-[10px] font-bold text-blue-400 dark:text-blue-300 uppercase tracking-wider mb-1">Amount Paid</p>
+                    <p className="text-sm font-extrabold text-emerald-700 dark:text-emerald-400">৳{invoice.amount.toLocaleString()}</p>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400">{invoice.currency}</p>
+                  </div>
+                  <div className="bg-white dark:bg-white/5 rounded-xl border border-blue-100 dark:border-blue-500/20 px-4 py-3">
+                    <p className="text-[10px] font-bold text-blue-400 dark:text-blue-300 uppercase tracking-wider mb-1">Payment Method</p>
+                    <p className="text-sm font-bold text-slate-800 dark:text-slate-200 capitalize">{invoice.payment_method ?? "—"}</p>
+                  </div>
+                  <div className="bg-white dark:bg-white/5 rounded-xl border border-blue-100 dark:border-blue-500/20 px-4 py-3">
+                    <p className="text-[10px] font-bold text-blue-400 dark:text-blue-300 uppercase tracking-wider mb-1">Transaction / Reference ID</p>
+                    <p className="text-sm font-bold font-mono text-violet-700 dark:text-violet-400">{invoice.payment_reference ?? "—"}</p>
+                  </div>
+                  <div className="bg-white dark:bg-white/5 rounded-xl border border-blue-100 dark:border-blue-500/20 px-4 py-3">
+                    <p className="text-[10px] font-bold text-blue-400 dark:text-blue-300 uppercase tracking-wider mb-1">Sender Number</p>
+                    <p className="text-sm font-bold font-mono text-slate-800 dark:text-slate-200">{invoice.sender_number ?? "—"}</p>
+                  </div>
+                </div>
+                <p className="text-xs text-blue-600 dark:text-blue-400 mt-3">Verify the transaction in your payment app, then click <strong>Confirm Payment</strong> above.</p>
+              </div>
+            )}
+
             {/* Payment methods (screen only) */}
             {isUnpaid && (
               <div className="mb-8">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4">How to Pay</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-4">How to Pay</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <PaymentMethodCard icon={<Smartphone className="w-5 h-5 text-pink-600" />} title="bKash" color="border-pink-200 bg-pink-50">
-                    <p className="text-xs text-slate-500 mb-1"><span className="font-semibold text-slate-700">Send to ({pd.bkash.accountType}):</span></p>
+                  <PaymentMethodCard icon={<Smartphone className="w-5 h-5 text-pink-600 dark:text-pink-400" />} title="bKash" color="border-pink-200 dark:border-pink-500/30 bg-pink-50 dark:bg-pink-500/10">
+                    <p className="text-xs text-slate-500 mb-1"><span className="font-semibold text-slate-700 dark:text-slate-300">Send to ({pd.bkash.accountType}):</span></p>
                     <p className="text-base font-mono font-bold text-pink-700 mb-3">{pd.bkash.number}</p>
-                    <div className="bg-emerald-500 rounded-xl px-3 py-2.5 mb-2 text-center">
-                      <p className="text-[10px] font-bold text-emerald-100 uppercase tracking-wider mb-0.5">⭐ Priyo — Send exactly</p>
-                      <p className="text-2xl font-extrabold text-white">৳{bkashPriyoSendAmount.toLocaleString()}</p>
-                      <p className="text-[11px] text-emerald-100 mt-0.5">৳{invoice.amount.toLocaleString()} + ৳{bkashPriyoCharge} ({pd.bkash.priyoCharge})</p>
-                    </div>
-                    <div className="bg-pink-600 rounded-xl px-3 py-2.5 mb-3 text-center">
-                      <p className="text-[10px] font-bold text-pink-200 uppercase tracking-wider mb-0.5">Regular — Send exactly</p>
-                      <p className="text-2xl font-extrabold text-white">৳{bkashSendAmount.toLocaleString()}</p>
-                      <p className="text-[11px] text-pink-200 mt-0.5">৳{invoice.amount.toLocaleString()} + ৳{bkashCharge} ({pd.bkash.cashoutCharge})</p>
+                    <div className="bg-pink-600 rounded-xl px-3 py-3 mb-3 text-center">
+                      <p className="text-[10px] font-bold text-pink-200 uppercase tracking-wider mb-0.5">Send Exactly</p>
+                      <p className="text-2xl font-extrabold text-white">৳{invoice.amount.toLocaleString()}</p>
+                      <p className="text-[11px] text-pink-200 mt-0.5">{invoice.currency}</p>
                     </div>
                     <p className="text-[11px] text-slate-500 leading-relaxed">{pd.bkash.instructions}</p>
                   </PaymentMethodCard>
 
-                  <PaymentMethodCard icon={<Smartphone className="w-5 h-5 text-orange-500" />} title="Nagad" color="border-orange-200 bg-orange-50">
-                    <p className="text-xs text-slate-500 mb-1"><span className="font-semibold text-slate-700">Send to ({pd.nagad.accountType}):</span></p>
+                  <PaymentMethodCard icon={<Smartphone className="w-5 h-5 text-orange-500 dark:text-orange-400" />} title="Nagad" color="border-orange-200 dark:border-orange-500/30 bg-orange-50 dark:bg-orange-500/10">
+                    <p className="text-xs text-slate-500 mb-1"><span className="font-semibold text-slate-700 dark:text-slate-300">Send to ({pd.nagad.accountType}):</span></p>
                     <p className="text-base font-mono font-bold text-orange-600 mb-3">{pd.nagad.number}</p>
                     <div className="bg-orange-500 rounded-xl px-3 py-3 mb-3 text-center">
-                      <p className="text-[10px] font-bold text-orange-100 uppercase tracking-wider mb-0.5">Send exactly</p>
-                      <p className="text-2xl font-extrabold text-white">৳{nagadSendAmount.toLocaleString()}</p>
-                      <p className="text-[11px] text-orange-100 mt-0.5">৳{invoice.amount.toLocaleString()} + ৳{nagadCharge} ({pd.nagad.cashoutCharge})</p>
+                      <p className="text-[10px] font-bold text-orange-100 uppercase tracking-wider mb-0.5">Send Exactly</p>
+                      <p className="text-2xl font-extrabold text-white">৳{invoice.amount.toLocaleString()}</p>
+                      <p className="text-[11px] text-orange-100 mt-0.5">{invoice.currency}</p>
                     </div>
                     <p className="text-[11px] text-slate-500 leading-relaxed">{pd.nagad.instructions}</p>
                   </PaymentMethodCard>
 
-                  <PaymentMethodCard icon={<Building2 className="w-5 h-5 text-blue-600" />} title="Bank Transfer" color="border-blue-200 bg-blue-50">
+                  <PaymentMethodCard icon={<Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />} title="Bank Transfer" color="border-blue-200 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-500/10">
                     {[
                       ["Bank", pd.bank.bankName],
                       ["Account", pd.bank.accountName],
@@ -451,16 +588,16 @@ export default function InvoiceDetailPage() {
                       ["Routing", pd.bank.routingNumber],
                     ].map(([label, val]) => (
                       <p key={label} className="text-[11px] text-slate-500 mb-0.5">
-                        <span className="font-semibold text-slate-700">{label}:</span> <span className="font-mono">{val}</span>
+                        <span className="font-semibold text-slate-700 dark:text-slate-300">{label}:</span> <span className="font-mono">{val}</span>
                       </p>
                     ))}
                     <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">{pd.bank.instructions}</p>
                   </PaymentMethodCard>
                 </div>
 
-                <div className="mt-4 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+                <div className="mt-4 flex items-start gap-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-xl px-4 py-3">
                   <span className="text-amber-500 text-base leading-5 mt-0.5 shrink-0">⚠️</span>
-                  <p className="text-sm text-amber-800 leading-5">
+                  <p className="text-sm text-amber-800 dark:text-amber-300 leading-5">
                     Always use <strong className="font-mono">{invoice.invoice_number}</strong> as payment reference.
                   </p>
                 </div>
@@ -469,11 +606,11 @@ export default function InvoiceDetailPage() {
 
             {/* Paid details */}
             {invoice.status === "paid" && (
-              <div className="mb-8 flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-2xl px-5 py-4">
-                <CheckCircle className="w-6 h-6 text-emerald-600 shrink-0" />
+              <div className="mb-8 flex items-center gap-3 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 rounded-2xl px-5 py-4">
+                <CheckCircle className="w-6 h-6 text-emerald-600 dark:text-emerald-400 shrink-0" />
                 <div>
-                  <p className="font-bold text-emerald-700">Payment Received</p>
-                  <p className="text-sm text-emerald-600">
+                  <p className="font-bold text-emerald-700 dark:text-emerald-400">Payment Received</p>
+                  <p className="text-sm text-emerald-600 dark:text-emerald-400">
                     Paid on {formatDate(invoice.paid_at)}
                     {invoice.payment_method && ` via ${invoice.payment_method}`}
                     {invoice.payment_reference && ` · Ref: ${invoice.payment_reference}`}
@@ -484,15 +621,15 @@ export default function InvoiceDetailPage() {
 
             {/* Notes */}
             {invoice.notes && (
-              <div className="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Notes</p>
-                <p className="text-sm text-slate-600">{invoice.notes}</p>
+              <div className="mb-6 p-4 bg-slate-50 dark:bg-white/4 rounded-xl border border-slate-200 dark:border-white/10">
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Notes</p>
+                <p className="text-sm text-slate-600 dark:text-slate-400">{invoice.notes}</p>
               </div>
             )}
 
             {/* Footer */}
-            <div className="border-t border-slate-100 pt-6 text-center text-xs text-slate-400">
-              <p className="font-semibold text-slate-600 mb-0.5">{pd.company.name}</p>
+            <div className="border-t border-slate-100 dark:border-white/5 pt-6 text-center text-xs text-slate-500 dark:text-slate-400">
+              <p className="font-semibold text-slate-600 dark:text-slate-400 mb-0.5">{pd.company.name}</p>
               <p>
                 <a href={`mailto:${pd.company.email}`} target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "none" }} className="hover:opacity-70 transition">{pd.company.email}</a>
                 {" · "}
@@ -512,17 +649,20 @@ export default function InvoiceDetailPage() {
         style={{ display: "none", width: 794, backgroundColor: "#fff", fontFamily: "Arial, sans-serif" }}
       >
         {/* Gradient header */}
-        <div style={{ background: "linear-gradient(to right, #7c3aed, #9333ea)", padding: "28px 40px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-          <div>
-            <div style={{ fontSize: 22, fontWeight: 800, color: "#fff" }}>{pd.company.name}</div>
-            <div style={{ fontSize: 12, color: "#ddd8fe", marginTop: 4 }}>{pd.company.email}</div>
-            <div style={{ fontSize: 12, color: "#ddd8fe" }}>{pd.company.address}</div>
+        <div style={{ background: "linear-gradient(to right, #13304A, #1E4A74)", padding: "28px 40px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <BrandLogoPdfTile height={64} />
+            <div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#fff" }}>{pd.company.name}</div>
+              <div style={{ fontSize: 12, color: "#B0B7C0", marginTop: 4 }}>{pd.company.email}</div>
+              <div style={{ fontSize: 12, color: "#B0B7C0" }}>{pd.company.address}</div>
+            </div>
           </div>
           <div style={{ textAlign: "right" }}>
             <div style={{ fontSize: 28, fontWeight: 900, color: "#fff", letterSpacing: 4 }}>INVOICE</div>
-            <div style={{ fontSize: 12, color: "#ddd8fe", fontFamily: "monospace", marginTop: 4 }}>#{invoice.invoice_number}</div>
+            <div style={{ fontSize: 12, color: "#B0B7C0", fontFamily: "monospace", marginTop: 4 }}>#{invoice.invoice_number}</div>
             <div style={{ marginTop: 8, display: "inline-block", padding: "3px 14px", borderRadius: 20, backgroundColor: pdfStatus.bg, color: pdfStatus.text, fontSize: 11, fontWeight: 700 }}>
-              {INVOICE_STATUS_LABELS[invoice.status].toUpperCase()}
+              {(INVOICE_STATUS_LABELS[invoice.status] ?? invoice.status ?? "").toUpperCase()}
             </div>
           </div>
         </div>
@@ -581,7 +721,7 @@ export default function InvoiceDetailPage() {
               <tr style={{ backgroundColor: "#f8fafc", borderTop: "2px solid #e2e8f0" }}>
                 <td colSpan={3} style={{ padding: "14px 16px", textAlign: "right", fontSize: 12, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 1 }}>Total Due</td>
                 <td style={{ padding: "14px 16px", textAlign: "right" }}>
-                  <span style={{ fontSize: 24, fontWeight: 900, color: "#7c3aed" }}>৳{invoice.amount.toLocaleString()}</span>
+                  <span style={{ fontSize: 24, fontWeight: 900, color: "#13304A" }}>৳{invoice.amount.toLocaleString()}</span>
                   <span style={{ fontSize: 11, color: "#94a3b8", marginLeft: 4 }}>{invoice.currency}</span>
                 </td>
               </tr>
@@ -632,14 +772,14 @@ export default function InvoiceDetailPage() {
         style={{ display: "none", width: 794, backgroundColor: "#fff", fontFamily: "Arial, sans-serif" }}
       >
         {/* Header band */}
-        <div style={{ background: "linear-gradient(to right, #7c3aed, #9333ea)", padding: "20px 40px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ background: "linear-gradient(to right, #13304A, #1E4A74)", padding: "20px 40px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
             <div style={{ fontSize: 18, fontWeight: 900, color: "#fff", letterSpacing: 2, textTransform: "uppercase" }}>Payment Guide</div>
-            <div style={{ fontSize: 12, color: "#ddd8fe", marginTop: 2 }}>Invoice #{invoice.invoice_number}</div>
+            <div style={{ fontSize: 12, color: "#B0B7C0", marginTop: 2 }}>Invoice #{invoice.invoice_number}</div>
           </div>
           <div style={{ textAlign: "right" }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: "#fff" }}>{pd.company.name}</div>
-            <div style={{ fontSize: 11, color: "#ddd8fe" }}>{pd.company.email}</div>
+            <div style={{ fontSize: 11, color: "#B0B7C0" }}>{pd.company.email}</div>
           </div>
         </div>
 
@@ -659,7 +799,7 @@ export default function InvoiceDetailPage() {
           {/* Amount summary */}
           <div style={{ textAlign: "center", marginBottom: 24, padding: "16px", backgroundColor: "#f8fafc", borderRadius: 10, border: "1px solid #e2e8f0" }}>
             <div style={{ fontSize: 11, color: "#64748b", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>Invoice Amount</div>
-            <div style={{ fontSize: 34, fontWeight: 900, color: "#7c3aed" }}>
+            <div style={{ fontSize: 34, fontWeight: 900, color: "#13304A" }}>
               ৳{invoice.amount.toLocaleString()}{" "}
               <span style={{ fontSize: 13, color: "#94a3b8", fontWeight: 400 }}>{invoice.currency}</span>
             </div>
@@ -671,21 +811,14 @@ export default function InvoiceDetailPage() {
             <div style={{ backgroundColor: "#fdf2f8", padding: "12px 20px", borderBottom: "1px solid #fbcfe8", display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ fontSize: 16 }}>📱</span>
               <span style={{ fontSize: 14, fontWeight: 700, color: "#be185d" }}>bKash</span>
-              <span style={{ fontSize: 12, color: "#64748b" }}>· Personal ·</span>
+              <span style={{ fontSize: 12, color: "#64748b" }}>· {pd.bkash.accountType} ·</span>
               <span style={{ fontSize: 14, fontWeight: 700, fontFamily: "monospace", color: "#db2777" }}>{pd.bkash.number}</span>
             </div>
-            <div style={{ padding: "16px 20px", display: "flex", gap: 14 }}>
-              {/* Priyo */}
-              <div style={{ flex: 1, backgroundColor: "#dcfce7", borderRadius: 8, padding: "14px 16px", textAlign: "center", border: "1px solid #86efac" }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: "#166534", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>⭐ Priyo — Send Exactly</div>
-                <div style={{ fontSize: 28, fontWeight: 900, color: "#15803d" }}>৳{bkashPriyoSendAmount.toLocaleString()}</div>
-                <div style={{ fontSize: 11, color: "#16a34a", marginTop: 4 }}>৳{invoice.amount.toLocaleString()} + ৳{bkashPriyoCharge} charge ({pd.bkash.priyoCharge})</div>
-              </div>
-              {/* Regular */}
-              <div style={{ flex: 1, backgroundColor: "#fce7f3", borderRadius: 8, padding: "14px 16px", textAlign: "center", border: "1px solid #f9a8d4" }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: "#9d174d", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Regular — Send Exactly</div>
-                <div style={{ fontSize: 28, fontWeight: 900, color: "#be185d" }}>৳{bkashSendAmount.toLocaleString()}</div>
-                <div style={{ fontSize: 11, color: "#db2777", marginTop: 4 }}>৳{invoice.amount.toLocaleString()} + ৳{bkashCharge} charge ({pd.bkash.cashoutCharge})</div>
+            <div style={{ padding: "16px 20px" }}>
+              <div style={{ backgroundColor: "#fce7f3", borderRadius: 8, padding: "14px 16px", textAlign: "center", border: "1px solid #f9a8d4" }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: "#9d174d", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Send Exactly</div>
+                <div style={{ fontSize: 28, fontWeight: 900, color: "#be185d" }}>৳{invoice.amount.toLocaleString()}</div>
+                <div style={{ fontSize: 11, color: "#db2777", marginTop: 4 }}>{invoice.currency}</div>
               </div>
             </div>
             <div style={{ padding: "0 20px 12px", fontSize: 11, color: "#64748b" }}>{pd.bkash.instructions}</div>
@@ -696,14 +829,14 @@ export default function InvoiceDetailPage() {
             <div style={{ backgroundColor: "#fff7ed", padding: "12px 20px", borderBottom: "1px solid #fed7aa", display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ fontSize: 16 }}>📱</span>
               <span style={{ fontSize: 14, fontWeight: 700, color: "#c2410c" }}>Nagad</span>
-              <span style={{ fontSize: 12, color: "#64748b" }}>· Personal ·</span>
+              <span style={{ fontSize: 12, color: "#64748b" }}>· {pd.nagad.accountType} ·</span>
               <span style={{ fontSize: 14, fontWeight: 700, fontFamily: "monospace", color: "#ea580c" }}>{pd.nagad.number}</span>
             </div>
             <div style={{ padding: "16px 20px" }}>
               <div style={{ backgroundColor: "#ffedd5", borderRadius: 8, padding: "14px 16px", textAlign: "center", border: "1px solid #fdba74" }}>
                 <div style={{ fontSize: 10, fontWeight: 700, color: "#9a3412", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Send Exactly</div>
-                <div style={{ fontSize: 28, fontWeight: 900, color: "#c2410c" }}>৳{nagadSendAmount.toLocaleString()}</div>
-                <div style={{ fontSize: 11, color: "#ea580c", marginTop: 4 }}>৳{invoice.amount.toLocaleString()} + ৳{nagadCharge} charge ({pd.nagad.cashoutCharge})</div>
+                <div style={{ fontSize: 28, fontWeight: 900, color: "#c2410c" }}>৳{invoice.amount.toLocaleString()}</div>
+                <div style={{ fontSize: 11, color: "#ea580c", marginTop: 4 }}>{invoice.currency}</div>
               </div>
             </div>
             <div style={{ padding: "0 20px 12px", fontSize: 11, color: "#64748b" }}>{pd.nagad.instructions}</div>
@@ -759,11 +892,26 @@ export default function InvoiceDetailPage() {
         okText={marking ? "Saving…" : "Confirm Payment"}
         okButtonProps={{ style: { backgroundColor: "#10b981", borderColor: "#10b981" }, loading: marking }}
         cancelText="Cancel"
-        title="Mark Invoice as Paid"
-        width={420}
+        title={isSubmitted ? "Confirm Customer Payment" : "Mark Invoice as Paid"}
+        width={440}
         destroyOnHidden
       >
         <div className="flex flex-col gap-3 py-1">
+          {isSubmitted && (
+            <div className="rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 px-4 py-3">
+              <p className="text-[10px] font-bold text-blue-500 dark:text-blue-400 uppercase tracking-wider mb-2">Customer Submitted</p>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                <span className="text-slate-500">Amount Paid:</span>
+                <span className="font-extrabold text-emerald-700 dark:text-emerald-400">৳{invoice.amount.toLocaleString()} {invoice.currency}</span>
+                <span className="text-slate-500">Method:</span>
+                <span className="font-semibold text-slate-800 dark:text-slate-200 capitalize">{invoice.payment_method ?? "—"}</span>
+                <span className="text-slate-500">Ref / TxID:</span>
+                <span className="font-mono font-bold text-violet-700 dark:text-violet-400">{invoice.payment_reference ?? "—"}</span>
+                <span className="text-slate-500">Sender No:</span>
+                <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">{invoice.sender_number ?? "—"}</span>
+              </div>
+            </div>
+          )}
           <div>
             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Payment Method</label>
             <Select
@@ -779,6 +927,69 @@ export default function InvoiceDetailPage() {
               ]}
             />
           </div>
+          {(() => {
+            const sub = invoice.store_subscriptions;
+            const defaultStart = defaultPeriodStart(invoice);
+            const chosen = startDate ? new Date(`${startDate}T00:00:00`) : defaultStart;
+            const months =
+              invoice.billing_cycle === BillingCycle.CUSTOM
+                ? monthsBetween(new Date(invoice.period_start), new Date(invoice.period_end))
+                : undefined;
+            const end = addBillingCycle(chosen, invoice.billing_cycle, months);
+            const isDefault = startDate === toDateInput(defaultStart);
+            const lastStart = sub?.current_period_start ? new Date(sub.current_period_start) : null;
+            const lastEnd = sub?.current_period_end ? new Date(sub.current_period_end) : null;
+            const daysSinceEnd = lastEnd ? Math.floor((Date.now() - lastEnd.getTime()) / 86400000) : null;
+            const endedLabel =
+              daysSinceEnd === null
+                ? ""
+                : daysSinceEnd > 0
+                  ? `ended ${daysSinceEnd} day${daysSinceEnd > 1 ? "s" : ""} ago`
+                  : daysSinceEnd === 0
+                    ? "ends today"
+                    : `${-daysSinceEnd} day${daysSinceEnd < -1 ? "s" : ""} left`;
+            const chip =
+              "px-2.5 py-1 rounded-lg text-xs font-semibold bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:border-violet-400 transition";
+            return (
+              <div>
+                <div className="mb-3 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/4 px-4 py-3">
+                  <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">
+                    Last subscription period
+                  </p>
+                  {lastEnd ? (
+                    <>
+                      <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                        {lastStart ? `${fmtLong(lastStart)} → ` : "Until "}{fmtLong(lastEnd)}
+                      </p>
+                      <p className={`text-xs mt-0.5 font-medium ${daysSinceEnd !== null && daysSinceEnd > 0 ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"}`}>
+                        {endedLabel}
+                      </p>
+                      <div className="flex flex-wrap gap-2 mt-2.5">
+                        <button type="button" className={chip} onClick={() => setStartDate(toDateInput(lastEnd))}>
+                          From when it ended ({fmtLong(lastEnd)})
+                        </button>
+                        <button type="button" className={chip} onClick={() => setStartDate(toDateInput(new Date()))}>
+                          From today
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-sm text-slate-600 dark:text-slate-300">No previous period — this is a first subscription.</p>
+                  )}
+                </div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Subscription starts on</label>
+                <input type="date" className={inputCls} value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-300">
+                  New period: <strong>{fmtLong(chosen)} → {fmtLong(end)}</strong>
+                </p>
+                <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                  {isDefault
+                    ? "Default: from today, or from the end of the current period if it hasn't ended yet."
+                    : "Custom start date. Set it to the day the old period ended to avoid a gap."}
+                </p>
+              </div>
+            );
+          })()}
           <div>
             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Transaction / Reference ID (optional)</label>
             <input className={inputCls} placeholder="e.g. TX123456" value={payRef} onChange={(e) => setPayRef(e.target.value)} />
@@ -786,20 +997,22 @@ export default function InvoiceDetailPage() {
         </div>
       </Modal>
 
-      {/* Cancel Modal */}
+      {/* Cancel / Reject Modal */}
       <Modal
         open={cancelOpen}
         onCancel={() => setCancelOpen(false)}
         onOk={handleCancel}
-        okText={canceling ? "Canceling…" : "Cancel Invoice"}
+        okText={canceling ? "Processing…" : isSubmitted ? "Reject Payment" : "Cancel Invoice"}
         okButtonProps={{ danger: true, loading: canceling }}
         cancelText="Keep"
-        title="Cancel Invoice"
+        title={isSubmitted ? "Reject Customer Payment" : "Cancel Invoice"}
         width={400}
         destroyOnHidden
       >
-        <p className="text-sm text-slate-600">
-          Mark this invoice as canceled? The store owner will no longer be expected to pay it.
+        <p className="text-sm text-slate-600 dark:text-slate-300">
+          {isSubmitted
+            ? "Reject this submitted payment? The invoice will be marked as cancelled and the store's subscription will be cancelled immediately, locking the store. The customer will need to resubmit."
+            : "Mark this invoice as cancelled? The store's subscription will be cancelled immediately, locking the store."}
         </p>
       </Modal>
     </>

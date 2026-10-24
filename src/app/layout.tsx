@@ -22,9 +22,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Shei Hoise SuperAdmin",
   description: "Super Admin Panel",
-  icons: {
-    icon: "/logo.png",
-  },
 };
 
 export default function RootLayout({
@@ -33,9 +30,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Apply saved theme before first paint to avoid a light flash */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}var r=document.documentElement;r.classList.toggle("dark",t==="dark");r.style.colorScheme=t}catch(e){}`,
+          }}
+        />
+      </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >
         <ThemeProvider> {/* ✅ Wrap children with ThemeProvider */}
           {children}

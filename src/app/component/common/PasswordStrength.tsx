@@ -35,8 +35,8 @@ export function PasswordStrength({ password, className = "" }: PasswordStrengthP
     "text-emerald-500"
   ];
 
-  const currentColor = strengthColors[strength - 1] || "bg-gray-300";
-  const currentTextColor = textColors[strength - 1] || "text-gray-500";
+  const currentColor = strengthColors[strength - 1] || "bg-gray-300 dark:bg-gray-600";
+  const currentTextColor = textColors[strength - 1] || "text-gray-500 dark:text-gray-400";
 
   return (
     <motion.div 

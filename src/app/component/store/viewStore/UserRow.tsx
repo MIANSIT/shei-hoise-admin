@@ -25,9 +25,10 @@ interface UserRowProps {
   index: number;
   onStatusChange: (storeId: string, status: StoreStatus) => void;
   onActiveChange: (storeId: string, isActive: boolean) => void;
+  onDeleteStore: (store: StoreWithTrial) => void;
 }
 
-export function UserRow({ user, index, onStatusChange, onActiveChange }: UserRowProps) {
+export function UserRow({ user, index, onStatusChange, onActiveChange, onDeleteStore }: UserRowProps) {
   const [expanded, setExpanded] = useState(false);
   const profile    = user.user_profiles?.[0];
   const fullName   = `${user.first_name} ${user.last_name}`;
@@ -35,10 +36,10 @@ export function UserRow({ user, index, onStatusChange, onActiveChange }: UserRow
   const gradient   = AVATAR_GRADIENTS[index % AVATAR_GRADIENTS.length];
 
   return (
-    <div className={`bg-white dark:bg-white/[0.025] border rounded-2xl overflow-hidden transition-all duration-200 ${
+    <div className={`bg-white dark:bg-white/2.5 border rounded-2xl overflow-hidden transition-all duration-200 ${
       expanded
-        ? "border-slate-300 dark:border-white/[0.14] shadow-lg dark:shadow-black/40"
-        : "border-slate-200 dark:border-white/[0.07] hover:border-slate-300 dark:hover:border-white/[0.14]"
+        ? "border-slate-300 dark:border-white/14 shadow-lg dark:shadow-black/40"
+        : "border-slate-200 dark:border-white/7 hover:border-slate-300 dark:hover:border-white/14"
     }`}>
 
       {/* Collapsed row */}
@@ -47,7 +48,7 @@ export function UserRow({ user, index, onStatusChange, onActiveChange }: UserRow
         onClick={() => setExpanded(!expanded)}
       >
         {/* Avatar */}
-        <div className={`w-11 h-11 rounded-2xl shrink-0 bg-gradient-to-br ${gradient} flex items-center justify-center text-white text-[15px] font-bold tracking-wide shadow-md`}>
+        <div className={`w-11 h-11 rounded-2xl shrink-0 bg-linear-to-br ${gradient} flex items-center justify-center text-white text-[15px] font-bold tracking-wide shadow-md`}>
           {profile?.avatar_url
             // eslint-disable-next-line @next/next/no-img-element
             ? <img src={profile.avatar_url} alt="avatar" className="w-full h-full object-cover rounded-2xl" />
@@ -59,7 +60,7 @@ export function UserRow({ user, index, onStatusChange, onActiveChange }: UserRow
           <div className="font-bold text-[15px] text-slate-900 dark:text-slate-100 tracking-tight truncate">
             {fullName}
           </div>
-          <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500 text-xs mt-0.5">
+          <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-xs mt-0.5">
             <IconMail />{user.email}
           </div>
         </div>
@@ -87,14 +88,14 @@ export function UserRow({ user, index, onStatusChange, onActiveChange }: UserRow
         </div>
 
         {/* Store count */}
-        <div className="flex-1 flex items-center gap-1.5 text-slate-400 dark:text-slate-500 text-sm">
+        <div className="flex-1 flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-sm">
           <IconStore />
           <span className="text-slate-700 dark:text-slate-300 font-semibold">{storeCount}</span>
           <span>{storeCount === 1 ? "store" : "stores"}</span>
         </div>
 
         {/* Chevron */}
-        <div className="text-slate-400 dark:text-slate-500">
+        <div className="text-slate-500 dark:text-slate-400">
           <IconChevron open={expanded} />
         </div>
       </div>
@@ -102,16 +103,16 @@ export function UserRow({ user, index, onStatusChange, onActiveChange }: UserRow
       {/* Expanded stores */}
       {expanded && (
         <div
-          className="border-t border-slate-100 dark:border-white/[0.06] px-6 py-5 flex flex-col gap-3 bg-slate-50 dark:bg-black/[0.1]"
+          className="border-t border-slate-100 dark:border-white/6 px-6 py-5 flex flex-col gap-3 bg-slate-50 dark:bg-black/10"
           style={{ animation: "slideDown 0.25s ease" }}
         >
           {storeCount === 0 ? (
-            <div className="text-center py-8 text-slate-400 dark:text-slate-500 text-sm bg-white dark:bg-white/[0.02] rounded-xl border border-dashed border-slate-200 dark:border-white/[0.08]">
+            <div className="text-center py-8 text-slate-500 dark:text-slate-400 text-sm bg-white dark:bg-white/2 rounded-xl border border-dashed border-slate-200 dark:border-white/8">
               No stores found
             </div>
           ) : (
             (user.stores as StoreWithTrial[])?.map(store => (
-              <StoreCard key={store.id} store={store} onStatusChange={onStatusChange} onActiveChange={onActiveChange} />
+              <StoreCard key={store.id} store={store} onStatusChange={onStatusChange} onActiveChange={onActiveChange} onDelete={onDeleteStore} />
             ))
           )}
         </div>

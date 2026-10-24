@@ -56,7 +56,7 @@ export function StoreOwnersHeader({ users }: StoreOwnersHeaderProps) {
               <div className={`text-2xl font-extrabold leading-none ${stat.color}`} style={{ fontFamily: "'Syne', sans-serif" }}>
                 {stat.value}
               </div>
-              <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 font-medium uppercase tracking-wider">
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-medium uppercase tracking-wider">
                 {stat.label}
               </div>
             </div>

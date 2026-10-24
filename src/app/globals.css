@@ -1,6 +1,7 @@
-@import "jodit/es2021/jodit.min.css";
-
 @import "tailwindcss";
+
+/* Tailwind v4: make `dark:` follow the .dark class (toggle), not the OS setting */
+@custom-variant dark (&:is(.dark, .dark *));
 
 @theme inline {
   --color-background: var(--background);
@@ -113,9 +114,123 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+  }
+  ::placeholder {
+    color: var(--muted-foreground);
+    opacity: 1;
+  }
+  /* Browser autofill paints its own (blue/yellow) background and text */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--foreground);
+    caret-color: var(--foreground);
+    box-shadow: 0 0 0 1000px var(--background) inset;
+    transition: background-color 9999s ease-in-out 0s;
+  }
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+}
+
 /* ===========================
    Ant Design Dark/Light Theme Overrides
    Uses Tailwind CSS variables
    =========================== */
 
+/* Page-level surfaces that antd paints itself */
+.ant-layout,
+.ant-layout-sider {
+  background: transparent;
+}
+
+/* Dropdowns, popovers, modals and drawers follow the active theme */
+.ant-dropdown .ant-dropdown-menu,
+.ant-select-dropdown,
+.ant-picker-dropdown .ant-picker-panel-container,
+.ant-popover .ant-popover-inner,
+.ant-modal .ant-modal-content,
+.ant-drawer .ant-drawer-content {
+  background: var(--popover);
+  color: var(--popover-foreground);
+}
+
+.ant-modal .ant-modal-header,
+.ant-drawer .ant-drawer-header {
+  background: transparent;
+}
+
+.ant-modal .ant-modal-title,
+.ant-drawer .ant-drawer-title,
+.ant-modal .ant-modal-close,
+.ant-drawer .ant-drawer-close {
+  color: var(--foreground);
+}
+
 /* Inputs */
+.ant-input,
+.ant-input-affix-wrapper,
+.ant-input-number,
+.ant-input-number-input,
+.ant-select-selector,
+.ant-picker {
+  background: var(--background) !important;
+  color: var(--foreground);
+  border-color: var(--input);
+}
+
+.ant-input::placeholder,
+.ant-input-number-input::placeholder,
+.ant-select-selection-placeholder,
+.ant-picker-input > input::placeholder {
+  color: var(--muted-foreground) !important;
+}
+
+.ant-input[disabled],
+.ant-input-disabled,
+.ant-select-disabled .ant-select-selector,
+.ant-picker-disabled {
+  background: var(--muted) !important;
+  color: var(--muted-foreground) !important;
+}
+
+/* Tables */
+.ant-table,
+.ant-table-thead > tr > th,
+.ant-table-tbody > tr > td,
+.ant-table-placeholder .ant-empty-description {
+  background: transparent;
+  color: var(--foreground);
+  border-color: var(--border);
+}
+
+.ant-table-thead > tr > th {
+  background: var(--muted) !important;
+}
+
+.ant-table-tbody > tr:hover > td {
+  background: var(--accent) !important;
+}
+
+/* Form labels, empty states, pagination */
+.ant-form-item-label > label,
+.ant-empty-description,
+.ant-pagination .ant-pagination-item a,
+.ant-pagination .ant-pagination-prev button,
+.ant-pagination .ant-pagination-next button {
+  color: var(--foreground);
+}

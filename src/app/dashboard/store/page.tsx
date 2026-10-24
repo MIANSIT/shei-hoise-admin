@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Modal } from "antd";
 import { viewStoreOwners } from "@/lib/queries/users/viewUser";
 import { updateStore } from "@/lib/queries/onboarding/store/updateStore";
+import { deleteStore } from "@/lib/queries/onboarding/store/deleteStore";
+import { useSheiNotification } from "@/lib/hooks/useSheiNotification";
 import { UserWithRelationsType } from "@/lib/schema/user.types";
 import { StoreStatus } from "@/lib/types/enums";
 import { FilterType, StoreWithTrial } from "@/lib/types/store/storeOwner.types";
@@ -14,10 +17,13 @@ import { UserRow } from "@/app/component/store/viewStore/UserRow";
 const isStoreActive = (val: unknown): boolean => val === true || val === "true";
 
 export default function StoreOwnersPage() {
+  const { success, error: notifyError } = useSheiNotification();
   const [users, setUsers] = useState<UserWithRelationsType[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
+  const [deleteTarget, setDeleteTarget] = useState<StoreWithTrial | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -50,6 +56,31 @@ export default function StoreOwnersPage() {
         ),
       })),
     );
+  };
+
+  const handleDeleteStore = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const res = await deleteStore(deleteTarget.id);
+    if (res.success) {
+      success(
+        res.ownerDeleted
+          ? "Store deleted along with the store admin's account"
+          : "Store deleted",
+      );
+      setUsers((prev) =>
+        res.ownerDeleted
+          ? prev.filter((u) => u.id !== res.ownerId)
+          : prev.map((u) => ({
+              ...u,
+              stores: u.stores?.filter((s) => s.id !== deleteTarget.id),
+            })),
+      );
+    } else {
+      notifyError("Failed to delete store");
+    }
+    setDeleting(false);
+    setDeleteTarget(null);
   };
 
   const filtered = users.filter((u) => {
@@ -100,7 +131,7 @@ export default function StoreOwnersPage() {
       `}</style>
 
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans transition-colors duration-300">
-        <div className="max-w-[1100px] mx-auto px-6 py-10">
+        <div className="max-w-275 mx-auto px-4 sm:px-6 py-10">
           <StoreOwnersHeader users={users} />
           <StoreOwnersToolbar
             search={search}
@@ -110,58 +141,87 @@ export default function StoreOwnersPage() {
             onFilterChange={setFilter}
           />
 
-          {/* Column headers */}
-          <div className="flex items-center gap-4 px-6 py-2 text-[11px] font-semibold text-slate-400 dark:text-slate-600 uppercase tracking-widest mb-2">
-            <div className="w-11 shrink-0" />
-            <div className="flex-[0_0_220px]">Owner</div>
-            <div className="flex-[0_0_150px]">Phone</div>
-            <div className="flex-[0_0_120px]">Country</div>
-            <div className="flex-[0_0_90px]">Status</div>
-            <div className="flex-1">Stores</div>
-          </div>
+          {/* Column headers + content share one horizontal scroller so the
+              fixed-width columns don't get crushed on narrow viewports (this
+              is a custom flex "table", not a real <table>). */}
+          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+            <div className="min-w-215">
+              {/* Column headers */}
+              <div className="flex items-center gap-4 px-6 py-2 text-[11px] font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-widest mb-2">
+                <div className="w-11 shrink-0" />
+                <div className="flex-[0_0_220px]">Owner</div>
+                <div className="flex-[0_0_150px]">Phone</div>
+                <div className="flex-[0_0_120px]">Country</div>
+                <div className="flex-[0_0_90px]">Status</div>
+                <div className="flex-1">Stores</div>
+              </div>
 
-          {/* Content */}
-          {loading ? (
-            <div className="flex flex-col gap-3">
-              {[...Array(4)].map((_, i) => (
-                <div
-                  key={i}
-                  className="h-20 rounded-2xl bg-slate-200 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.06]"
-                  style={{
-                    animation: `pulse 1.5s ease infinite`,
-                    animationDelay: `${i * 0.1}s`,
-                  }}
-                />
-              ))}
+              {/* Content */}
+              {loading ? (
+                <div className="flex flex-col gap-3">
+                  {[...Array(4)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="h-20 rounded-2xl bg-slate-200 dark:bg-white/4 border border-slate-200 dark:border-white/6"
+                      style={{
+                        animation: `pulse 1.5s ease infinite`,
+                        animationDelay: `${i * 0.1}s`,
+                      }}
+                    />
+                  ))}
+                </div>
+              ) : filtered.length === 0 ? (
+                <div className="text-center py-20 bg-white dark:bg-white/2 rounded-3xl border border-dashed border-slate-200 dark:border-white/8">
+                  <div className="text-5xl mb-4 opacity-40">🏪</div>
+                  <div
+                    className="text-lg font-bold text-slate-500 dark:text-slate-400"
+                    style={{ fontFamily: "'Syne', sans-serif" }}
+                  >
+                    No store owners found
+                  </div>
+                  <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    Try adjusting your search or filter
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2.5">
+                  {filtered.map((user, i) => (
+                    <UserRow
+                      key={user.id}
+                      user={user}
+                      index={i}
+                      onStatusChange={handleStatusChange}
+                      onActiveChange={handleActiveChange}
+                      onDeleteStore={setDeleteTarget}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
-          ) : filtered.length === 0 ? (
-            <div className="text-center py-20 bg-white dark:bg-white/[0.02] rounded-3xl border border-dashed border-slate-200 dark:border-white/[0.08]">
-              <div className="text-5xl mb-4 opacity-40">🏪</div>
-              <div
-                className="text-lg font-bold text-slate-500 dark:text-slate-400"
-                style={{ fontFamily: "'Syne', sans-serif" }}
-              >
-                No store owners found
-              </div>
-              <div className="text-sm text-slate-400 dark:text-slate-500 mt-1">
-                Try adjusting your search or filter
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2.5">
-              {filtered.map((user, i) => (
-                <UserRow
-                  key={user.id}
-                  user={user}
-                  index={i}
-                  onStatusChange={handleStatusChange}
-                  onActiveChange={handleActiveChange}
-                />
-              ))}
-            </div>
-          )}
+          </div>
         </div>
       </div>
+
+      {/* Delete Confirm Modal */}
+      <Modal
+        open={!!deleteTarget}
+        onCancel={() => setDeleteTarget(null)}
+        onOk={handleDeleteStore}
+        okText={deleting ? "Deleting…" : "Delete"}
+        okButtonProps={{ danger: true, loading: deleting }}
+        cancelText="Cancel"
+        title="Delete Store"
+        width={440}
+      >
+        <p className="text-slate-600 dark:text-slate-400 text-sm">
+          Are you sure you want to delete{" "}
+          <strong>{deleteTarget?.store_name}</strong>? This permanently
+          removes the store, its settings, subscriptions, invoices, and
+          uploaded files. If this is the owner&apos;s only store, their admin
+          account and login credentials will be deleted too. This action
+          cannot be undone.
+        </p>
+      </Modal>
     </>
   );
 }
