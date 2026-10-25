@@ -10,6 +10,7 @@ import {
   BadgeCheck,
   FileText,
   Presentation,
+  HelpCircle,
 } from "lucide-react";
 import React from "react";
 
@@ -75,4 +76,6 @@ export const sideMenu: MenuItem[] = [
       { title: "User Requests", href: "/dashboard/user-requests", icon: Inbox },
     ],
   },
+
+  { title: "FAQ", href: "/dashboard/faq", icon: HelpCircle },
 ];
