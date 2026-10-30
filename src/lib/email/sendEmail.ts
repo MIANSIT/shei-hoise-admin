@@ -8,8 +8,11 @@ import tls from "node:tls";
 /**
  * Minimal SMTP sender (implicit TLS, AUTH LOGIN) with no third-party mail
  * library. Built for Gmail / Google Workspace with an app password:
- *   SMTP_HOST=smtp.gmail.com  SMTP_PORT=465  SMTP_USER  SMTP_PASS  EMAIL_FROM
+ *   GMAIL_USER  GMAIL_APP_PASSWORD  (optional: EMAIL_REPLY_TO)
  */
+
+const GMAIL_HOST = "smtp.gmail.com";
+const GMAIL_PORT = 465;
 
 export const LOGO_CID = "sheihoise-logo";
 
@@ -23,7 +26,7 @@ export interface SendEmailInput {
 export class EmailNotConfiguredError extends Error {
   constructor() {
     super(
-      "Email is not configured. Set SMTP_HOST, SMTP_USER and SMTP_PASS in .env.local.",
+      "Email is not configured. Set GMAIL_USER and GMAIL_APP_PASSWORD in the environment.",
     );
     this.name = "EmailNotConfiguredError";
   }
@@ -197,15 +200,14 @@ function buildMessage(opts: {
  * is not hosted on a public address.
  */
 export async function sendEmail({ to, subject, html, text }: SendEmailInput) {
-  const host = process.env.SMTP_HOST;
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-  if (!host || !user || !pass) throw new EmailNotConfiguredError();
+  const user = process.env.GMAIL_USER;
+  const pass = process.env.GMAIL_APP_PASSWORD;
+  if (!user || !pass) throw new EmailNotConfiguredError();
 
   if (!EMAIL_RE.test(to)) throw new Error("Invalid recipient email address.");
 
-  const port = Number(process.env.SMTP_PORT ?? 465);
-  const from = process.env.EMAIL_FROM ?? `Shei Hoise <${user}>`;
+  // Gmail only DKIM-signs mail whose From matches the authenticated account.
+  const from = `Shei Hoise <${user}>`;
   const { address: fromAddress } = parseFrom(from);
 
   const logo = await fs.readFile(path.join(process.cwd(), "public", "logo_beta.png"));
@@ -220,7 +222,7 @@ export async function sendEmail({ to, subject, html, text }: SendEmailInput) {
     domain: fromAddress.split("@")[1] ?? "localhost",
   });
 
-  const smtp = await SmtpConnection.connect(host, port);
+  const smtp = await SmtpConnection.connect(GMAIL_HOST, GMAIL_PORT);
   try {
     await smtp.expect([220]);
     await smtp.command(`EHLO ${fromAddress.split("@")[1] ?? "localhost"}`, [250]);
