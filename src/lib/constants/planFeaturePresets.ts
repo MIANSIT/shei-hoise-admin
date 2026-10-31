@@ -14,6 +14,7 @@ export const PRESET_FEATURES = [
   { key: "conversion_api", label: "Conversions API" },
   { key: "meta_pixel", label: "Meta Pixel" },
   { key: "expense_tracking", label: "Expense Tracking" },
+  { key: "investor_money", label: "Investor Money" },
   { key: "money_tracker", label: "Money Tracker" },
   { key: "stock_management", label: "Stock Management" },
   { key: "customer_membership", label: "Customer Membership" },
