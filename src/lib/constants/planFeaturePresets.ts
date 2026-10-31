@@ -16,6 +16,7 @@ export const PRESET_FEATURES = [
   { key: "expense_tracking", label: "Expense Tracking" },
   { key: "money_tracker", label: "Money Tracker" },
   { key: "stock_management", label: "Stock Management" },
+  { key: "customer_membership", label: "Customer Membership" },
   { key: "courier_tracking", label: "Courier Tracking" },
   { key: "vendor_flow", label: "Vendor Flow" },
   { key: "storefront_design", label: "Storefront Design" },
